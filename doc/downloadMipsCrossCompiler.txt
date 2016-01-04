@@ -1,0 +1,8 @@
+
+
+
+http://www.cs.berkeley.edu/~kubitron/courses/cs162-F05/Nachos/xgcc.html
+
+Add to the file ~/.bashrc the line PATH="$HOME/Desktop/mips-x86.linux-xgcc:$PATH"
+add to the line 34 of the file Makefile.sysdep the line ../mipsCompiler/mips-gcc
+
