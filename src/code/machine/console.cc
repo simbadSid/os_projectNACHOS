@@ -17,11 +17,17 @@
 #include "console.h"
 #include "system.h"
 
-// Dummy functions because C++ is weird about pointers to member functions
-static void ConsoleReadPoll(int c) 
-{ Console *console = (Console *)c; console->CheckCharAvail(); }
+
+static void ConsoleReadPoll(int c)				// Dummy functions because C++ is weird about pointers to member functions
+{
+	Console *console = (Console *)c;
+	console->CheckCharAvail();
+}
 static void ConsoleWriteDone(int c)
-{ Console *console = (Console *)c; console->WriteDone(); }
+{
+	Console *console = (Console *)c;
+	console->WriteDone();
+}
 
 //----------------------------------------------------------------------
 // Console::Console
@@ -39,24 +45,18 @@ static void ConsoleWriteDone(int c)
 Console::Console(char *readFile, char *writeFile, VoidFunctionPtr readAvail, 
 		VoidFunctionPtr writeDone, int callArg)
 {
-    if (readFile == NULL)
-	readFileNo = 0;					// keyboard = stdin
-    else
-    	readFileNo = OpenForReadWrite(readFile, TRUE);	// should be read-only
-    if (writeFile == NULL)
-	writeFileNo = 1;				// display = stdout
-    else
-    	writeFileNo = OpenForWrite(writeFile);
+    if (readFile == NULL)	readFileNo	= 0;									// keyboard = stdin
+    else					readFileNo	= OpenForReadWrite(readFile, TRUE);		// should be read-only
+    if (writeFile == NULL)	writeFileNo	= 1;									// display = stdout
+    else			    	writeFileNo = OpenForWrite(writeFile);
 
-    // set up the stuff to emulate asynchronous interrupts
-    writeHandler = writeDone;
-    readHandler = readAvail;
-    handlerArg = callArg;
-    putBusy = FALSE;
-    incoming = EOF;
+    writeHandler	= writeDone;												// set up the stuff to emulate asynchronous interrupts
+    readHandler		= readAvail;
+    handlerArg		= callArg;
+    putBusy			= FALSE;
+    incoming		= EOF;
 
-    // start polling for incoming packets
-    interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime, ConsoleReadInt);
+    interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime, ConsoleReadInt);// start polling for incoming packets
 }
 
 //----------------------------------------------------------------------
