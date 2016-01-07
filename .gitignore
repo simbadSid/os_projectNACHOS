@@ -1,4 +1,8 @@
 .*
+archive
 bin
 Debug
 nachos_initialCode
+src/code/bin
+src/code/build
+src/code/build-origin

@@ -27,20 +27,20 @@ StartProcess (char *filename)
     AddrSpace *space;
 
     if (executable == NULL)
-      {
-	  printf ("Unable to open file %s\n", filename);
-	  return;
-      }
-    space = new AddrSpace (executable);
-    currentThread->space = space;
+	{
+		printf ("Unable to open file %s\n", filename);
+		return;
+	}
+    space				= new AddrSpace (executable);
+    currentThread->space= space;
 
-    delete executable;		// close file
+    delete executable;					// close file
 
-    space->InitRegisters ();	// set the initial register values
-    space->RestoreState ();	// load page table register
+    space->InitRegisters ();			// set the initial register values
+    space->RestoreState ();				// load page table register
 
-    machine->Run ();		// jump to the user progam
-    ASSERT (FALSE);		// machine->Run never returns;
+    machine->Run ();					// jump to the user program
+    ASSERT (FALSE);						// machine->Run never returns;
     // the address space exits
     // by doing the syscall "exit"
 }
@@ -84,12 +84,11 @@ ConsoleTest (char *in, char *out)
     writeDone = new Semaphore ("write done", 0);
 
     for (;;)
-      {
-	  readAvail->P ();	// wait for character to arrive
-	  ch = console->GetChar ();
-	  console->PutChar (ch);	// echo it!
-	  writeDone->P ();	// wait for write to finish
-	  if (ch == 'q')
-	      return;		// if q, quit
-      }
+	{
+		readAvail->P ();			// wait for character to arrive
+		ch = console->GetChar ();
+		console->PutChar (ch);		// echo it!
+		writeDone->P ();			// wait for write to finish
+		if (ch == 'q')  return;		// if q, quit
+	}
 }
