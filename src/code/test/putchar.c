@@ -10,9 +10,9 @@ void print(char c, int n)
 int
 main()
 {
-    print(’a’,4);
+    print('a',4);
 // >>> Patotskaya Y
-    print('/nModyfied by Patotskaya Y');
+    print('T',0);
 // <<< Patotskaya Y
     Halt();
 }
