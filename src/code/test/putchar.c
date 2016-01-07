@@ -12,7 +12,7 @@ main()
 {
     print('a',4);
 // >>> Patotskaya Y
-    print('T',0);
+    print('Test',4);
 // <<< Patotskaya Y
     Halt();
 }
