@@ -11,5 +11,8 @@ int
 main()
 {
     print(’a’,4);
+// >>> Patotskaya Y
+    print('/nModyfied by Patotskaya Y');
+// <<< Patotskaya Y
     Halt();
 }
