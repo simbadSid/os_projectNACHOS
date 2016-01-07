@@ -7,3 +7,6 @@ src/code/bin
 src/code/build
 src/code/build-origin
 src/code/TAGS
+
+src/code/#*#
+src/code/*/#*#
