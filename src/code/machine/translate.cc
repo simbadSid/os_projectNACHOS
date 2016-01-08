@@ -74,10 +74,17 @@ ShortToMachine(unsigned short shortword) { return ShortToHost(shortword); }
 
 
 //+b simbadSid 8.01.16
-
+//---------------------------------------------------------------------
+// Parameters:
+// 		- from:	address of the input string in MIPS user space
+//		- to:	address of the output string (needs to have at least size+1 available chars)
+//---------------------------------------------------------------------
 void copyStringFromMachine( int from, char *to, unsigned size)
 {
-	char *input		= machine->ReadRegister(from);
+// TODO change WordToHost by readMem
+// TODO what claude said
+// TODO kjlsdhfg;lsd;lfigjsd;fl alisa ljhggp;f;klg
+	char *input		= (char*)WordToHost(from);
 	char *output	= to;
 	unsigned i;
 
@@ -88,7 +95,7 @@ void copyStringFromMachine( int from, char *to, unsigned size)
 		input++;
 	}
 	output = '\0';
-}s
+}
 //+e simbadSid 8.01.16
 
 //----------------------------------------------------------------------

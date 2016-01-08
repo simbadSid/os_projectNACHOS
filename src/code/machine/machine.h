@@ -212,6 +212,11 @@ unsigned int WordToMachine(unsigned int word);
 unsigned short ShortToMachine(unsigned short shortword);
 
 //+b simbadSid 8.01.16
+//---------------------------------------------------------------------
+// Parameters:
+// 		- from:	address of the input string in MIPS user space
+//		- to:	address of the output string (needs to have at least size+1 available chars)
+//---------------------------------------------------------------------
 void copyStringFromMachine( int from, char *to, unsigned size);
 //+e simbadSid 8.01.16
 

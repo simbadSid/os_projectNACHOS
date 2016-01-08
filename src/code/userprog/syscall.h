@@ -20,18 +20,19 @@
 /* system call codes -- used by the stubs to tell the kernel which system call
  * is being asked for
  */
-#define SC_Halt		0
-#define SC_Exit		1
-#define SC_Exec		2
-#define SC_Join		3
-#define SC_Create	4
-#define SC_Open		5
-#define SC_Read		6
-#define SC_Write	7
-#define SC_Close	8
-#define SC_Fork		9
-#define SC_Yield	10
-#define SC_PutChar	11
+#define SC_Halt			0
+#define SC_Exit			1
+#define SC_Exec			2
+#define SC_Join			3
+#define SC_Create		4
+#define SC_Open			5
+#define SC_Read			6
+#define SC_Write		7
+#define SC_Close		8
+#define SC_Fork			9
+#define SC_Yield		10
+#define SC_PutChar		11
+#define SC_PutString	13
 
 
 #ifdef IN_USER_MODE
@@ -138,6 +139,14 @@ void Yield ();
  * Needs to be lunched in user mode.
  */
 void PutChar(char c);
+
+//+b simbadSid 8.01.16
+
+/* PutChar: Call the system function SynchPutString which will write the input string in the current console.
+ * Needs to be lunched in user mode.
+ */
+void PutString(char *string, unsigned size);
+//+b simbadSid 8.01.16
 
 
 #endif // IN_USER_MODE

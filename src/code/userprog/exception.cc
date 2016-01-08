@@ -71,7 +71,11 @@ UpdatePC ()
 void
 ExceptionHandler (ExceptionType which)
 {
-    //+b FoxTox 08.01.2016
+	char c;
+	int strAddr;
+	size_t size;
+
+//+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
 
     if (which == SyscallException)
@@ -79,19 +83,35 @@ ExceptionHandler (ExceptionType which)
 		switch (type)
 		{
 			case SC_Halt:
+			{
 				DEBUG('a', "Shutdown, initiated by user program.\n");
 				interrupt->Halt();
 				break;
+			}
 			case SC_PutChar:
-				char c = machine->ReadRegister(4);
+			{
+				c = machine->ReadRegister(4);
 				synchconsole->SynchPutChar(c);
 				break;
+			}
+			case SC_PutString:
+			{
+// Translate the address (MIPS address) into nachos address, then copy (use function wordToMachine)
+				strAddr	= (int)machine->ReadRegister(4);
+				size	= (size_t)machine->ReadRegister(5);
+				char buffer[size+1];
+				copyStringFromMachine(strAddr, buffer, size);
+				synchconsole->SynchPutString(buffer);
+				break;
+			}
 			default:
+			{
 				printf("Unexpected user mode exception %d %d\n", which, type);
 				ASSERT(FALSE);
+			}
 		}
 		UpdatePC();
     }
-    //+e FoxTox 08.01.2016
+//+e FoxTox 08.01.2016
 
 }
