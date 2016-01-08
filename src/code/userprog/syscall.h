@@ -10,6 +10,8 @@
  * of liability and disclaimer of warranty provisions.
  */
 
+// goubetc 8.01.16
+
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
 
@@ -30,6 +32,7 @@
 #define SC_Fork		9
 #define SC_Yield	10
 #define SC_PutChar	11
+
 
 #ifdef IN_USER_MODE
 
@@ -55,6 +58,8 @@ void Halt () __attribute__((noreturn));
 
 /* This user program is done (status = 0 means exited normally). */
 void Exit (int status) __attribute__((noreturn));
+
+
 
 /* A unique identifier for an executing user program (address space) */
 typedef int SpaceId;
@@ -133,6 +138,7 @@ void Yield ();
  * Needs to be lunched in user mode.
  */
 void PutChar(char c);
+
 
 #endif // IN_USER_MODE
 
