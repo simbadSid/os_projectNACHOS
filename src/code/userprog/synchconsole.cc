@@ -1,4 +1,3 @@
-#ifdef CHANGED
 #include "copyright.h"
 #include "system.h"
 #include "synchconsole.h"
@@ -7,12 +6,12 @@ static Semaphore *readAvail;
 static Semaphore *writeDone;
 static void ReadAvail(int arg) { readAvail->V(); }
 static void WriteDone(int arg) { writeDone->V(); }
-3
+
 SynchConsole::SynchConsole(char *readFile, char *writeFile)
 {
     readAvail = new Semaphore("read avail", 0);
     writeDone = new Semaphore("write done", 0);
-    console = ...
+    console = new Console(readFile, writeFile, ReadAvail, WriteDone, 0);
 	}
 SynchConsole::~SynchConsole()
 {
@@ -22,18 +21,27 @@ SynchConsole::~SynchConsole()
 }
 void SynchConsole::SynchPutChar(const char ch)
 {
-    // ...
+    
+    console->PutChar(ch);
+}
+
 }
 char SynchConsole::SynchGetChar()
 {
-    // ...
+    console->CheckCharAvail();
+    return console->GetChar(ch);
 }
 void SynchConsole::SynchPutString(const char s[])
 {
-    // ...
+    while (*s != '\0'){
+	SynchPutChar(*s);
+	s++;
+    }
 }
 void SynchConsole::SynchGetString(char *s, int n)
 {
-    // ...
+    for (int i=0; i< n; ++i){
+	*s = get
+    }
 }
-#endif // CHANGED
+
