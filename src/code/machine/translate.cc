@@ -71,6 +71,26 @@ unsigned short
 ShortToMachine(unsigned short shortword) { return ShortToHost(shortword); }
 
 
+
+
+//+b simbadSid 8.01.16
+
+void copyStringFromMachine( int from, char *to, unsigned size)
+{
+	char *input		= machine->ReadRegister(from);
+	char *output	= to;
+	unsigned i;
+
+	for (i=0; i<size && *input!= '\0'; i++)
+	{
+		*output = *input;
+		output++;
+		input++;
+	}
+	output = '\0';
+}s
+//+e simbadSid 8.01.16
+
 //----------------------------------------------------------------------
 // Machine::ReadMem
 //      Read "size" (1, 2, or 4) bytes of virtual memory at "addr" into 
