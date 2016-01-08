@@ -113,6 +113,19 @@ main (int argc, char **argv)
 														// Nachos will loop forever waiting
 														// for console input
 	    }
+		else if (!strcmp (*argv, "-sc"))				// test the synchronized console
+	    {
+			if (argc == 1)	ConsoleTest (NULL, NULL);
+			else
+			{
+				ASSERT (argc > 2);
+				ConsoleTest (*(argv + 1), *(argv + 2));
+				argCount = 3;
+			}
+			interrupt->Halt ();							// once we start the console, then
+														// Nachos will loop forever waiting
+														// for console input
+	    }
 #endif													// USER_PROGRAM
 #ifdef FILESYS
 		if (!strcmp (*argv, "-cp"))						// copy from UNIX to Nachos

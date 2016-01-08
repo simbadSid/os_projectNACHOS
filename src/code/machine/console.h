@@ -46,7 +46,10 @@ class Console {
     void PutChar(char ch);			// Write "ch" to the console display,
 									// and return immediately.  "writeHandler"
 									// is called when the I/O completes.
-
+    void PutString(const char s[], size_t size);		// Write "s" to the console display,
+									// and return immediately.  "writeHandler"
+									// is called when the I/O completes.
+    								// The string size must be smaller or equal the PageSize (macro in machine/machine.h)
     char GetChar();					// Poll the console input.  If a char is
 									// available, return it.  Otherwise, return EOF.
     								// "readHandler" is called whenever there is
@@ -67,9 +70,9 @@ class Console {
 									// interrupt handlers
     bool putBusy;    				// Is a PutChar operation in progress?
 									// If so, you can't do another one!
-    char incoming;    			// Contains the character to be read,
-					// if there is one available. 
-					// Otherwise contains EOF.
+    char incoming;					// Contains the character to be read,
+									// if there is one available.
+									// Otherwise contains EOF.
 };
 
 #endif // CONSOLE_H
