@@ -155,8 +155,15 @@ Initialize (int argc, char **argv)
     interrupt->Enable ();
     CallOnUserAbort (Cleanup);	// if user hits ctl-C
 
+
+
+
+//TODO to check
+    sysConsole	= new SynchConsole(NULL, NULL);
+
 #ifdef USER_PROGRAM
-    machine = new Machine (debugUserProg);	// this must come first
+    machine		= new Machine (debugUserProg);	// this must come first
+
 #endif
 
 #ifdef FILESYS
