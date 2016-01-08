@@ -5,6 +5,7 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
@@ -15,6 +16,8 @@
 #include "interrupt.h"
 #include "stats.h"
 #include "timer.h"
+
+// FoxTox 08.01.2016
 
 // Initialization and cleanup routines
 extern void Initialize (int argc, char **argv);	// Initialization,
@@ -32,6 +35,10 @@ extern Timer *timer;		// the hardware alarm clock
 #ifdef USER_PROGRAM
 #include "machine.h"
 extern Machine *machine;	// user program memory and registers
+//+b FoxTox 08.01.2016
+#include "synchconsole.h"
+extern SynchConsole *synchconsole;
+//+e FoxTox 08.01.2016
 #endif
 
 #ifdef FILESYS_NEEDED		// FILESYS or FILESYS_STUB

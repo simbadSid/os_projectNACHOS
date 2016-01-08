@@ -8,6 +8,8 @@
 // goubetc 8.01.16
 #include "syscall.h"
 
+// FoxTox 08.01.2016
+
         .text   
         .align  2
 
@@ -132,6 +134,7 @@ Yield:
 //+b goubetc 8.01.16
 	.globl PutChar
 	.ent	PutChar
+
 PutChar:
 	addiu $2,$0,SC_PutChar
 	syscall
