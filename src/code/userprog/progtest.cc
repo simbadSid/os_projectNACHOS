@@ -89,6 +89,11 @@ ConsoleTest (char *in, char *out)
 		ch = console->GetChar ();
 		console->PutChar (ch);		// echo it!
 		writeDone->P ();			// wait for write to finish
-		if (ch == 'q')  return;		// if q, quit
+		switch (ch)
+		{
+			case 'q':	return;		// if q, quit
+			case EOF:	return;
+			default: break;
+		}
 	}
 }

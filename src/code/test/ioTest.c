@@ -15,6 +15,7 @@ int
 main ()
 {
 
+//	ConsoleTest(NULL, );
 	Halt ();
 
     /* not reached */
