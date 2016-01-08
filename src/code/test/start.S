@@ -141,13 +141,6 @@ PutChar:
 	j	$31
 	.end PutChar
 
-	.globl Exit
-	.ent	Exit
-Exit:
-	addiu $2,$0,SC_Exit
-	syscall
-	j	$31
-	.end PutChar
 //+e goubetc 8.01.16
 	
 /* dummy function to keep gcc happy */
