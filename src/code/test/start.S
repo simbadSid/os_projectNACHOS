@@ -8,6 +8,8 @@
 
 #include "syscall.h"
 
+// FoxTox 08.01.2016
+
         .text   
         .align  2
 
@@ -135,6 +137,10 @@ PutChar:
 	j	$31
 	.end PutChar
 
+	//+b FoxTox 08.01.2016
+	.global PutChar
+	.ent PutChar
+	//+e FoxTox 08.01.2016
 
 /* dummy function to keep gcc happy */
         .globl  __main
