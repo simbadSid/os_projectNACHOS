@@ -11,8 +11,39 @@
 #include "copyright.h"
 #include "system.h"
 #include "console.h"
+#include "synchconsole.h"
 #include "addrspace.h"
 #include "synch.h"
+
+
+
+
+//----------------------------------------------------------------------
+// Local global variables
+// Data structures needed for the console test.  Threads making
+// I/O requests wait on a Semaphore to delay until the I/O completes.
+//----------------------------------------------------------------------
+static Console		*console;
+static SynchConsole	*synchConsole;
+static Semaphore	*readAvail;
+static Semaphore	*writeDone;
+
+
+
+
+//----------------------------------------------------------------------
+// Private static methods
+//----------------------------------------------------------------------
+void freeConsoleTest()
+{
+	delete console;
+	delete readAvail;
+	delete writeDone;
+}
+void freeSychConsoleTest()
+{
+	delete synchConsole;
+}
 
 //----------------------------------------------------------------------
 // StartProcess
@@ -45,13 +76,6 @@ StartProcess (char *filename)
     // by doing the syscall "exit"
 }
 
-// Data structures needed for the console test.  Threads making
-// I/O requests wait on a Semaphore to delay until the I/O completes.
-
-static Console *console;
-static Semaphore *readAvail;
-static Semaphore *writeDone;
-
 //----------------------------------------------------------------------
 // ConsoleInterruptHandlers
 //      Wake up the thread that requested the I/O.
@@ -79,21 +103,46 @@ ConsoleTest (char *in, char *out)
 {
     char ch;
 
-    console = new Console (in, out, ReadAvail, WriteDone, 0);
-    readAvail = new Semaphore ("read avail", 0);
-    writeDone = new Semaphore ("write done", 0);
+    console		= new Console (in, out, ReadAvail, WriteDone, 0);
+    readAvail	= new Semaphore ("read avail", 0);
+    writeDone	= new Semaphore ("write done", 0);
 
     for (;;)
 	{
-		readAvail->P ();					// wait for character to arrive
+		readAvail->P ();									// wait for character to arrive
 		ch = console->GetChar ();
 		switch (ch)
 		{
-			case 'q':	return;				// if q, quit
-			case EOF:	return;
+			case 'q':	freeConsoleTest(); return;		// if q, quit
+			case EOF:	freeConsoleTest(); return;
 			default:	break;
 		}
-		console->PutChar (ch);				// echo it!
-		writeDone->P ();					// wait for write to finish
+		console->PutChar (ch);								// echo it!
+		writeDone->P ();									// wait for write to finish
+	}
+}
+//----------------------------------------------------------------------
+// SynchConsoleTest
+//      Test the synchronized console by echoing characters typed at the input onto
+//      the output.  Stop when the user types a 'q'.
+//----------------------------------------------------------------------
+
+void
+SynchConsoleTest (char *in, char *out)
+{
+    char ch;
+
+    synchConsole= new SynchConsole (in, out);
+
+    for (;;)
+	{
+		ch = synchConsole->SynchGetChar ();
+		switch (ch)
+		{
+			case 'q':	freeSychConsoleTest(); return;		// if q, quit
+			case EOF:	freeSychConsoleTest(); return;
+			default:	break;
+		}
+		synchConsole->SynchPutChar (ch);					// echo it!
 	}
 }
