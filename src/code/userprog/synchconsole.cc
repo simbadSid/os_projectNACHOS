@@ -24,10 +24,11 @@ static void WriteDone(int arg) { writeDone->V(); }
 // -------------------------------------------------------------
 SynchConsole::SynchConsole(char *readFile, char *writeFile)
 {
-	readAvail	= new Semaphore("read avail", 0);
-	writeDone	= new Semaphore("write done", 0);
-	console		= new Console(readFile, writeFile, ReadAvail, WriteDone, 0	);
+    readAvail	= new Semaphore("read avail", 0);
+    writeDone	= new Semaphore("write done", 0);
+    console		= new Console(readFile, writeFile, ReadAvail, WriteDone, 0	);
 }
+
 SynchConsole::~SynchConsole()
 {
     delete console;
@@ -40,42 +41,43 @@ SynchConsole::~SynchConsole()
 // -------------------------------------------------------------
 void SynchConsole::SynchPutChar(const char ch)
 {
-	console->PutChar (ch);
-	writeDone->P ();
+    console->PutChar (ch);
+    writeDone->P ();
 }
 char SynchConsole::SynchGetChar()
 {
-	readAvail->P ();
-	return console->GetChar ();
+    readAvail->P ();
+    return console->GetChar ();
 }
 void SynchConsole::SynchPutString(const char s[])
 {
-	ASSERT(s != NULL);
-	if (s[0] == '\0') return;								// Case empty string
+    ASSERT(s != NULL);
+    if (s[0] == '\0') return;								// Case empty string
 
-	char const *buffer = s;
-	size_t i, bufferSize=0;
-	for (i=0; s[i] != '\0'; i++)							// For each char of the string
+    char const *buffer = s;
+    size_t i, bufferSize=0;
+    for (i=0; s[i] != '\0'; i++)							// For each char of the string
 	{
-		if (bufferSize == PageSize)							//		If a block has been scanned
+	    if (bufferSize == PageSize)							//		If a block has been scanned
 		{													//		Write the block in the file with 1 atomic action
-			console->PutString(buffer, bufferSize);
-			bufferSize	= 0;
-			buffer		= s;
+		    console->PutString(buffer, bufferSize);
+		    bufferSize	= 0;
+		    buffer		= s;
 		}
-		bufferSize ++;
+	    bufferSize ++;
 	}
-	if (bufferSize != 0)console->PutString(buffer, bufferSize);
-	writeDone->P ();
+    if (bufferSize != 0)console->PutString(buffer, bufferSize);
+    writeDone->P ();
 }
 void SynchConsole::SynchGetString(char *s, int n)
 {
-	char *buffer = s;
-	size_t i;
-	for (i=0; i<(size_t)n; i++)
+    char *buffer = s;
+    size_t i;
+    for (i=0; i<(size_t)n; i++)
 	{
-		readAvail->P ();
-		*buffer = console->GetChar();
-		buffer ++;
+	    readAvail->P ();
+	    *buffer = console->GetChar();
+	    buffer ++;
 	}
 }
+

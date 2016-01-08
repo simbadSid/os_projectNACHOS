@@ -5,8 +5,10 @@
  *	what we need for a user program here, namely Start and the system
  *	calls.
  */
-
+// goubetc 8.01.16
 #include "syscall.h"
+
+// FoxTox 08.01.2016
 
         .text   
         .align  2
@@ -129,13 +131,18 @@ Yield:
 	j	$31
 	.end Yield
 
+//+b goubetc 8.01.16
+	.globl PutChar
+	.ent	PutChar
+
 PutChar:
 	addiu $2,$0,SC_PutChar
 	syscall
 	j	$31
 	.end PutChar
 
-
+//+e goubetc 8.01.16
+	
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main

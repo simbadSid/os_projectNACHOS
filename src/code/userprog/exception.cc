@@ -25,6 +25,10 @@
 #include "system.h"
 #include "syscall.h"
 
+
+// FoxTox 08.01.2016
+
+
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
 // the user program immediately after the "syscall" instruction.
@@ -67,33 +71,28 @@ UpdatePC ()
 void
 ExceptionHandler (ExceptionType which)
 {
-	char c;
+    //+b FoxTox 08.01.2016
+    int type = machine->ReadRegister(2);
 
-	if (which == SyscallException)
-	{
-		int syscallType = machine->ReadRegister (2);
-		switch(syscallType)
-		{
-			case SC_Halt:
-				DEBUG ('a', "Shutdown, initiated by user program.\n");
-				interrupt->Halt ();
-				break;
-			case SC_PutChar:
-				c = (char)machine->ReadRegister(4);
-				sysConsole->SynchPutChar(c);
-				break;
-			default:
-				printf ("SyscallException: Unexpected syscall type: %d \n", syscallType);
-				ASSERT (FALSE);
-		}
+    if (which == SyscallException) {
+	switch (type) {
+	case SC_Halt: {
+	    DEBUG('a', "Shutdown, initiated by user program.\n");
+	    interrupt->Halt();
+	    break;
 	}
-	else
-	{
-		printf ("Unexpected user mode exception %d\n", which);
-		ASSERT (FALSE);
+	case SC_PutChar: {
+	    char c = machine->ReadRegister(4);
+	    synchconsole->SynchPutChar(c);
+	    break;
 	}
+	default: {
+	    printf("Unexpected user mode exception %d %d\n", which, type);
+	    ASSERT(FALSE);
+	}
+	}
+	UpdatePC();
+    }
+    //+e FoxTox 08.01.2016
 
-	// LB: Do not forget to increment the pc before returning!
-	UpdatePC ();
-	// End of addition
 }

@@ -5,8 +5,11 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+
 #include "copyright.h"
 #include "system.h"
+
+// FoxTox 08.01.2016
 
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
@@ -27,8 +30,11 @@ FileSystem *fileSystem;
 SynchDisk *synchDisk;
 #endif
 
-#ifdef USER_PROGRAM		// requires either FILESYS or FILESYS_STUB
-Machine *machine;		// user program memory and registers
+#ifdef USER_PROGRAM			// requires either FILESYS or FILESYS_STUB
+Machine *machine;			// user program memory and registers
+//+b FoxTox 08.01.2016
+SynchConsole *synchconsole; // synchronised console
+//+e FoxTox 08.01.2016
 #endif
 
 #ifdef NETWORK
@@ -155,15 +161,11 @@ Initialize (int argc, char **argv)
     interrupt->Enable ();
     CallOnUserAbort (Cleanup);	// if user hits ctl-C
 
-
-
-
-//TODO to check
-    sysConsole	= new SynchConsole(NULL, NULL);
-
 #ifdef USER_PROGRAM
-    machine		= new Machine (debugUserProg);	// this must come first
-
+    machine = new Machine (debugUserProg);	// this must come first
+	//+b FoxTox 08.01.2016
+//    synchconsole = new SynchConsole(NULL, NULL);
+	//+e FoxTox 08.01.2016
 #endif
 
 #ifdef FILESYS
@@ -193,6 +195,9 @@ Cleanup ()
 
 #ifdef USER_PROGRAM
     delete machine;
+	//+b FoxTox 08.01.2016
+    delete synchconsole;
+	//+e FoxTox 08.01.2016
 #endif
 
 #ifdef FILESYS_NEEDED

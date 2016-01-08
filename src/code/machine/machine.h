@@ -25,17 +25,16 @@
 #include "utility.h"
 #include "translate.h"
 #include "disk.h"
-#include "synchconsole.h"
 
 // Definitions related to the size, and format of user memory
 
-#define PageSize 		SectorSize				// set the page size equal to
-												// the disk sector size, for
-												// simplicity
+#define PageSize 	SectorSize 	// set the page size equal to
+					// the disk sector size, for
+					// simplicity
 
-#define NumPhysPages	32
-#define MemorySize 		(NumPhysPages * PageSize)
-#define TLBSize			4		// if there is a TLB, make it small
+#define NumPhysPages    32
+#define MemorySize 	(NumPhysPages * PageSize)
+#define TLBSize		4		// if there is a TLB, make it small
 
 enum ExceptionType { NoException,           // Everything ok!
 		     SyscallException,      // A program executed a system call.
@@ -154,9 +153,9 @@ class Machine {
 // Note that *all* communication between the user program and the kernel 
 // are in terms of these data structures.
 
-    char			*mainMemory;			// physical memory to store user program,
-											// code and data, while executing
-    int				registers[NumTotalRegs];// CPU registers, for executing user programs
+    char *mainMemory;		// physical memory to store user program,
+				// code and data, while executing
+    int registers[NumTotalRegs]; // CPU registers, for executing user programs
 
 
 // NOTE: the hardware translation of virtual addresses in the user program

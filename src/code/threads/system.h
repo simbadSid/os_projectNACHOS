@@ -5,6 +5,7 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
@@ -16,29 +17,31 @@
 #include "stats.h"
 #include "timer.h"
 
+// FoxTox 08.01.2016
 
 // Initialization and cleanup routines
 extern void Initialize (int argc, char **argv);	// Initialization,
-												// called before anything else
-extern void Cleanup ();							// Cleanup, called when
-												// Nachos is done.
+						// called before anything else
+extern void Cleanup ();		// Cleanup, called when
+						// Nachos is done.
 
-extern Thread *currentThread;					// the thread holding the CPU
-extern Thread *threadToBeDestroyed;				// the thread that just finished
-extern Scheduler *scheduler;					// the ready list
-extern Interrupt *interrupt;					// interrupt status
-extern Statistics *stats;						// performance metrics
-extern Timer *timer;							// the hardware alarm clock
+extern Thread *currentThread;	// the thread holding the CPU
+extern Thread *threadToBeDestroyed;	// the thread that just finished
+extern Scheduler *scheduler;	// the ready list
+extern Interrupt *interrupt;	// interrupt status
+extern Statistics *stats;	// performance metrics
+extern Timer *timer;		// the hardware alarm clock
 
 #ifdef USER_PROGRAM
 #include "machine.h"
+extern Machine *machine;	// user program memory and registers
+//+b FoxTox 08.01.2016
 #include "synchconsole.h"
-extern Machine *machine;						// user program memory and registers
-extern SynchConsole	*sysConsole;
-
+extern SynchConsole *synchconsole;
+//+e FoxTox 08.01.2016
 #endif
 
-#ifdef FILESYS_NEEDED							// FILESYS or FILESYS_STUB
+#ifdef FILESYS_NEEDED		// FILESYS or FILESYS_STUB
 #include "filesys.h"
 extern FileSystem *fileSystem;
 #endif
