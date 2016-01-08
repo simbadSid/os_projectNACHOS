@@ -33,7 +33,7 @@
 ###########################################################################
 # List of NachOS user programs initially present
 ORIG_USERPROGS=halt matmult shell sort
-#ORIG_USERPROGS=putchar matmult shell sort
+ORIG_USERPROGS=putchar matmult shell sort
 ORIG_USERPROGS=ioTest matmult shell sort
 
 ###########################################################################
