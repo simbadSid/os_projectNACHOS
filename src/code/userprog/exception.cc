@@ -72,10 +72,6 @@ UpdatePC ()
 void
 ExceptionHandler (ExceptionType which)
 {
-	char c;
-	int strAddr;
-	size_t size;
-
 //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
 
@@ -97,8 +93,9 @@ ExceptionHandler (ExceptionType which)
 			}
 			case SC_PutString:
 			{
-				strAddr	= (int)machine->ReadRegister(4);				// Reads the user address of the string
-				size	= (size_t)machine->ReadRegister(5);				// Reads the size of the string
+
+				int strAddr	= (int)machine->ReadRegister(4);				// Reads the user address of the string
+				size_t size	= (size_t)machine->ReadRegister(5);				// Reads the size of the string
 				char buffer[size+1];
 				machine->copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
 				synchconsole->SynchPutString(buffer);
