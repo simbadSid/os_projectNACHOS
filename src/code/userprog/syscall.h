@@ -32,7 +32,9 @@
 #define SC_Fork			9
 #define SC_Yield		10
 #define SC_PutChar		11
-#define SC_PutString	13
+#define SC_GetChar		12
+#define SC_GetString	13
+#define SC_PutString	14
 
 
 #ifdef IN_USER_MODE
@@ -140,13 +142,23 @@ void Yield ();
  */
 void PutChar(char c);
 
+/* GetChar: Call the system function SynchGetChar which will read char and return it.
+ * Needs to be lunched in user mode.
+ */
+char GetChar();
+
+/* GetString: Call the system function SynchGetString which will read char and return it.
+ * Needs to be lunched in user mode.
+ */
+char GetString(char *s, int n);
+
 //+b simbadSid 8.01.16
 
 /* PutChar: Call the system function SynchPutString which will write the input string in the current console.
  * Needs to be lunched in user mode.
  */
 void PutString(char *string, unsigned size);
-//+b simbadSid 8.01.16
+//+e simbadSid 8.01.16
 
 
 #endif // IN_USER_MODE

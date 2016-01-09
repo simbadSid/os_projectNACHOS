@@ -2,23 +2,33 @@
 
 
 // FoxTox 08.01.2016
+// FoxTox 09.01.2016
+
 
 //+b FoxTox 08.01.2016
 void print(char c, int n)
 {
     int i;
-    for (i = 0; i < n; i++) {
-    	PutChar(c+i);
+    for (i = 0; i < 20; i++) {
+    	char temp = GetChar();
+    	PutChar(temp);
     }
+	char line[11];
+	GetString(line, 11);
+	PutString(line, 10);
     PutChar('\n');
 }
 
-//+b FoxTox 08.01.2016
+//+e FoxTox 08.01.2016
 
+
+//+b FoxTox 09.01.2016
 int
 main()
 {
-    print('a',4);
-    Halt();
+    print('a',2);
+    //Halt();
+    return 2;
     // create system call for
 }
+//+e FoxTox 09.01.2016

@@ -28,6 +28,8 @@
 
 
 // FoxTox 08.01.2016
+// FoxTox 09.01.2016
+// simbadSid 9.01.16
 
 
 //----------------------------------------------------------------------
@@ -72,42 +74,54 @@ UpdatePC ()
 void
 ExceptionHandler (ExceptionType which)
 {
-	char c;
-	int strAddr;
-	size_t size;
-
 //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
 
-    if (which == SyscallException)
-    {
-		switch (type)
-		{
-			case SC_Halt:
-			{
+    if (which == SyscallException) {
+		switch (type) {
+			case SC_Halt: {
 				DEBUG('a', "Shutdown, initiated by user program.\n");
 				interrupt->Halt();
 				break;
 			}
-			case SC_PutChar:
-			{
-				c = machine->ReadRegister(4);
+			case SC_PutChar: {
+				char c = (char)machine->ReadRegister(4);
 				synchconsole->SynchPutChar(c);
+				break;
+			}
+			case SC_GetChar: {
+				machine->WriteRegister(2, (int)synchconsole->SynchGetChar());
 				break;
 			}
 			case SC_PutString:
 			{
 //+b simbadSid 9.01.16
-				strAddr	= (int)machine->ReadRegister(4);						// Reads the user address of the string
-				size	= (size_t)machine->ReadRegister(5);						// Reads the size of the string
+				size_t size	= (size_t)machine->ReadRegister(5);					// Reads the size of the string
+				int strAddr	= (int)machine->ReadRegister(4);					// Reads the user address of the string
 				char buffer[size+1];
 				machine->copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
 				synchconsole->SynchPutString(buffer);
 				break;
 //+e simbadSid 9.01.16
 			}
-			default:
-			{
+		    //+b FoxTox 09.01.2016
+			case SC_GetString: {
+				int n = machine->ReadRegister(4);
+				char *result = new char[n + 1];
+				synchconsole->SynchGetString(result, n);
+				int address = machine->ReadRegister(4);
+				if (*result == EOF) {
+					machine->WriteMem(address, 1, (int)*result);
+					break;
+				}
+				for (int i = 0; i < n + 1; ++i) {
+					if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
+						break;
+				}
+				break;
+			}
+		    //+b FoxTox 09.01.2016
+			default: {
 				printf("Unexpected user mode exception %d %d\n", which, type);
 				ASSERT(FALSE);
 			}
