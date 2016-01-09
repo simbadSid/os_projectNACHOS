@@ -5,6 +5,10 @@
 
 
 
+// FoxTox 9.01.16
+// simbadSid 9.01.16
+
+
 
 
 // -------------------------------------------------------------
@@ -77,6 +81,7 @@ void SynchConsole::SynchPutString(const char s[])
 }
 //+e simbadSid 9.01.16
 
+//+b FoxTox 9.01.16
 void SynchConsole::SynchGetString(char *s, int n)
 {
 	char c;
@@ -95,4 +100,5 @@ void SynchConsole::SynchGetString(char *s, int n)
     if (i == 0 || c == EOF)
     	*s = EOF;
 }
+//+e FoxTox 9.01.16
 
