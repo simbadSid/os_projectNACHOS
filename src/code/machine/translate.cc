@@ -69,35 +69,6 @@ WordToMachine(unsigned int word) { return WordToHost(word); }
 
 unsigned short
 ShortToMachine(unsigned short shortword) { return ShortToHost(shortword); }
-
-
-
-
-//+b simbadSid 8.01.16
-//---------------------------------------------------------------------
-// Parameters:
-// 		- from:	address of the input string in MIPS user space
-//		- to:	address of the output string (needs to have at least size+1 available chars)
-//---------------------------------------------------------------------
-void copyStringFromMachine( int from, char *to, unsigned size)
-{
-// TODO change WordToHost by readMem
-// TODO what claude said
-// TODO kjlsdhfg;lsd;lfigjsd;fl alisa ljhggp;f;klg
-	char *input		= (char*)WordToHost(from);
-	char *output	= to;
-	unsigned i;
-
-	for (i=0; i<size && *input!= '\0'; i++)
-	{
-		*output = *input;
-		output++;
-		input++;
-	}
-	output = '\0';
-}
-//+e simbadSid 8.01.16
-
 //----------------------------------------------------------------------
 // Machine::ReadMem
 //      Read "size" (1, 2, or 4) bytes of virtual memory at "addr" into 
@@ -114,38 +85,37 @@ void copyStringFromMachine( int from, char *to, unsigned size)
 bool
 Machine::ReadMem(int addr, int size, int *value)
 {
-    int data;
-    ExceptionType exception;
-    int physicalAddress;
-    
-    DEBUG('a', "Reading VA 0x%x, size %d\n", addr, size);
-    
-    exception = Translate(addr, &physicalAddress, size, FALSE);
-    if (exception != NoException) {
-	machine->RaiseException(exception, addr);
-	return FALSE;
-    }
-    switch (size) {
-      case 1:
-	data = machine->mainMemory[physicalAddress];
-	*value = data;
-	break;
-	
-      case 2:
-	data = *(unsigned short *) &machine->mainMemory[physicalAddress];
-	*value = ShortToHost(data);
-	break;
-	
-      case 4:
-	data = *(unsigned int *) &machine->mainMemory[physicalAddress];
-	*value = WordToHost(data);
-	break;
+	int data;
+	ExceptionType exception;
+	int physicalAddress;
 
-      default: ASSERT(FALSE);
-    }
-    
-    DEBUG('a', "\tvalue read = %8.8x\n", *value);
-    return (TRUE);
+	DEBUG('a', "Reading VA 0x%x, size %d\n", addr, size);
+	
+	exception = Translate(addr, &physicalAddress, size, FALSE);
+	if (exception != NoException)
+	{
+		machine->RaiseException(exception, addr);
+		return FALSE;
+	}
+	switch (size)
+	{
+		case 1:
+			data = machine->mainMemory[physicalAddress];
+			*value = data;
+			break;
+		case 2:
+			data = *(unsigned short *) &machine->mainMemory[physicalAddress];
+			*value = ShortToHost(data);
+			break;
+		case 4:
+			data = *(unsigned int *) &machine->mainMemory[physicalAddress];
+			*value = WordToHost(data);
+			break;
+		default: ASSERT(FALSE);
+	}
+	
+	DEBUG('a', "\tvalue read = %8.8x\n", *value);
+	return (TRUE);
 }
 
 //----------------------------------------------------------------------
@@ -164,36 +134,75 @@ Machine::ReadMem(int addr, int size, int *value)
 bool
 Machine::WriteMem(int addr, int size, int value)
 {
-    ExceptionType exception;
-    int physicalAddress;
-     
-    DEBUG('a', "Writing VA 0x%x, size %d, value 0x%x\n", addr, size, value);
+	ExceptionType exception;
+	int physicalAddress;
 
-    exception = Translate(addr, &physicalAddress, size, TRUE);
-    if (exception != NoException) {
-	machine->RaiseException(exception, addr);
-	return FALSE;
-    }
-    switch (size) {
-      case 1:
-	machine->mainMemory[physicalAddress] = (unsigned char) (value & 0xff);
-	break;
+	DEBUG('a', "Writing VA 0x%x, size %d, value 0x%x\n", addr, size, value);
 
-      case 2:
-	*(unsigned short *) &machine->mainMemory[physicalAddress]
-		= ShortToMachine((unsigned short) (value & 0xffff));
-	break;
-      
-      case 4:
-	*(unsigned int *) &machine->mainMemory[physicalAddress]
-		= WordToMachine((unsigned int) value);
-	break;
+	exception = Translate(addr, &physicalAddress, size, TRUE);
+	if (exception != NoException)
+	{
+		machine->RaiseException(exception, addr);
+		return FALSE;
+	}
+	switch (size)
+	{
+		case 1:
+			machine->mainMemory[physicalAddress] = (unsigned char) (value & 0xff);
+			break;
+		case 2:
+			*(unsigned short *) &machine->mainMemory[physicalAddress]
+			= ShortToMachine((unsigned short) (value & 0xffff));
+			break;
+		case 4:
+			*(unsigned int *) &machine->mainMemory[physicalAddress]
+			= WordToMachine((unsigned int) value);
+			break;
+		default: ASSERT(FALSE);
+	}
 	
-      default: ASSERT(FALSE);
-    }
-    
-    return TRUE;
+	return TRUE;
 }
+//+b simbadSid 8.01.16
+//---------------------------------------------------------------------
+// Reads the characters at the user address until it finds '\0' or reaches the expected size.
+// Parameters:
+// 		- from:	address of the input string in MIPS user space
+//		- to:	address of the output string (needs to have at least size+1 available chars)
+// Returns:
+//		- the number of char read.
+//		- -1 if an error occurred (errors are managed as os exceptions)
+//---------------------------------------------------------------------
+size_t Machine::copyStringFromMachine( int from, char *to, size_t size)
+{
+	size_t resSize;
+	int kernelStringPtr, userStringPtr = from;
+	int bufferChar;
+	bool test;
+
+	if (size == 0)
+	{
+		*to = '\0';
+		return 0;
+	}
+	for (resSize=0; resSize<size; resSize++)
+	{
+		kernelStringPtr	= WordToHost(userStringPtr);
+		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
+		if (!test) return -1;
+		*to = (char)bufferChar;
+		if (bufferChar == '\0') break;
+		to++;
+		userStringPtr++;
+	}
+	if (resSize == size)								// Case: size char has been read without '\0'
+	{
+		*to= '\0';
+		return size;
+	}
+	else	return resSize=1;							// Case: the string is shorter than expected
+}
+//+e simbadSid 8.01.16
 
 //----------------------------------------------------------------------
 // Machine::Translate

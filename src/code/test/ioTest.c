@@ -10,12 +10,31 @@
 
 
 
-
-int
-main ()
+int strlen(char *str)
 {
+	int res = 0;
+	char *buffer = str;
 
-//	ConsoleTest(NULL, );
+	while (*buffer != '\0')
+	{
+		buffer ++;
+		res ++;
+	}
+	return res;
+}
+int main ()
+{
+	char *str;
+
+	str= "qwerty\n";
+	PutString(str, strlen(str));
+
+	str= "qwer\0ty";
+	PutString(str, strlen(str)+2);
+
+	str= "\nIT WORKS...\n";
+	PutString(str, strlen(str));
+
 	Halt ();
 
     /* not reached */

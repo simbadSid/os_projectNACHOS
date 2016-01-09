@@ -24,6 +24,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+//#include "machine.h"
 
 
 // FoxTox 08.01.2016
@@ -96,11 +97,10 @@ ExceptionHandler (ExceptionType which)
 			}
 			case SC_PutString:
 			{
-// Translate the address (MIPS address) into nachos address, then copy (use function wordToMachine)
-				strAddr	= (int)machine->ReadRegister(4);
-				size	= (size_t)machine->ReadRegister(5);
+				strAddr	= (int)machine->ReadRegister(4);				// Reads the user address of the string
+				size	= (size_t)machine->ReadRegister(5);				// Reads the size of the string
 				char buffer[size+1];
-				copyStringFromMachine(strAddr, buffer, size);
+				machine->copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
 				synchconsole->SynchPutString(buffer);
 				break;
 			}

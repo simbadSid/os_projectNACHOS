@@ -51,23 +51,23 @@ char SynchConsole::SynchGetChar()
 }
 void SynchConsole::SynchPutString(const char s[])
 {
-    ASSERT(s != NULL);
-    if (s[0] == '\0') return;								// Case empty string
+	ASSERT(s != NULL);
+	if (s[0] == '\0') return;								// Case empty string
 
-    char const *buffer = s;
-    size_t i, bufferSize=0;
-    for (i=0; s[i] != '\0'; i++)							// For each char of the string
+	char const *buffer = s;
+	size_t i, bufferSize=0;
+	for (i=0; s[i] != '\0'; i++)							// For each char of the string
 	{
-	    if (bufferSize == PageSize)							//		If a block has been scanned
+		if (bufferSize == PageSize)							//		If a block has been scanned
 		{													//		Write the block in the file with 1 atomic action
-		    console->PutString(buffer, bufferSize);
-		    bufferSize	= 0;
-		    buffer		= s;
+			console->PutString(buffer, bufferSize);
+			bufferSize	= 0;
+			buffer		= buffer+bufferSize*sizeof(buffer);
 		}
-	    bufferSize ++;
+		bufferSize ++;
 	}
-    if (bufferSize != 0)console->PutString(buffer, bufferSize);
-    writeDone->P ();
+	if (bufferSize != 0)	console->PutString(buffer, bufferSize);
+	writeDone->P ();
 }
 void SynchConsole::SynchGetString(char *s, int n)
 {
