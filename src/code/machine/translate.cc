@@ -29,6 +29,12 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+
+
+// simbadSid 9.01.16
+
+
+
 #include "copyright.h"
 #include "machine.h"
 #include "addrspace.h"
@@ -163,7 +169,7 @@ Machine::WriteMem(int addr, int size, int value)
 	
 	return TRUE;
 }
-//+b simbadSid 8.01.16
+//+b simbadSid 9.01.16
 //---------------------------------------------------------------------
 // Reads the characters at the user address until it finds '\0' or reaches the expected size.
 // Parameters:
@@ -202,7 +208,7 @@ size_t Machine::copyStringFromMachine( int from, char *to, size_t size)
 	}
 	else	return resSize=1;							// Case: the string is shorter than expected
 }
-//+e simbadSid 8.01.16
+//+e simbadSid 9.01.16
 
 //----------------------------------------------------------------------
 // Machine::Translate
