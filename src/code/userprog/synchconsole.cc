@@ -60,24 +60,14 @@ char SynchConsole::SynchGetChar()
 void SynchConsole::SynchPutString(const char s[])
 {
 	ASSERT(s != NULL);
-	if (s[0] == '\0') return;								// Case empty string
+	if (s[0] == '\0') return;							// Case empty string
 
-	char const *buffer = s, *bufferEnd = s;
-	size_t i, bufferSize=0;
-	for (i=0; s[i] != '\0'; i++)							// For each char of the string
+	size_t i;
+	for (i=0; s[i] != '\0'; i++)
 	{
-		if (bufferSize == PageSize)							//		If a block has been scanned
-		{													//		Write the block in the file with 1 atomic action
-			console->PutString(buffer, bufferSize);
-			writeDone->P ();
-			bufferSize	= 0;
-			buffer		= bufferEnd;
-		}
-		bufferSize ++;
-		bufferEnd ++;
+	    console->PutChar (s[i]);
+		writeDone->P ();
 	}
-	if (bufferSize != 0)	console->PutString(buffer, bufferSize);
-	writeDone->P ();
 }
 //+e simbadSid 9.01.16
 
