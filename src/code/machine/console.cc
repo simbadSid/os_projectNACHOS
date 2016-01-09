@@ -18,6 +18,8 @@
 #include "system.h"
 
 
+// simbadSid 09.01.2016		Removed all the changes of the console File
+
 static void ConsoleReadPoll(int c)				// Dummy functions because C++ is weird about pointers to member functions
 {
 	Console *console = (Console *)c;
