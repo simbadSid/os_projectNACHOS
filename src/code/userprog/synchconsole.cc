@@ -44,11 +44,14 @@ void SynchConsole::SynchPutChar(const char ch)
     console->PutChar (ch);
     writeDone->P ();
 }
+
 char SynchConsole::SynchGetChar()
 {
     readAvail->P ();
+    console->CheckCharAvail();
     return console->GetChar ();
 }
+
 void SynchConsole::SynchPutString(const char s[])
 {
     ASSERT(s != NULL);
@@ -69,15 +72,23 @@ void SynchConsole::SynchPutString(const char s[])
     if (bufferSize != 0)console->PutString(buffer, bufferSize);
     writeDone->P ();
 }
+
 void SynchConsole::SynchGetString(char *s, int n)
 {
-    char *buffer = s;
+	char c;
     size_t i;
-    for (i=0; i<(size_t)n; i++)
+
+    for (i=0; i<(size_t)n; ++i)
 	{
 	    readAvail->P ();
-	    *buffer = console->GetChar();
-	    buffer ++;
+	    if ((c = console->GetChar()) == EOF)
+	    	break;
+	    *(s + i) = c;
+	    if (c == '\n')
+	    	break;
 	}
+    *(s + i + 1) = 0;
+    if (i == 0 || c == EOF)
+    	*s = EOF;
 }
 

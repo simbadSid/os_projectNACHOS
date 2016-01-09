@@ -82,8 +82,27 @@ ExceptionHandler (ExceptionType which)
 	    break;
 	}
 	case SC_PutChar: {
-	    char c = machine->ReadRegister(4);
+	    char c = (char)machine->ReadRegister(4);
 	    synchconsole->SynchPutChar(c);
+	    break;
+	}
+	case SC_GetChar: {
+	    machine->WriteRegister(2, (int)synchconsole->SynchGetChar());
+	    break;
+	}
+	case SC_GetString: {
+		int n = machine->ReadRegister(4);
+		char *result = malloc((n + 1) * size_of(char));
+		synchconsole->SynchGetString(result, n);
+		int address = machine->ReadRegister(4);
+		if *result == EOF {
+			machine->WriteMem(address, 1, (int)*result);
+			break;
+		}
+		for (int i = 0; i < n + 1; ++i) {
+			if !(machine->WriteMem(address + i, 1, (int)*(result + i))
+				break;
+		}
 	    break;
 	}
 	default: {
