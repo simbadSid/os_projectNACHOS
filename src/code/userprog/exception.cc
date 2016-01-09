@@ -92,15 +92,15 @@ ExceptionHandler (ExceptionType which)
 	}
 	case SC_GetString: {
 		int n = machine->ReadRegister(4);
-		char *result = malloc((n + 1) * size_of(char));
+		char *result = new char[n + 1];
 		synchconsole->SynchGetString(result, n);
 		int address = machine->ReadRegister(4);
-		if *result == EOF {
+		if (*result == EOF) {
 			machine->WriteMem(address, 1, (int)*result);
 			break;
 		}
 		for (int i = 0; i < n + 1; ++i) {
-			if !(machine->WriteMem(address + i, 1, (int)*(result + i))
+			if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
 				break;
 		}
 	    break;
