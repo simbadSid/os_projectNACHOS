@@ -141,6 +141,15 @@ PutChar:
 	j	$31
 	.end PutChar
 
+	.globl PutString
+	.ent	PutString
+
+PutString:
+	addiu $2,$0,SC_PutString
+	syscall
+	j	$31
+	.end PutString
+
 //+e goubetc 8.01.16
 
 //+b FoxTox 8.01.16

@@ -157,6 +157,7 @@ void Console::PutString(const char s[], size_t size)
 {
     ASSERT(putBusy == FALSE);
     ASSERT(size <= PageSize);
+
     WriteFile(writeFileNo, s, sizeof(char)*size);
     putBusy = TRUE;
     interrupt->Schedule(ConsoleWriteDone, (int)this, ConsoleTime, ConsoleWriteInt);

@@ -32,8 +32,12 @@
 #define SC_Fork			9
 #define SC_Yield		10
 #define SC_PutChar		11
+<<<<<<< HEAD
 #define SC_GetChar		12
 #define SC_GetString	13
+=======
+#define SC_PutString	13
+>>>>>>> 6903036da0858db3f96031c3c6015d59972ab59f
 
 
 #ifdef IN_USER_MODE
@@ -150,6 +154,15 @@ char GetChar();
  * Needs to be lunched in user mode.
  */
 char GetString(char *s, int n);
+
+//+b simbadSid 8.01.16
+
+/* PutChar: Call the system function SynchPutString which will write the input string in the current console.
+ * Needs to be lunched in user mode.
+ */
+void PutString(char *string, unsigned size);
+//+e simbadSid 8.01.16
+
 
 #endif // IN_USER_MODE
 
