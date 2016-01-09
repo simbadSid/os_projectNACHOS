@@ -2,6 +2,8 @@
 
 
 // FoxTox 08.01.2016
+// FoxTox 09.01.2016
+
 
 //+b FoxTox 08.01.2016
 void print(char c, int n)
@@ -13,11 +15,14 @@ void print(char c, int n)
     }
 	char line[11];
 	GetString(line, 11);
+	PutString(line, 10);
     PutChar('\n');
 }
 
-//+b FoxTox 08.01.2016
+//+e FoxTox 08.01.2016
 
+
+//+b FoxTox 09.01.2016
 int
 main()
 {
@@ -26,3 +31,4 @@ main()
     return 2;
     // create system call for
 }
+//+e FoxTox 09.01.2016

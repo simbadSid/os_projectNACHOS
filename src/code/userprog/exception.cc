@@ -28,6 +28,7 @@
 
 
 // FoxTox 08.01.2016
+// FoxTox 09.01.2016
 
 
 //----------------------------------------------------------------------
@@ -93,7 +94,6 @@ ExceptionHandler (ExceptionType which)
 			}
 			case SC_PutString:
 			{
-
 				int strAddr	= (int)machine->ReadRegister(4);				// Reads the user address of the string
 				size_t size	= (size_t)machine->ReadRegister(5);				// Reads the size of the string
 				char buffer[size+1];
@@ -101,6 +101,7 @@ ExceptionHandler (ExceptionType which)
 				synchconsole->SynchPutString(buffer);
 				break;
 			}
+		    //+b FoxTox 09.01.2016
 			case SC_GetString: {
 				int n = machine->ReadRegister(4);
 				char *result = new char[n + 1];
@@ -116,6 +117,7 @@ ExceptionHandler (ExceptionType which)
 				}
 				break;
 			}
+		    //+b FoxTox 09.01.2016
 			default: {
 				printf("Unexpected user mode exception %d %d\n", which, type);
 				ASSERT(FALSE);
