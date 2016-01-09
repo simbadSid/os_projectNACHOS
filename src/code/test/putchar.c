@@ -1,5 +1,4 @@
 #include "syscall.h"
-#include <stdio.h>
 
 
 // FoxTox 08.01.2016
@@ -12,10 +11,8 @@ void print(char c, int n)
     	char temp = GetChar();
     	PutChar(temp);
     }
-    int n = 10;
-	char *line = malloc((n + 1) * size_of(char));
-	GetString(line, n);
-	printf(" %s \n", line);
+	char line[11];
+	GetString(line, 11);
     PutChar('\n');
 }
 
