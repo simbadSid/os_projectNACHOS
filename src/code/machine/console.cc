@@ -18,6 +18,8 @@
 #include "system.h"
 
 
+// simbadSid 09.01.2016		Removed all the changes of the console File
+
 static void ConsoleReadPoll(int c)				// Dummy functions because C++ is weird about pointers to member functions
 {
 	Console *console = (Console *)c;
@@ -145,20 +147,6 @@ Console::PutChar(char ch)
 {
     ASSERT(putBusy == FALSE);
     WriteFile(writeFileNo, &ch, sizeof(char));
-    putBusy = TRUE;
-    interrupt->Schedule(ConsoleWriteDone, (int)this, ConsoleTime, ConsoleWriteInt);
-}
-
-//----------------------------------------------------------------------
-// Write "s" to the console display and return immediately.  "writeHandler" is called when the I/O completes.
-// The string size must be smaller or equal the PageSize (macro in machine/machine.h)
-//----------------------------------------------------------------------
-void Console::PutString(const char s[], size_t size)
-{
-    ASSERT(putBusy == FALSE);
-    ASSERT(size <= PageSize);
-
-    WriteFile(writeFileNo, s, sizeof(char)*size);
     putBusy = TRUE;
     interrupt->Schedule(ConsoleWriteDone, (int)this, ConsoleTime, ConsoleWriteInt);
 }

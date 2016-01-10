@@ -119,12 +119,6 @@ class Machine {
 	void DelayedLoad(int nextReg, int nextVal);		// Do a pending delayed load (modifying a reg)
 	bool ReadMem(int addr, int size, int* value);	// Read or write 1, 2, or 4 bytes of virtual
 	bool WriteMem(int addr, int size, int value);	// memory (at addr).  Return FALSE if a
-													// correct translation couldn't be found.
-	//+b simbadSid 8.01.16
-	size_t copyStringFromMachine( int from, char *to, size_t size);
-													// Reads a user mode string at the user address from and writes it in the kernel string to
-													// Returns the number of char read or -1 if an error occurred (errors are managed as os exceptions)
-	//+e simbadSid 8.01.16
 
 	ExceptionType Translate(int virtAddr, int* physAddr, int size,bool writing);
 													// Translate an address, and check for

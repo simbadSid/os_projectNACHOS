@@ -29,6 +29,12 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+
+
+// simbadSid 9.01.16
+
+
+
 #include "copyright.h"
 #include "machine.h"
 #include "addrspace.h"
@@ -163,46 +169,6 @@ Machine::WriteMem(int addr, int size, int value)
 	
 	return TRUE;
 }
-//+b simbadSid 8.01.16
-//---------------------------------------------------------------------
-// Reads the characters at the user address until it finds '\0' or reaches the expected size.
-// Parameters:
-// 		- from:	address of the input string in MIPS user space
-//		- to:	address of the output string (needs to have at least size+1 available chars)
-// Returns:
-//		- the number of char read.
-//		- -1 if an error occurred (errors are managed as os exceptions)
-//---------------------------------------------------------------------
-size_t Machine::copyStringFromMachine( int from, char *to, size_t size)
-{
-	size_t resSize;
-	int kernelStringPtr, userStringPtr = from;
-	int bufferChar;
-	bool test;
-
-	if (size == 0)
-	{
-		*to = '\0';
-		return 0;
-	}
-	for (resSize=0; resSize<size; resSize++)
-	{
-		kernelStringPtr	= WordToHost(userStringPtr);
-		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
-		if (!test) return -1;
-		*to = (char)bufferChar;
-		if (bufferChar == '\0') break;
-		to++;
-		userStringPtr++;
-	}
-	if (resSize == size)								// Case: size char has been read without '\0'
-	{
-		*to= '\0';
-		return size;
-	}
-	else	return resSize=1;							// Case: the string is shorter than expected
-}
-//+e simbadSid 8.01.16
 
 //----------------------------------------------------------------------
 // Machine::Translate
