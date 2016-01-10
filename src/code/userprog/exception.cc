@@ -177,11 +177,11 @@ ExceptionHandler (ExceptionType which)
 //+b simbadSid 9.01.16
 //TODO				char name[THREAD_NAME_MAX_SIZE];
 //TODO				initThreadName(name);
-				VoidFunctionPtr	func	= (VoidFunctionPtr) machine->ReadRegister(4);
-				int				arg		= (int)machine-> ReadRegister(5);
-//TODO				Thread 			t		= new Thread(threadName);
-				Thread 			*t		= new Thread("skjdflghdf");
-				t->UserThreadCreate(func, arg);
+				int		func	= machine->ReadRegister(4);
+				void*	arg		= (void*)machine-> ReadRegister(5);
+//				Thread 	*t		= new Thread(threadName);
+				Thread	*t		= new Thread("skjdflghdf");
+				t->UserThreadCreate((void (*)(void*))func, arg);
 				break;
 //+e simbadSid 9.01.16
 			}

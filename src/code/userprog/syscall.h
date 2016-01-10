@@ -184,7 +184,7 @@ void PutInt(int n);
 /* UserThreadCreate: Call the system function UserThreadCreate to add a thread to current process.
  * Needs to be lunched in user mode.
  */
-void UserThreadCreate(VoidFunctionPtr func, int arg);
+void UserThreadCreate(void f(void *arg), void *arg);
 //+e simbadSid 9.01.16
 
 
