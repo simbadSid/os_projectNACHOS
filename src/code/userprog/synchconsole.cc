@@ -17,7 +17,7 @@
 // -------------------------------------------------------------
 static Semaphore *readAvail;
 static Semaphore *writeDone;
-
+static Semaphore *consoleAvail; //+ goubetc 10.01.16
 
 
 // -------------------------------------------------------------
@@ -50,22 +50,19 @@ SynchConsole::~SynchConsole()
 // -------------------------------------------------------------
 void SynchConsole::SynchPutChar(const char ch)
 {
-    //+b goubetc 10.01.16
-    consoleAvail->P ();
+    consoleAvail->P ();     //+ goubetc 10.01.16
     console->PutChar (ch);
     writeDone->P ();
-    consoleAvail->V ();
-    //+e goubetc 10.01.16
+    consoleAvail->V ();    //+ goubetc 10.01.16
 }
 
 char SynchConsole::SynchGetChar()
 {
-    //+b goubetc 10.01.16
-    consoleAvail->P ();
+    consoleAvail->P ();   //+e goubetc 10.01.16
     console->CheckCharAvail();
-    consoleAvail->V (); 
+    consoleAvail->V ();   //+ goubetc 10.01.16
     return console->GetChar ();
-    //+e goubetc 10.01.16
+    
 }
 
 //+b simbadSid 9.01.16
@@ -79,16 +76,18 @@ void SynchConsole::SynchPutString(const char s[])
 	for (i=0; s[i] != '\0'; i++)
 	{
 	    console->PutChar (s[i]);
-		writeDone->P ();
+		writeDone->P (); 
 	}
 }
 //+e simbadSid 9.01.16
 
 
 //+b FoxTox 9.01.16
+
 void SynchConsole::SynchGetString(char *s, int n)
 {
-	char c;
+    consoleAvail->P (); //+ goubetc 10.01.16
+    char c;
     size_t i;
 
     for (i=0; i<(size_t)n; ++i)
@@ -103,21 +102,25 @@ void SynchConsole::SynchGetString(char *s, int n)
     *(s + i + 1) = 0;
     if (i == 0 || c == EOF)
     	*s = EOF;
+    consoleAvail->V (); //+ goubetc 10.01.16
 }
+
 //+e FoxTox 9.01.16
 
 void SynchConsole::SynchGetInt(int *n)
 {
-	char *s = new char[MAX_INT_DIGITS];
-	SynchGetString(s, MAX_INT_DIGITS);
-	sscanf(s, "%d", n);
-	delete[] s;
+    char *s = new char[MAX_INT_DIGITS]; 
+    SynchGetString(s, MAX_INT_DIGITS);
+    sscanf(s, "%d", n);
+    delete[] s;
 }
 
 void SynchConsole::SynchPutInt(int n)
 {
 	char sint[MAX_INT_DIGITS];
+	consoleAvail->P ();//+ goubetc 10.01.16
 	snprintf(sint, MAX_INT_DIGITS, "%d", n);
+	consoleAvail->V (); //+ goubetc 10.01.16
 	SynchPutString(sint);
 }
 //+e FoxTox 09.01.2016
