@@ -179,7 +179,7 @@ ExceptionHandler (ExceptionType which)
 //TODO				initThreadName(name);
 				int		func	= machine->ReadRegister(4);
 				void*	arg		= (void*)machine-> ReadRegister(5);
-//				Thread 	*t		= new Thread(threadName);
+//TODO				Thread 	*t		= new Thread(threadName);
 				Thread	*t		= new Thread("skjdflghdf");
 				t->UserThreadCreate((void (*)(void*))func, arg);
 				break;

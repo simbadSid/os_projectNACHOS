@@ -63,10 +63,10 @@ void threadFunction2(void *arg)
 // -------------------------------------
 int main ()
 {
-//	UserThreadCreate(threadFunction0);
+	UserThreadCreate(threadFunction0, (void*)0);
 //	UserThreadCreate(threadFunction1, 45);
 //	UserThreadCreate(threadFunction2, 68, 's');
-	Halt ();
+//	Halt ();
 
 	/* not reached */
 	return 0;
