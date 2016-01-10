@@ -26,7 +26,7 @@
 	.ent	__start
 __start:
 	jal	main
-	move	$4,$0		
+	move	$4,$2
 	jal	Exit	 /* if we return from main, exit(0) */
 	.end __start
 
@@ -151,7 +151,45 @@ PutString:
 	.end PutString
 
 //+e goubetc 8.01.16
-	
+
+//+b FoxTox 8.01.16
+	.globl GetChar
+	.ent	GetChar
+
+GetChar:
+	addiu $2,$0,SC_GetChar
+	syscall
+	j	$31
+	.end GetChar
+
+	.globl GetString
+	.ent	GetString
+
+GetString:
+	addiu $2,$0,SC_GetString
+	syscall
+	j	$31
+	.end GetString
+
+	.globl GetInt
+	.ent	GetInt
+
+GetInt:
+	addiu $2,$0,SC_GetInt
+	syscall
+	j	$31
+	.end GetInt
+
+	.globl PutInt
+	.ent	PutInt
+
+PutInt:
+	addiu $2,$0,SC_PutInt
+	syscall
+	j	$31
+	.end PutInt
+//+e FoxTox 8.01.16
+
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main

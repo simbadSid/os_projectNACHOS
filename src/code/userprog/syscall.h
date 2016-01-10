@@ -11,6 +11,8 @@
  */
 
 // goubetc 8.01.16
+// FoxTox 09.01.2016
+
 
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
@@ -31,8 +33,14 @@
 #define SC_Close		8
 #define SC_Fork			9
 #define SC_Yield		10
+//+b FoxTox 09.01.2016
 #define SC_PutChar		11
-#define SC_PutString	13
+#define SC_GetChar		12
+#define SC_GetString	13
+#define SC_PutString	14
+#define SC_GetInt		15
+#define SC_PutInt		16
+//+e FoxTox 09.01.2016
 
 
 #ifdef IN_USER_MODE
@@ -135,10 +143,22 @@ void Fork (void (*func) ());
  */
 void Yield ();
 
+//+b FoxTox 09.01.2016
 /* PutChar: Call the system function SynchPutChar which will write the input char in the current console.
  * Needs to be lunched in user mode.
  */
 void PutChar(char c);
+
+/* GetChar: Call the system function SynchGetChar which will read char and return it.
+ * Needs to be lunched in user mode.
+ */
+char GetChar();
+
+/* GetString: Call the system function SynchGetString which will read char and return it.
+ * Needs to be lunched in user mode.
+ */
+char GetString(char *s, int n);
+//+e FoxTox 09.01.2016
 
 //+b simbadSid 8.01.16
 
@@ -146,7 +166,18 @@ void PutChar(char c);
  * Needs to be lunched in user mode.
  */
 void PutString(char *string, unsigned size);
-//+b simbadSid 8.01.16
+//+e simbadSid 8.01.16
+
+/* GetInt: Call the system function SynchGetInt which will read integer from console.
+ * Needs to be lunched in user mode.
+ */
+void GetInt(int *n);
+
+/* PutInt: Call the system function SynchGetInt which will write integer from console.
+ * Needs to be lunched in user mode.
+ */
+void PutInt(int n);
+//+e simbadSid 8.01.16
 
 
 #endif // IN_USER_MODE

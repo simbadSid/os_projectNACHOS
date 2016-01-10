@@ -24,9 +24,12 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+//#include "machine.h"
 
 
 // FoxTox 08.01.2016
+// FoxTox 09.01.2016
+// simbadSid 9.01.16
 
 
 //----------------------------------------------------------------------
@@ -43,6 +46,46 @@ UpdatePC ()
     pc += 4;
     machine->WriteRegister (NextPCReg, pc);
 }
+//+b simbadSid 9.01.16
+//---------------------------------------------------------------------
+// Reads the characters at the user address until it finds '\0' or reaches the expected size.
+// Parameters:
+// 		- from:	address of the input string in MIPS user space
+//		- to:	address of the output string (needs to have at least size+1 available chars)
+// Returns:
+//		- the number of char read.
+//		- -1 if an error occurred (errors are managed as os exceptions)
+//---------------------------------------------------------------------
+size_t copyStringFromMachine( int from, char *to, size_t size)
+{
+	size_t resSize;
+	int kernelStringPtr, userStringPtr = from;
+	int bufferChar;
+	bool test;
+
+	if (size == 0)
+	{
+		*to = '\0';
+		return 0;
+	}
+	for (resSize=0; resSize<size; resSize++)
+	{
+		kernelStringPtr	= WordToHost(userStringPtr);
+		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
+		if (!test) return -1;
+		*to = (char)bufferChar;
+		if (bufferChar == '\0') break;
+		to++;
+		userStringPtr++;
+	}
+	if (resSize == size)								// Case: size char has been read without '\0'
+	{
+		*to= '\0';
+		return size;
+	}
+	else	return resSize=1;							// Case: the string is shorter than expected
+}
+//+e simbadSid 9.01.16
 
 
 //----------------------------------------------------------------------
@@ -71,41 +114,65 @@ UpdatePC ()
 void
 ExceptionHandler (ExceptionType which)
 {
-	char c;
-	int strAddr;
-	size_t size;
-
 //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
 
-    if (which == SyscallException)
-    {
-		switch (type)
-		{
-			case SC_Halt:
-			{
+    if (which == SyscallException) {
+		switch (type) {
+			case SC_Halt: {
 				DEBUG('a', "Shutdown, initiated by user program.\n");
 				interrupt->Halt();
 				break;
 			}
-			case SC_PutChar:
-			{
-				c = machine->ReadRegister(4);
+			case SC_PutChar: {
+				char c = (char)machine->ReadRegister(4);
 				synchconsole->SynchPutChar(c);
+				break;
+			}
+			case SC_GetChar: {
+				machine->WriteRegister(2, (int)synchconsole->SynchGetChar());
 				break;
 			}
 			case SC_PutString:
 			{
-// Translate the address (MIPS address) into nachos address, then copy (use function wordToMachine)
-				strAddr	= (int)machine->ReadRegister(4);
-				size	= (size_t)machine->ReadRegister(5);
+//+b simbadSid 9.01.16
+				size_t size	= (size_t)machine->ReadRegister(5);			// Reads the size of the string
+				int strAddr	= (int)machine->ReadRegister(4);			// Reads the user address of the string
 				char buffer[size+1];
-				copyStringFromMachine(strAddr, buffer, size);
+				copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
 				synchconsole->SynchPutString(buffer);
 				break;
+//+e simbadSid 9.01.16
 			}
-			default:
-			{
+		    //+b FoxTox 09.01.2016
+			case SC_GetString: {
+				int n = machine->ReadRegister(4);
+				char *result = new char[n + 1];
+				synchconsole->SynchGetString(result, n);
+				int address = machine->ReadRegister(4);
+				if (*result == EOF) {
+					machine->WriteMem(address, 1, (int)*result);
+					break;
+				}
+				for (int i = 0; i < n + 1; ++i) {
+					if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
+						break;
+				}
+				break;
+			}
+			case SC_GetInt: {
+				int addr = machine->ReadRegister(4);
+				int *n = new int[MAX_INT_DIGITS];
+				synchconsole->SynchGetInt(n);
+				machine->WriteMem(addr, 4, *n);
+				break;
+			}
+			case SC_PutInt: {
+				synchconsole->SynchPutInt(machine->ReadRegister(4));
+				break;
+			}
+		    //+b FoxTox 09.01.2016
+			default: {
 				printf("Unexpected user mode exception %d %d\n", which, type);
 				ASSERT(FALSE);
 			}

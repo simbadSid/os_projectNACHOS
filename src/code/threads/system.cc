@@ -164,7 +164,7 @@ Initialize (int argc, char **argv)
 #ifdef USER_PROGRAM
     machine = new Machine (debugUserProg);	// this must come first
 	//+b FoxTox 08.01.2016
-//    synchconsole = new SynchConsole(NULL, NULL);
+	synchconsole = new SynchConsole(NULL, NULL);
 	//+e FoxTox 08.01.2016
 #endif
 
