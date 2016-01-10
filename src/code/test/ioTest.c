@@ -64,7 +64,7 @@ int main ()
 	str = "\nIT WORKS...\n";
 	PutString(str, strlen(str));
 
-	char longStr[LONG_STRING_SIZE];			// Test long string write: bigger than the writing buffer of the system funvtion PutString
+	char longStr[LONG_STRING_SIZE];				// Test long string write: bigger than the writing buffer of the system funvtion PutString
 	initString(longStr, LONG_STRING_SIZE);
 	PutString(longStr, strlen(longStr));
 
