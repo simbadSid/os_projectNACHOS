@@ -40,6 +40,9 @@
 #include "copyright.h"
 #include "utility.h"
 
+
+// FoxTox 10.01.2015
+
 #ifdef USER_PROGRAM
 #include "machine.h"
 #include "addrspace.h"
@@ -112,6 +115,9 @@ class Thread
     {
 	printf ("%s, ", name);
     }
+    // +b FoxTox 10.01.2015
+    int UserThreadCreate(void f(void *arg), void *arg);
+    // +e FoxTox 10.01.2015
 
   private:
     // some of the private data for this class is listed above

@@ -20,6 +20,9 @@
 #include "synch.h"
 #include "system.h"
 
+
+// FoxTox 10.01.2015
+
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
 					// execution stack, for detecting 
 					// stack overflows
@@ -407,6 +410,14 @@ Thread::RestoreUserState ()
     for (int i = 0; i < NumTotalRegs; i++)
 	machine->WriteRegister (i, userRegisters[i]);
 }
+
+
+// +b FoxTox 10.01.2015
+int Thread::UserThreadCreate(void f(void *arg), void *arg) {
+	Fork((VoidFunctionPtr) f, (int)arg);
+	return 0;
+}
+// +e FoxTox 10.01.2015
 #endif
 
 
