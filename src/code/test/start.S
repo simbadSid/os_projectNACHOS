@@ -188,7 +188,12 @@ PutInt:
 	syscall
 	j	$31
 	.end PutInt
+
 //+b simbadSid 9.01.16
+
+	.globl	UserThreadCreate
+	.ent	UserThreadCreate
+
 UserThreadCreate:
 	addiu $2,$0,SC_UserThreadCreate
 	syscall
