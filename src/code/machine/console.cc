@@ -146,18 +146,6 @@ Console::PutChar(char ch)
     ASSERT(putBusy == FALSE);
     WriteFile(writeFileNo, &ch, sizeof(char));
     putBusy = TRUE;
-    interrupt->Schedule(ConsoleWriteDone, (int)this, ConsoleTime, ConsoleWriteInt);
-}
-
-//----------------------------------------------------------------------
-// Write "s" to the console display and return immediately.  "writeHandler" is called when the I/O completes.
-// The string size must be smaller or equal the PageSize (macro in machine/machine.h)
-//----------------------------------------------------------------------
-void Console::PutString(const char s[], size_t size)
-{
-    ASSERT(putBusy == FALSE);
-    ASSERT(size <= PageSize);
-    WriteFile(writeFileNo, s, sizeof(char)*size);
-    putBusy = TRUE;
-    interrupt->Schedule(ConsoleWriteDone, (int)this, ConsoleTime, ConsoleWriteInt);
+    interrupt->Schedule(ConsoleWriteDone, (int)this, ConsoleTime,
+					ConsoleWriteInt);
 }
