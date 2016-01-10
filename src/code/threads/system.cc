@@ -143,13 +143,12 @@ Initialize (int argc, char **argv)
 #endif
       }
 
-    DebugInit (debugArgs);	// initialize DEBUG messages
-    stats = new Statistics ();	// collect statistics
-    interrupt = new Interrupt;	// start up interrupt handling
-    scheduler = new Scheduler ();	// initialize the ready queue
-    if (randomYield)		// start the timer (if needed)
-	timer = new Timer (TimerInterruptHandler, 0, randomYield);
-
+    DebugInit (debugArgs);										// initialize DEBUG messages
+    stats = new Statistics ();									// collect statistics
+    interrupt = new Interrupt;									// start up interrupt handling
+    scheduler = new Scheduler ();								// initialize the ready queue
+    if (randomYield)											// start the timer (if needed)
+    	timer = new Timer (TimerInterruptHandler, 0, randomYield);
     threadToBeDestroyed = NULL;
 
     // We didn't explicitly allocate the current thread we are running in.
@@ -159,13 +158,11 @@ Initialize (int argc, char **argv)
     currentThread->setStatus (RUNNING);
 
     interrupt->Enable ();
-    CallOnUserAbort (Cleanup);	// if user hits ctl-C
+    CallOnUserAbort (Cleanup);									// if user hits ctl-C
 
 #ifdef USER_PROGRAM
-    machine = new Machine (debugUserProg);	// this must come first
-	//+b FoxTox 08.01.2016
+    machine = new Machine (debugUserProg);						// this must come first
 	synchconsole = new SynchConsole(NULL, NULL);
-	//+e FoxTox 08.01.2016
 #endif
 
 #ifdef FILESYS

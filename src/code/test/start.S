@@ -188,7 +188,13 @@ PutInt:
 	syscall
 	j	$31
 	.end PutInt
-//+e FoxTox 8.01.16
+//+b simbadSid 9.01.16
+UserThreadCreate:
+	addiu $2,$0,SC_UserThreadCreate
+	syscall
+	j	$31
+	.end UserThreadCreate
+//+e simbadSid 9.01.16
 
 /* dummy function to keep gcc happy */
         .globl  __main

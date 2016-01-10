@@ -45,24 +45,21 @@
 #include "addrspace.h"
 #endif
 
-// CPU register state to be saved on context switch.  
-// The SPARC and MIPS only need 10 registers, but the Snake needs 18.
-// For simplicity, this is just the max over all architectures.
-#define MachineStateSize 18
 
+#define MachineStateSize 18								// CPU register state to be saved on context switch.
+														// The SPARC and MIPS only need 10 registers, but the Snake needs 18.
+														// For simplicity, this is just the max over all architectures.
+#define StackSize	(4 * 1024)							// Size of the thread's private execution stack.
+														// WATCH OUT IF THIS ISN'T BIG ENOUGH!!!!! in words
+enum ThreadStatus										// Thread state
+{
+	JUST_CREATED,
+	RUNNING,
+	READY, BLOCKED
+};
+extern void ThreadPrint (int arg);						// external function, dummy routine whose sole job is to call Thread::Print
 
-// Size of the thread's private execution stack.
-// WATCH OUT IF THIS ISN'T BIG ENOUGH!!!!!
-#define StackSize	(4 * 1024)	// in words
-
-
-// Thread state
-enum ThreadStatus
-{ JUST_CREATED, RUNNING, READY, BLOCKED };
-
-// external function, dummy routine whose sole job is to call Thread::Print
-extern void ThreadPrint (int arg);
-
+//---------------------------------------------------------------------
 // The following class defines a "thread control block" -- which
 // represents a single thread of execution.
 //
@@ -73,71 +70,47 @@ extern void ThreadPrint (int arg);
 //    
 //  Some threads also belong to a user address space; threads
 //  that only run in the kernel have a NULL address space.
-
+//---------------------------------------------------------------------
 class Thread
 {
   private:
     // NOTE: DO NOT CHANGE the order of these first two members.
     // THEY MUST be in this position for SWITCH to work.
-    int *stackTop;		// the current stack pointer
-    int machineState[MachineStateSize];	// all registers except for stackTop
+    int *stackTop;										// the current stack pointer
+    int machineState[MachineStateSize];					// all registers except for stackTop
 
   public:
-      Thread (const char *debugName);	// initialize a Thread 
-     ~Thread ();		// deallocate a Thread
-    // NOTE -- thread being deleted
-    // must not be running when delete 
-    // is called
-
+      Thread (const char *debugName);					// initialize a Thread
+     ~Thread ();										// deallocate a Thread NOTE -- thread being deleted must not be running when delete is called
     // basic thread operations
+    void Fork (VoidFunctionPtr func, int arg);			// Make thread run (*func)(arg)
+    void Yield ();										// Relinquish the CPU if any other thread is runnable
+    void Sleep ();										// Put the thread to sleep and relinquish the processor
+    void Finish ();										// The thread is done executing
+    void CheckOverflow ();								// Check if thread has overflowed its stack
 
-    void Fork (VoidFunctionPtr func, int arg);	// Make thread run (*func)(arg)
-    void Yield ();		// Relinquish the CPU if any 
-    // other thread is runnable
-    void Sleep ();		// Put the thread to sleep and 
-    // relinquish the processor
-    void Finish ();		// The thread is done executing
-
-    void CheckOverflow ();	// Check if thread has 
-    // overflowed its stack
-    void setStatus (ThreadStatus st)
-    {
-	status = st;
-    }
-    const char *getName ()
-    {
-	return (name);
-    }
-    void Print ()
-    {
-	printf ("%s, ", name);
-    }
+    void setStatus (ThreadStatus st){status = st;}		// Basic setter and getter
+    const char *getName (){return (name);}
+    void Print (){printf ("%s, ", name);}
 
   private:
     // some of the private data for this class is listed above
-
-    int *stack;			// Bottom of the stack 
-    // NULL if this is the main thread
-    // (If NULL, don't deallocate stack)
-    ThreadStatus status;	// ready, running or blocked
+    int *stack;											// Bottom of the stack NULL if this is the main thread (If NULL, don't deallocate stack)
+    ThreadStatus status;								// ready, running or blocked
     const char *name;
-
-    void StackAllocate (VoidFunctionPtr func, int arg);
-    // Allocate a stack for thread.
-    // Used internally by Fork()
+    void StackAllocate (VoidFunctionPtr func, int arg);	// Allocate a stack for thread. Used internally by Fork()
 
 #ifdef USER_PROGRAM
 // A thread running a user program actually has *two* sets of CPU registers -- 
 // one for its state while executing user code, one for its state 
 // while executing kernel code.
 
-    int userRegisters[NumTotalRegs];	// user-level CPU register state
+    int userRegisters[NumTotalRegs];					// user-level CPU register state
 
   public:
-    void SaveUserState ();	// save user-level register state
-    void RestoreUserState ();	// restore user-level register state
-
-    AddrSpace *space;		// User code this thread is running.
+    void SaveUserState ();								// save user-level register state
+    void RestoreUserState ();							// restore user-level register state
+    AddrSpace *space;									// User code this thread is running.
 #endif
 };
 

@@ -34,17 +34,17 @@
 
 Thread::Thread (const char *threadName)
 {
-    name = threadName;
-    stackTop = NULL;
-    stack = NULL;
-    status = JUST_CREATED;
+	name		= threadName;
+	stackTop	= NULL;
+	stack		= NULL;
+	status		= JUST_CREATED;
 #ifdef USER_PROGRAM
-    space = NULL;
-    // FBT: Need to initialize special registers of simulator to 0
-    // in particular LoadReg or it could crash when switching
-    // user threads.
-    for (int r=NumGPRegs; r<NumTotalRegs; r++)
-      userRegisters[r] = 0;
+	this->space = NULL;
+	// FBT: Need to initialize special registers of simulator to 0
+	// in particular LoadReg or it could crash when switching
+	// user threads.
+	for (int r=NumGPRegs; r<NumTotalRegs; r++)
+		userRegisters[r] = 0;
 #endif
 }
 
@@ -92,9 +92,7 @@ Thread::~Thread ()
 void
 Thread::Fork (VoidFunctionPtr func, int arg)
 {
-    DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n",
-	   name, (int) func, arg);
-
+    DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n", name, (int) func, arg);
     StackAllocate (func, arg);
 
 #ifdef USER_PROGRAM

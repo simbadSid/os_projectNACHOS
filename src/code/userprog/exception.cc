@@ -172,6 +172,20 @@ ExceptionHandler (ExceptionType which)
 				break;
 			}
 		    //+b FoxTox 09.01.2016
+			case SC_UserThreadCreate:
+			{
+//+b simbadSid 9.01.16
+//TODO				char name[THREAD_NAME_MAX_SIZE];
+//TODO				initThreadName(name);
+				VoidFunctionPtr	func	= (VoidFunctionPtr) machine->ReadRegister(4);
+				int				arg		= (int)machine-> ReadRegister(5);
+//TODO				Thread 			t		= new Thread(threadName);
+				Thread 			*t		= new Thread("skjdflghdf");
+				t->UserThreadCreate(func, arg);
+				break;
+//+e simbadSid 9.01.16
+			}
+
 			default: {
 				printf("Unexpected user mode exception %d %d\n", which, type);
 				ASSERT(FALSE);
