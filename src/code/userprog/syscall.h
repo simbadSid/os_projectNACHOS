@@ -22,24 +22,25 @@
 /* system call codes -- used by the stubs to tell the kernel which system call
  * is being asked for
  */
-#define SC_Halt			0
-#define SC_Exit			1
-#define SC_Exec			2
-#define SC_Join			3
-#define SC_Create		4
-#define SC_Open			5
-#define SC_Read			6
-#define SC_Write		7
-#define SC_Close		8
-#define SC_Fork			9
-#define SC_Yield		10
+#define SC_Halt				0
+#define SC_Exit				1
+#define SC_Exec				2
+#define SC_Join				3
+#define SC_Create			4
+#define SC_Open				5
+#define SC_Read				6
+#define SC_Write			7
+#define SC_Close			8
+#define SC_Fork				9
+#define SC_Yield			10
 //+b FoxTox 09.01.2016
-#define SC_PutChar		11
-#define SC_GetChar		12
-#define SC_GetString	13
-#define SC_PutString	14
-#define SC_GetInt		15
-#define SC_PutInt		16
+#define SC_PutChar			11
+#define SC_GetChar			12
+#define SC_GetString		13
+#define SC_PutString		14
+#define SC_GetInt			15
+#define SC_PutInt			16
+#define SC_UserThreadCreate	17
 //+e FoxTox 09.01.2016
 
 
@@ -177,7 +178,14 @@ void GetInt(int *n);
  * Needs to be lunched in user mode.
  */
 void PutInt(int n);
-//+e simbadSid 8.01.16
+
+
+//+b simbadSid 9.01.16
+/* UserThreadCreate: Call the system function UserThreadCreate to add a thread to current process.
+ * Needs to be lunched in user mode.
+ */
+void UserThreadCreate(VoidFunctionPtr func, int arg);
+//+e simbadSid 9.01.16
 
 
 #endif // IN_USER_MODE
