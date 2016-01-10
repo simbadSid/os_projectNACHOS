@@ -59,6 +59,7 @@ Console::Console(char *readFile, char *writeFile, VoidFunctionPtr readAvail,
     incoming		= EOF;
 
     interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime, ConsoleReadInt);// start polling for incoming packets
+
 }
 
 //----------------------------------------------------------------------
