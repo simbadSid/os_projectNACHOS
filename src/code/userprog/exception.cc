@@ -117,6 +117,17 @@ ExceptionHandler (ExceptionType which)
 				}
 				break;
 			}
+			case SC_GetInt: {
+				int addr = machine->ReadRegister(4);
+				int *n = new int[MAX_INT_DIGITS];
+				synchconsole->SynchGetInt(n);
+				machine->WriteMem(addr, 4, *n);
+				break;
+			}
+			case SC_PutInt: {
+				synchconsole->SynchPutInt(machine->ReadRegister(4));
+				break;
+			}
 		    //+b FoxTox 09.01.2016
 			default: {
 				printf("Unexpected user mode exception %d %d\n", which, type);

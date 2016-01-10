@@ -17,6 +17,10 @@ void print(char c, int n)
 	GetString(line, 11);
 	PutString(line, 10);
     PutChar('\n');
+    int numb;
+    GetInt(&numb);
+    PutInt(numb);
+    Halt();
 }
 
 //+e FoxTox 08.01.2016
@@ -27,8 +31,7 @@ int
 main()
 {
     print('a',2);
-    //Halt();
-    return 2;
+    Halt();
     // create system call for
 }
 //+e FoxTox 09.01.2016

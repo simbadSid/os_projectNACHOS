@@ -6,6 +6,8 @@
 
 
 
+// FoxTox 09.01.2016
+
 
 // -------------------------------------------------------------
 // Local global variables
@@ -73,6 +75,7 @@ void SynchConsole::SynchPutString(const char s[])
 	writeDone->P ();
 }
 
+//+b FoxTox 09.01.2016
 void SynchConsole::SynchGetString(char *s, int n)
 {
 	char c;
@@ -92,3 +95,18 @@ void SynchConsole::SynchGetString(char *s, int n)
     	*s = EOF;
 }
 
+void SynchConsole::SynchGetInt(int *n)
+{
+	char *s = new char[MAX_INT_DIGITS];
+	SynchGetString(s, MAX_INT_DIGITS);
+	sscanf(s, "%d", n);
+	delete[] s;
+}
+
+void SynchConsole::SynchPutInt(int n)
+{
+	char sint[MAX_INT_DIGITS];
+	snprintf(sint, MAX_INT_DIGITS, "%d", n);
+	SynchPutString(sint);
+}
+//+e FoxTox 09.01.2016

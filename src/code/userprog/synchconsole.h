@@ -5,7 +5,9 @@
 #include "utility.h"
 #include "console.h"
 
+// FoxTox 09.01.2016
 
+#define MAX_INT_DIGITS 20
 
 
 class SynchConsole
@@ -16,7 +18,11 @@ class SynchConsole
 		void SynchPutChar(const char ch);				// Unix putchar(3S)
 		char SynchGetChar();							// Unix getchar(3S)
 		void SynchPutString(const char *s);				// Unix puts(3S)
+		//+b FoxTox 09.01.2016
 		void SynchGetString(char *s, int n);			// Unix fgets(3S)
+		void SynchGetInt(int *n);
+		void SynchPutInt(int n);
+		//+e FoxTox 09.01.2016
 	private:
 		Console *console;
 };
