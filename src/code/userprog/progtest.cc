@@ -54,26 +54,26 @@ void freeSychConsoleTest()
 void
 StartProcess (char *filename)
 {
-    OpenFile *executable = fileSystem->Open (filename);
-    AddrSpace *space;
+	OpenFile *executable = fileSystem->Open (filename);
+	AddrSpace *space;
 
-    if (executable == NULL)
+	if (executable == NULL)
 	{
 		printf ("Unable to open file %s\n", filename);
 		return;
 	}
-    space				= new AddrSpace (executable);
-    currentThread->space= space;
+	space				= new AddrSpace (executable);
+	currentThread->space= space;
 
-    delete executable;					// close file
+	delete executable;					// close file
 
-    space->InitRegisters ();			// set the initial register values
-    space->RestoreState ();				// load page table register
+	space->InitRegisters ();			// set the initial register values
+	space->RestoreState ();				// load page table register
 
-    machine->Run ();					// jump to the user program
-    ASSERT (FALSE);						// machine->Run never returns;
-    // the address space exits
-    // by doing the syscall "exit"
+	machine->Run ();					// jump to the user program
+	ASSERT (FALSE);						// machine->Run never returns;
+										// the address space exits
+										// by doing the syscall "exit"
 }
 
 //----------------------------------------------------------------------
