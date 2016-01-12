@@ -40,7 +40,7 @@ void threadFunction0(void *arg)
 	PutChar('a');
 	PutChar('b');
 //	PutChar('\n');
-//	UserThreadExit();
+	UserThreadExit();
 }
 void threadFunction1(void *arg)
 {
