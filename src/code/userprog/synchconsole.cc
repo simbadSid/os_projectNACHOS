@@ -124,3 +124,14 @@ void SynchConsole::SynchPutInt(int n)
 	SynchPutString(sint);
 }
 //+e FoxTox 09.01.2016
+
+//+b TooFo 11012016
+// Gets Char and returns an integer value
+int SynchConsole::SynchGetCharInt()
+{
+    reading->P ();   //+e goubetc 10.01.16
+    console->CheckCharIntAvail();
+    return (int)console->GetCharInt ();
+    reading->V ();   //+ goubetc 10.01.16
+}
+//+e TooFo 11012016

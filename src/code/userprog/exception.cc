@@ -160,6 +160,14 @@ ExceptionHandler (ExceptionType which)
 				}
 				break;
 			}
+
+			//+b TooFo 11012016
+			case SC_GetCharInt: {
+				synchconsole->SynchGetCharInt();
+				break;
+			}
+
+			//+e TooFo 11012016
 			case SC_GetInt: {
 				int addr = machine->ReadRegister(4);
 				int *n = new int[MAX_INT_DIGITS];

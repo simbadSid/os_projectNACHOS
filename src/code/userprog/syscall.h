@@ -12,6 +12,7 @@
 
 // goubetc 8.01.16
 // FoxTox 09.01.2016
+// TooFo 11012016
 
 
 #ifndef SYSCALLS_H
@@ -41,6 +42,8 @@
 #define SC_GetInt			15
 #define SC_PutInt			16
 #define SC_UserThreadCreate	17
+#define SC_GetCharInt		51  //+ TooFo 11012016 "Bonus Task
+
 //+e FoxTox 09.01.2016
 
 
@@ -179,6 +182,7 @@ void GetInt(int *n);
  */
 void PutInt(int n);
 
+int GetCharInt();  //+ TooFo 11012016
 
 //+b simbadSid 9.01.16
 /* UserThreadCreate: Call the system function UserThreadCreate to add a thread to current process.
