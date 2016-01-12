@@ -117,16 +117,15 @@ class Machine {
 // Routines internal to the machine simulation -- DO NOT call these 
 	void OneInstruction(Instruction *instr); 		// Run one instruction of a user program.
 	void DelayedLoad(int nextReg, int nextVal);		// Do a pending delayed load (modifying a reg)
+
 	bool ReadMem(int addr, int size, int* value);	// Read or write 1, 2, or 4 bytes of virtual
 	bool WriteMem(int addr, int size, int value);	// memory (at addr).  Return FALSE if a
-
 	ExceptionType Translate(int virtAddr, int* physAddr, int size,bool writing);
 													// Translate an address, and check for
 													// alignment.  Set the use and dirty bits in
 													// the translation entry appropriately,
 													// and return an exception code if the
 													// translation couldn't be completed.
-
 	void RaiseException(ExceptionType which, int badVAddr);
 													// Trap to the Nachos kernel, because of a
 													// system call or other exception.

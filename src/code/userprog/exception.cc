@@ -26,6 +26,8 @@
 #include "syscall.h"
 #include "synch.h" //+ goubetc 11.01.16
 //#include "machine.h"
+#include "userthread.h"
+
 
 
 // FoxTox 08.01.2016
@@ -33,8 +35,6 @@
 // simbadSid 9.01.16
 // goubetc 11.01.16
 
-extern int do_UserThreadExit(); //+ goubetc 11.01.16
-extern int do_UserThreadCreate(int fun, int arg); //+ goubetc 11.01.16
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
 // the user program immediately after the "syscall" instruction.
@@ -75,7 +75,7 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 	{
 		kernelStringPtr	= WordToHost(userStringPtr);
 		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
-		if (!test) return -1;
+		if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
 		*to = (char)bufferChar;
 		if (bufferChar == '\0') break;
 		to++;
@@ -89,7 +89,6 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 	else	return resSize=1;							// Case: the string is shorter than expected
 }
 //+e simbadSid 9.01.16
-
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -118,106 +117,120 @@ void
 ExceptionHandler (ExceptionType which)
 {
     //+b FoxTox 08.01.2016
-    int type = machine->ReadRegister(2);
+    int type = machine->ReadRegister(2);			
     Semaphore *threads_alive = new Semaphore("threads_alive", 1);  //+ goubetc 11.01.16
-    
-    if (which == SyscallException) {
-	switch (type) {
-	case SC_Halt: {
-	    DEBUG('a', "Shutdown, initiated by user program.\n");
-	    threads_alive->P_Count(); //+ goubetc 11.01.16
-	    interrupt->Halt();
-	    break;
-	}
-	case SC_PutChar: {
-	    char c = (char)machine->ReadRegister(4);
-	    synchconsole->SynchPutChar(c);
-	    break;
-	}
-	case SC_GetChar: {
-	    machine->WriteRegister(2, (int)synchconsole->SynchGetChar());
-	    break;
-	}
-	case SC_PutString:
-	    {
-		//+b simbadSid 9.01.16
-		size_t size	= (size_t)machine->ReadRegister(5);			// Reads the size of the string
-		int strAddr	= (int)machine->ReadRegister(4);			// Reads the user address of the string
-		char buffer[size+1];
-		copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
-		synchconsole->SynchPutString(buffer);
-		break;
-		//+e simbadSid 9.01.16
-	    }
-	    //+b FoxTox 09.01.2016
-	case SC_GetString: {
-	    int n = machine->ReadRegister(4);
-	    char *result = new char[n + 1];
-	    synchconsole->SynchGetString(result, n);
-	    int address = machine->ReadRegister(4);
-	    if (*result == EOF) {
-		machine->WriteMem(address, 1, (int)*result);
-		break;
-	    }
-	    for (int i = 0; i < n + 1; ++i) {
-		if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
+    if (which == SyscallException)
+	{
+	    switch (type)
+		{
+		case SC_Halt:
+		    {
+			DEBUG('a', "Shutdown, initiated by user program.\n");
+			threads_alive->P_Count(); //+ goubetc 11.01.16
+			interrupt->Halt();
+			break;
+		    }
+		case SC_PutChar: {
+		    char c = (char)machine->ReadRegister(4);
+		    synchconsole->SynchPutChar(c);
 		    break;
-	    }
-	    break;
-	}   
-	case SC_GetInt: {
+		}
+		case SC_GetChar: {
+		    machine->WriteRegister(2, (int)synchconsole->SynchGetChar());
+		    break;
+		}
+		case SC_PutString:
+		    {
+			//+b simbadSid 9.01.16
+			size_t size	= (size_t)machine->ReadRegister(5);			// Reads the size of the string
+			int strAddr	= (int)machine->ReadRegister(4);			// Reads the user address of the string
+			char buffer[size+1];
+			copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
+			synchconsole->SynchPutString(buffer);
+			break;
+			//+e simbadSid 9.01.16
+		    }
+		    //+b FoxTox 09.01.2016
+		case SC_GetString: {
+		    int n = machine->ReadRegister(4);
+		    char *result = new char[n + 1];
+		    synchconsole->SynchGetString(result, n);
+		    int address = machine->ReadRegister(4);
+		    if (*result == EOF) {
+			machine->WriteMem(address, 1, (int)*result);
+			break;
+		    }
+		    for (int i = 0; i < n + 1; ++i) {
+			if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
+			    break;
+		    }
+		    break;
+		}
+		case SC_GetInt: {
+		    int addr = machine->ReadRegister(4);
+		    int *n = new int[MAX_INT_DIGITS];
+		    synchconsole->SynchGetInt(n);
+		    machine->WriteMem(addr, 4, *n);
+		    break;
+		}
+		case SC_PutInt: {
+		    synchconsole->SynchPutInt(machine->ReadRegister(4));
+		    break;
+		}
+		    //+b FoxTox 09.01.2016
+		    //+b simbadSid 10.01.16
+		case SC_UserThreadCreate:
+		    {
+			int func, arg;
+			ExceptionType eFunc, eArg;
+			int	userPtrFunc		= machine->ReadRegister(4);
+			int	userPtrArg		= machine-> ReadRegister(5);
+			int	userPtrExitFunc	= machine-> ReadRegister(6);
+			int	kernelPtrFunc	= WordToHost(userPtrFunc);
+			int	kernelPtrArg	= WordToHost(userPtrArg);
+			//TODO translate exit function
+			eFunc				= machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
+			if (eFunc != NoException)														// Case corrupted function address
+			    {
+				machine->RaiseException(eFunc, kernelPtrFunc);
+				return;
+			    }
+			eArg				= machine->Translate(kernelPtrArg, &arg, sizeof(void*), false);
+			if (eArg != NoException)														// Case corrupted argument address
+			    {
+				machine->RaiseException(eArg, kernelPtrArg);
+				return;
+			    }
+			//				int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrExitFunc);
+			int res = do_UserThreadCreate(func, arg, userPtrExitFunc);
+			if (!res)
+			    threads_alive->Count(); //+ goubetc 11.01.16
+				
+			machine->WriteRegister(2, res);													// Write the output of the system call
+			break;
+		    }
+		case SC_UserThreadJoin:
+		    {
+			//TODO
+			while(true) currentThread->Yield();
+			break;
+		    }
+		case SC_UserThreadExit:
+		    {
+			do_UserThreadExit();
+			break;
+		    }
+		    //+e simbadSid 10.01.16
+		default:
+		    {
+			printf("Unexpected user mode exception %d %d\n", which, type);
+			ASSERT(FALSE);
+		    }
 
-	    int addr = machine->ReadRegister(4);
-	    int *n = new int[MAX_INT_DIGITS];
-	    synchconsole->SynchGetInt(n);
-	    machine->WriteMem(addr, 4, *n);
-	    break;
-	}
-	case SC_PutInt: {
-	    synchconsole->SynchPutInt(machine->ReadRegister(4));
-	    break;
-	}
-	    //+b FoxTox 09.01.2016
-	case SC_UserThreadCreate:{
-	    int func, arg;
-	    ExceptionType eFunc, eArg;
-	    int     userPtrFunc             = machine->ReadRegister(4);
-	    int     userPtrArg              = machine-> ReadRegister(5);
-	    int     kernelPtrFunc   = WordToHost(userPtrFunc);
-	    int     kernelPtrArg    = WordToHost(userPtrArg);
-	    eFunc                           = machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
-	    if (eFunc != NoException)                                                                                                               // Case corrupted function address
-		{
-		    machine->RaiseException(eFunc, kernelPtrFunc);
-		    return;
 		}
-	    eArg                            = machine->Translate(kernelPtrArg, &arg, sizeof(void*), false);
-	    if (eArg != NoException)                                                                                                                // Case corrupted argument address
-		{
-		    machine->RaiseException(eArg, kernelPtrArg);
-		    return;
-		}
-	    int res = do_UserThreadCreate(func, 0); // TO-DO  chage 0 by arg
-	    if (!res)
-		threads_alive->Count(); //+ goubetc 11.01.16
-	    machine->WriteRegister(2, res);                                                                                                 // Write the output of the system call
-	    break;
+	    
+	    UpdatePC();
 	}
-	    //+b goubetc 11.01.16
-	case SC_UserThreadExit:{
-	    int res = do_UserThreadExit(); 
-	    threads_alive->V_Count();
-	    machine->WriteRegister(2, res);
-	    break;
-	}
-	    //+e goubetc 11.01.16
-	default: {
-	    printf("Unexpected user mode exception %d %d\n", which, type);
-	    ASSERT(FALSE);
-	}
-	}
-	UpdatePC();
-    }
     //+e FoxTox 08.01.2016
 
 }
