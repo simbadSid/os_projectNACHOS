@@ -6,8 +6,6 @@
  */
 #include "userthread.h"
 
-
-
 #define THREAD_NAME_MAX_SIZE	100
 
 int nbrUserThread = 0;
@@ -121,3 +119,4 @@ nbrUserThread ++;
 		nbrUserThread ++;
 		return tid;
 	}
+

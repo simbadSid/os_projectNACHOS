@@ -41,6 +41,7 @@ void threadFunction0(void *arg)
 	PutChar('b');
 //	PutChar('\n');
 	UserThreadExit();
+
 }
 void threadFunction1(void *arg)
 {
@@ -86,6 +87,7 @@ int main ()
 //	UserThreadJoin(tid1);
 //	UserThreadJoin(tid2);
 //	UserThreadJoin(tid3);
+
 
 	Halt ();
 

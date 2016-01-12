@@ -36,8 +36,8 @@
 //+b FoxTox 09.01.2016
 #define SC_PutChar			11
 #define SC_GetChar			12
-#define SC_GetString		13
-#define SC_PutString		14
+#define SC_GetString	        	13
+#define SC_PutString		        14
 #define SC_GetInt			15
 #define SC_PutInt			16
 //+e FoxTox 09.01.2016
@@ -208,7 +208,12 @@ int UserThreadJoin(int tid);
 
 //+e simbadSid 9.01.16
 
-
+//+ b goubetc 10.01.16
+/* UserThreadExit: Call the system function UserThreadExit to exit a thread.
+ * Needs to be lunched in user mode.
+ */
+void UserThreadExit();
+//+ e goubetc 10.01.16
 #endif // IN_USER_MODE
 
 #endif /* SYSCALL_H */

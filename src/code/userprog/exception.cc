@@ -24,13 +24,16 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "synch.h" //+ goubetc 11.01.16
+//#include "machine.h"
 #include "userthread.h"
+
 
 
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
-
+// goubetc 11.01.16
 
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
@@ -58,32 +61,32 @@ UpdatePC ()
 //---------------------------------------------------------------------
 size_t copyStringFromMachine( int from, char *to, size_t size)
 {
-	size_t resSize;
-	int kernelStringPtr, userStringPtr = from;
-	int bufferChar;
-	bool test;
+    size_t resSize;
+    int kernelStringPtr, userStringPtr = from;
+    int bufferChar;
+    bool test;
 
-	if (size == 0)
+    if (size == 0)
 	{
-		*to = '\0';
-		return 0;
+	    *to = '\0';
+	    return 0;
 	}
-	for (resSize=0; resSize<size; resSize++)
+    for (resSize=0; resSize<size; resSize++)
 	{
-		kernelStringPtr	= WordToHost(userStringPtr);
-		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
-		if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
-		*to = (char)bufferChar;
-		if (bufferChar == '\0') break;
-		to++;
-		userStringPtr++;
+	    kernelStringPtr	= WordToHost(userStringPtr);
+	    test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
+	    if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
+	    *to = (char)bufferChar;
+	    if (bufferChar == '\0') break;
+	    to++;
+	    userStringPtr++;
 	}
-	if (resSize == size)								// Case: size char has been read without '\0'
+    if (resSize == size)								// Case: size char has been read without '\0'
 	{
-		*to= '\0';
-		return size;
+	    *to= '\0';
+	    return size;
 	}
-	else	return resSize=1;							// Case: the string is shorter than expected
+    else	return resSize=1;							// Case: the string is shorter than expected
 }
 //+e simbadSid 9.01.16
 
@@ -113,132 +116,133 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 void
 ExceptionHandler (ExceptionType which)
 {
-//+b FoxTox 08.01.2016
-    int type = machine->ReadRegister(2);
-
+    //+b FoxTox 08.01.2016
+    int type = machine->ReadRegister(2);			
+    Semaphore *threads_alive = new Semaphore("threads_alive", 1);  //+ goubetc 11.01.16
     if (which == SyscallException)
-    {
-		switch (type)
+	{
+	    switch (type)
 		{
-			case SC_Halt:
-			{
-				int currentTID = currentThread->getTID();
-				bool test = userThreadList->Remove(currentTID, NULL);
-				ASSERT(test);
-				DEBUG('t', "Shutdown, initiated by user program: name = \"%s\", tid = %d.\n", currentThread->getName(), currentTID);
-				DEBUG('t', "Start wating for the user threads to finish.\n");
-				while(!userThreadList->IsEmpty()) currentThread->Yield();
-				DEBUG('t', "End wating for the user threads.\n");
-				interrupt->Halt();
-				delete currentThread;
-				break;
-			}
-			case SC_PutChar: {
-				char c = (char)machine->ReadRegister(4);
-				synchconsole->SynchPutChar(c);
-				break;
-			}
-			case SC_GetChar: {
-				machine->WriteRegister(2, (int)synchconsole->SynchGetChar());
-				break;
-			}
-			case SC_PutString:
-			{
-//+b simbadSid 9.01.16
-				size_t size	= (size_t)machine->ReadRegister(5);			// Reads the size of the string
-				int strAddr	= (int)machine->ReadRegister(4);			// Reads the user address of the string
-				char buffer[size+1];
-				copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
-				synchconsole->SynchPutString(buffer);
-				break;
-//+e simbadSid 9.01.16
-			}
-		    //+b FoxTox 09.01.2016
-			case SC_GetString: {
-				int n = machine->ReadRegister(4);
-				char *result = new char[n + 1];
-				synchconsole->SynchGetString(result, n);
-				int address = machine->ReadRegister(4);
-				if (*result == EOF) {
-					machine->WriteMem(address, 1, (int)*result);
-					break;
-				}
-				for (int i = 0; i < n + 1; ++i) {
-					if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
-						break;
-				}
-				break;
-			}
-			case SC_GetInt: {
-				int addr = machine->ReadRegister(4);
-				int *n = new int[MAX_INT_DIGITS];
-				synchconsole->SynchGetInt(n);
-				machine->WriteMem(addr, 4, *n);
-				break;
-			}
-			case SC_PutInt: {
-				synchconsole->SynchPutInt(machine->ReadRegister(4));
-				break;
-			}
-		    //+b FoxTox 09.01.2016
-//+b simbadSid 10.01.16
-			case SC_UserThreadCreate:
-			{
-DEBUG('t', "Exception: user create.\n");
-				int func, arg;
-				ExceptionType eFunc, eArg;
-				int	userPtrFunc		= machine->ReadRegister(4);
-				int	userPtrArg		= machine-> ReadRegister(5);
-				int	userPtrExitFunc	= machine-> ReadRegister(6);
-				int	kernelPtrFunc	= WordToHost(userPtrFunc);
-				int	kernelPtrArg	= WordToHost(userPtrArg);
-//TODO translate exit function
-				eFunc				= machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
-				if (eFunc != NoException)														// Case corrupted function address
-				{
-					machine->RaiseException(eFunc, kernelPtrFunc);
-					return;
-				}
-				eArg				= machine->Translate(kernelPtrArg, &arg, sizeof(void*), false);
-				if (eArg != NoException)														// Case corrupted argument address
-				{
-					machine->RaiseException(eArg, kernelPtrArg);
-					return;
-				}
-//				int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrExitFunc);
-				int res = do_UserThreadCreate(func, arg, userPtrExitFunc);
-				machine->WriteRegister(2, res);													// Write the output of the system call
-				break;
-			}
-			case SC_UserThreadJoin:
-			{
-				Thread *threadToJoin;
-				int		threadToJoinTID	= machine->ReadRegister(4);
-				bool	test			= userThreadList->IsInList(threadToJoinTID, &threadToJoin);
-				if (!test)
-				{
-					DEBUG('t', "Exception UserThreadJoin: can not find the user thread tid = %d.\n", threadToJoinTID);
-// TODO manage the exception
-					return;
-				}
-				DEBUG('t', "Exception UserThreadJoin: user thread joins tid = %d.\n", threadToJoinTID);
-				while(userThreadList->IsInList(threadToJoinTID, NULL)) currentThread->Yield();
-				break;
-			}
-			case SC_UserThreadExit:
-			{
-				do_UserThreadExit();
-				break;
-			}
-//+e simbadSid 10.01.16
-			default:
-			{
-				printf("Unexpected user mode exception %d %d\n", which, type);
-				ASSERT(FALSE);
-			}
+		case SC_Halt:
+		    {
+			int currentTID = currentThread->getTID();
+			bool test = userThreadList->Remove(currentTID, NULL);
+			ASSERT(test);
+			DEBUG('t', "Shutdown, initiated by user program: name = \"%s\", tid = %d.\n", currentThread->getName(), currentTID);
+			DEBUG('t', "Start wating for the user threads to finish.\n");
+			while(!userThreadList->IsEmpty()) currentThread->Yield();
+			DEBUG('t', "End wating for the user threads.\n");
+			interrupt->Halt();
+			delete currentThread;
+			break;
+		    }
+		case SC_PutChar: {
+		    char c = (char)machine->ReadRegister(4);
+		    synchconsole->SynchPutChar(c);
+		    break;
 		}
-		UpdatePC();
-    }
-//+e FoxTox 08.01.2016
+		case SC_GetChar: {
+		    machine->WriteRegister(2, (int)synchconsole->SynchGetChar());
+		    break;
+		}
+		case SC_PutString:
+		    {
+			//+b simbadSid 9.01.16
+			size_t size	= (size_t)machine->ReadRegister(5);			// Reads the size of the string
+			int strAddr	= (int)machine->ReadRegister(4);			// Reads the user address of the string
+			char buffer[size+1];
+			copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
+			synchconsole->SynchPutString(buffer);
+			break;
+			//+e simbadSid 9.01.16
+		    }
+		    //+b FoxTox 09.01.2016
+		case SC_GetString: {
+		    int n = machine->ReadRegister(4);
+		    char *result = new char[n + 1];
+		    synchconsole->SynchGetString(result, n);
+		    int address = machine->ReadRegister(4);
+		    if (*result == EOF) {
+			machine->WriteMem(address, 1, (int)*result);
+			break;
+		    }
+		    for (int i = 0; i < n + 1; ++i) {
+			if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
+			    break;
+		    }
+		    break;
+		}
+		case SC_GetInt: {
+		    int addr = machine->ReadRegister(4);
+		    int *n = new int[MAX_INT_DIGITS];
+		    synchconsole->SynchGetInt(n);
+		    machine->WriteMem(addr, 4, *n);
+		    break;
+		}
+		case SC_PutInt: {
+		    synchconsole->SynchPutInt(machine->ReadRegister(4));
+		    break;
+		}
+		    //+b FoxTox 09.01.2016
+		    //+b simbadSid 10.01.16
+		case SC_UserThreadCreate:
+		    {
+			DEBUG('t', "Exception: user create.\n");
+			int func, arg;
+			ExceptionType eFunc, eArg;
+			int	userPtrFunc		= machine->ReadRegister(4);
+			int	userPtrArg		= machine-> ReadRegister(5);
+			int	userPtrExitFunc	= machine-> ReadRegister(6);
+			int	kernelPtrFunc	= WordToHost(userPtrFunc);
+			int	kernelPtrArg	= WordToHost(userPtrArg);
+			//TODO translate exit function
+			eFunc				= machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
+			if (eFunc != NoException)														// Case corrupted function address
+			    {
+				machine->RaiseException(eFunc, kernelPtrFunc);
+				return;
+			    }
+			eArg				= machine->Translate(kernelPtrArg, &arg, sizeof(void*), false);
+			if (eArg != NoException)														// Case corrupted argument address
+			    {
+				machine->RaiseException(eArg, kernelPtrArg);
+				return;
+			    }
+			//				int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrExitFunc);
+			int res = do_UserThreadCreate(func, arg, userPtrExitFunc);
+			machine->WriteRegister(2, res);													// Write the output of the system call
+			break;
+		    }
+		case SC_UserThreadJoin:
+		    {
+			Thread *threadToJoin;
+			int		threadToJoinTID	= machine->ReadRegister(4);
+			bool	test			= userThreadList->IsInList(threadToJoinTID, &threadToJoin);
+			if (!test)
+			    {
+				DEBUG('t', "Exception UserThreadJoin: can not find the user thread tid = %d.\n", threadToJoinTID);
+				// TODO manage the exception
+				return;
+			    }
+			DEBUG('t', "Exception UserThreadJoin: user thread joins tid = %d.\n", threadToJoinTID);
+			while(userThreadList->IsInList(threadToJoinTID, NULL)) currentThread->Yield();
+			break;
+		    }
+		case SC_UserThreadExit:
+		    {
+			do_UserThreadExit();
+			break;
+		    }
+		    //+e simbadSid 10.01.16
+		default:
+		    {
+			printf("Unexpected user mode exception %d %d\n", which, type);
+			ASSERT(FALSE);
+		    }
+		}
+	    
+	    UpdatePC();
+	}
+    //+e FoxTox 08.01.2016
 
 }
