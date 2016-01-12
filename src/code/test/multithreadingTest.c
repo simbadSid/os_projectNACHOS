@@ -32,7 +32,7 @@ int strlen(char *str)
 // -------------------------------------
 void threadFunction0(void *arg)
 {
-	char *str = "Simple thread function without parameters\n";
+	char *str = "Simple thread function without parameters\n\0";
 	PutString(str, strlen(str));
 }
 void threadFunction1(void *arg)
@@ -63,10 +63,10 @@ void threadFunction2(void *arg)
 // -------------------------------------
 int main ()
 {
-	UserThreadCreate(threadFunction0, (void*)0);
+	UserThreadCreate(threadFunction0, 0);
 //	UserThreadCreate(threadFunction1, 45);
 //	UserThreadCreate(threadFunction2, 68, 's');
-//	Halt ();
+	Halt ();
 
 	/* not reached */
 	return 0;

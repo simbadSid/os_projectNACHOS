@@ -61,8 +61,9 @@ char SynchConsole::SynchGetChar()
 {
     reading->P ();   //+e goubetc 10.01.16
     console->CheckCharAvail();
+    char c = console->GetChar ();
     reading->V ();   //+ goubetc 10.01.16
-    return console->GetChar ();
+    return c;
     
 }
 

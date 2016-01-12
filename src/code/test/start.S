@@ -5,7 +5,7 @@
  *	what we need for a user program here, namely Start and the system
  *	calls.
  */
-// goubetc 8.01.16
+// goubetc 8.01.16 11.01.16
 #include "syscall.h"
 
 // FoxTox 08.01.2016
@@ -200,7 +200,16 @@ UserThreadCreate:
 	j	$31
 	.end UserThreadCreate
 //+e simbadSid 9.01.16
+//+b goubetc 11.01.16
+	.globl	UserThreadExit
+	.ent	UserThreadExit
 
+UserThreadCreate:
+	addiu $2,$0,SC_UserThreadExit
+	syscall
+	j	$31
+	.end UserThreadExit
+//+e goubetc 11.01.16
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main
