@@ -58,6 +58,7 @@ void SynchConsole::SynchPutChar(const char ch)
 char SynchConsole::SynchGetChar()
 {
     reading->Acquire ();   //+ goubetc 12.01.16
+    readAvail->P ();
     console->CheckCharAvail();
     char c = console->GetChar ();
     reading->Release ();   //+ goubetc 12.01.16
