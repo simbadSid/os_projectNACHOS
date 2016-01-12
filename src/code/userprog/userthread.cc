@@ -31,29 +31,6 @@ int nbrUserThread = 0;
 	}
 	ThreadCreationParameter::~ThreadCreationParameter() {}
 
-	// ------------------------------------------------
-	// Looks for the thread tid in the list.
-	// If the thread is found, true is returned and the thread is put in the thread parameter.
-	// Else, false is returned.
-	// ------------------------------------------------
-	bool UserThreadList::Remove(int TID, Thread **THREAD)
-	{
-		if (this->thread	== NULL) return false;						// Case: empty list
-		if (this->tid		== TID)										// Case: thread found
-		{
-			*THREAD = this->thread;
-			if (this->next != NULL)
-			{
-				this->tid		= this->next->tid;
-				this->thread	= this->next->thread;
-				this->next		= this->next->next;
-			}
-			delete this->next;
-			return true;
-		}
-		if (this->next == NULL)	return false;							// Case: end of list reached
-		else					return this->next->Remove(TID, THREAD);
-	}
 
 // ------------------------------------------
 // Thread management handlers (delayed function: executed by the schedular)
