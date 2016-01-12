@@ -35,19 +35,20 @@
 //      "threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
 
-Thread::Thread (const char *threadName)
+Thread::Thread (const char *threadName, int threadID)
 {
-    name = threadName;
-    stackTop = NULL;
-    stack = NULL;
-    status = JUST_CREATED;
+	name		= threadName;
+	tid			= threadID;
+	stackTop	= NULL;
+	stack		= NULL;
+	status		= JUST_CREATED;
 #ifdef USER_PROGRAM
-    space = NULL;
-    // FBT: Need to initialize special registers of simulator to 0
-    // in particular LoadReg or it could crash when switching
-    // user threads.
-    for (int r=NumGPRegs; r<NumTotalRegs; r++)
-      userRegisters[r] = 0;
+	this->space = NULL;
+	// FBT: Need to initialize special registers of simulator to 0
+	// in particular LoadReg or it could crash when switching
+	// user threads.
+	for (int r=NumGPRegs; r<NumTotalRegs; r++)
+		userRegisters[r] = 0;
 #endif
 }
 
@@ -95,26 +96,21 @@ Thread::~Thread ()
 void
 Thread::Fork (VoidFunctionPtr func, int arg)
 {
-    DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n",
-	   name, (int) func, arg);
-
+    DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n", name, (int) func, arg);
     StackAllocate (func, arg);
 
 #ifdef USER_PROGRAM
-
     // LB: The addrspace should be tramsitted here, instead of later in
     // StartProcess, so that the pageTable can be restored at
     // launching time. This is crucial if the thread is launched with
     // an already running program, as in the "fork" Unix system call. 
-    
+
     // LB: Observe that currentThread->space may be NULL at that time.
     this->space = currentThread->space;
-
 #endif // USER_PROGRAM
 
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
-    scheduler->ReadyToRun (this);	// ReadyToRun assumes that interrupts 
-    // are disabled!
+    scheduler->ReadyToRun (this);	// ReadyToRun assumes that interrupts are disabled!
     (void) interrupt->SetLevel (oldLevel);
 }
 
@@ -411,19 +407,113 @@ Thread::RestoreUserState ()
 	machine->WriteRegister (i, userRegisters[i]);
 }
 
+// +b FoxTox 10.01.2016
+//----------------------------------------------------------------------
+// - Initialize the memory space of the caller thread using the memory space of the current thread.
+// - Allocates space of the caller thread stack (according to the need of the function f and the arguments arg).
+// - Makes the pointer register of caller thread indicate the function f address.
+// Parameters:
+//		- func	: Kernel pointer on the function to executed by the new thread
+//		- arg	: Kernel pointer on the arguments
+//TODO Return
+// Return the stack pointer of the new stack in case of success
+//----------------------------------------------------------------------
+int Thread::UserThreadCreate(int currentThreadStack)
+{
+	userThreadList->Append(this);
+//TODO CHANGE THE 3 by a macros
+	this->stack	= (int*)currentThreadStack + PageSize * 3;						// Distinguish the new thread stack from the current thread stack
+	this->space	= (AddrSpace*)currentThread->space;
 
-// +b FoxTox 10.01.2015
-int Thread::UserThreadCreate(void f(void *arg), void *arg) {
-	Fork((VoidFunctionPtr) f, (int)arg);
-	return 0;
+	currentThread->space->SaveState();
+
+	return (int)this->stack;
 }
 
-//
-//void Thread::StartUserThread () {
-//
-//}
 // +e FoxTox 10.01.2015
-
 #endif
 
+
+// +b simbadSid 10.01.2016
+
+// ------------------------------------------
+// UserThreadList:
+// Class to store the set of all the threads currently existing
+// ------------------------------------------
+#ifdef USER_PROGRAM
+	UserThreadList::UserThreadList()
+	{
+		this->thread= NULL;
+		this->next	= NULL;
+	}
+	UserThreadList::UserThreadList(Thread *THREAD, UserThreadList *NEXT)
+	{
+		this->thread= THREAD;
+		this->next	= NEXT;
+	}
+	UserThreadList::~UserThreadList()
+	{
+		if (this->next != NULL) delete this->next;
+	}
+	void UserThreadList::Append(Thread *THREAD)
+	{
+		if (this->thread == NULL)										// Case: empty list
+		{
+			this->thread	= THREAD;
+			this->next		= NULL;
+			return;
+		}
+		UserThreadList *NEXT;
+
+		NEXT = new UserThreadList(this->thread, this->next);
+		this->thread	= THREAD;
+		this->next		= NEXT;
+	}
+	// ------------------------------------------------
+	// Looks for the thread tid in the list.
+	// If the thread is found, true is returned and the thread is put in the thread parameter (can be NULL).
+	// Else, false is returned.
+	// ------------------------------------------------
+	bool UserThreadList::Remove(int TID, Thread **THREAD)
+	{
+		if (this->thread			== NULL) return false;						// Case: empty list
+		if (this->thread->getTID()	== TID)										// Case: thread found
+		{
+			if (THREAD != NULL) *THREAD = this->thread;
+			if (this->next != NULL)
+			{
+				UserThreadList *tmpNext	= this->next;
+				this->thread	= this->next->thread;
+				this->next		= this->next->next;
+				delete tmpNext;
+			}
+			else
+				this->thread 	= NULL;
+			return true;
+		}
+		if (this->next == NULL)	return false;									// Case: end of list reached
+		else					return this->next->Remove(TID, THREAD);
+	}
+	bool UserThreadList::IsEmpty()
+	{
+		return (this->thread == NULL);
+	}
+
+	// ------------------------------------------------
+	// Checks for the thread with the given tid in the list.
+	// If the outputThread is not null and the thread is found in the list, it is put in the outputThread variable.
+	// ------------------------------------------------
+	bool UserThreadList::IsInList (int TID, Thread **outputThread)
+	{
+		if (this->thread			== NULL) return false;
+		if (this->thread->getTID()	== TID)
+		{
+			if (outputThread != NULL) *outputThread = this->thread;
+			return true;
+		}
+		if (this->next == NULL)	return false;
+		else					return this->next->IsInList(TID, outputThread);
+	}
+#endif
+// +e simbadSid 10.01.2016
 

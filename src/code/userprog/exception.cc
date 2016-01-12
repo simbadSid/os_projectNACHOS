@@ -24,7 +24,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
-//#include "machine.h"
+#include "userthread.h"
 
 
 // FoxTox 08.01.2016
@@ -72,7 +72,7 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 	{
 		kernelStringPtr	= WordToHost(userStringPtr);
 		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
-		if (!test) return -1;
+		if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
 		*to = (char)bufferChar;
 		if (bufferChar == '\0') break;
 		to++;
@@ -86,7 +86,6 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 	else	return resSize=1;							// Case: the string is shorter than expected
 }
 //+e simbadSid 9.01.16
-
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -117,11 +116,21 @@ ExceptionHandler (ExceptionType which)
 //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
 
-    if (which == SyscallException) {
-		switch (type) {
-			case SC_Halt: {
-				DEBUG('a', "Shutdown, initiated by user program.\n");
+    if (which == SyscallException)
+    {
+		switch (type)
+		{
+			case SC_Halt:
+			{
+				int currentTID = currentThread->getTID();
+				bool test = userThreadList->Remove(currentTID, NULL);
+				ASSERT(test);
+				DEBUG('t', "Shutdown, initiated by user program: name = \"%s\", tid = %d.\n", currentThread->getName(), currentTID);
+				DEBUG('t', "Start wating for the user threads to finish.\n");
+				while(!userThreadList->IsEmpty()) currentThread->Yield();
+				DEBUG('t', "End wating for the user threads.\n");
 				interrupt->Halt();
+				delete currentThread;
 				break;
 			}
 			case SC_PutChar: {
@@ -172,7 +181,58 @@ ExceptionHandler (ExceptionType which)
 				break;
 			}
 		    //+b FoxTox 09.01.2016
-			default: {
+//+b simbadSid 10.01.16
+			case SC_UserThreadCreate:
+			{
+DEBUG('t', "Exception: user create.\n");
+				int func, arg;
+				ExceptionType eFunc, eArg;
+				int	userPtrFunc		= machine->ReadRegister(4);
+				int	userPtrArg		= machine-> ReadRegister(5);
+				int	userPtrExitFunc	= machine-> ReadRegister(6);
+				int	kernelPtrFunc	= WordToHost(userPtrFunc);
+				int	kernelPtrArg	= WordToHost(userPtrArg);
+//TODO translate exit function
+				eFunc				= machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
+				if (eFunc != NoException)														// Case corrupted function address
+				{
+					machine->RaiseException(eFunc, kernelPtrFunc);
+					return;
+				}
+				eArg				= machine->Translate(kernelPtrArg, &arg, sizeof(void*), false);
+				if (eArg != NoException)														// Case corrupted argument address
+				{
+					machine->RaiseException(eArg, kernelPtrArg);
+					return;
+				}
+//				int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrExitFunc);
+				int res = do_UserThreadCreate(func, arg, userPtrExitFunc);
+				machine->WriteRegister(2, res);													// Write the output of the system call
+				break;
+			}
+			case SC_UserThreadJoin:
+			{
+				Thread *threadToJoin;
+				int		threadToJoinTID	= machine->ReadRegister(4);
+				bool	test			= userThreadList->IsInList(threadToJoinTID, &threadToJoin);
+				if (!test)
+				{
+					DEBUG('t', "Exception UserThreadJoin: can not find the user thread tid = %d.\n", threadToJoinTID);
+// TODO manage the exception
+					return;
+				}
+				DEBUG('t', "Exception UserThreadJoin: user thread joins tid = %d.\n", threadToJoinTID);
+				while(userThreadList->IsInList(threadToJoinTID, NULL)) currentThread->Yield();
+				break;
+			}
+			case SC_UserThreadExit:
+			{
+				do_UserThreadExit();
+				break;
+			}
+//+e simbadSid 10.01.16
+			default:
+			{
 				printf("Unexpected user mode exception %d %d\n", which, type);
 				ASSERT(FALSE);
 			}

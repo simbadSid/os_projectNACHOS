@@ -35,6 +35,7 @@
 ORIG_USERPROGS=halt matmult shell sort
 ORIG_USERPROGS=putchar matmult shell sort
 ORIG_USERPROGS=ioTest matmult shell sort
+ORIG_USERPROGS=multithreadingTest matmult shell sort
 
 ###########################################################################
 # Group of files used to defined initial flavors
@@ -44,7 +45,7 @@ THREAD_SRC      :=      main.cc list.cc scheduler.cc synch.cc synchlist.cc \
                         stats.cc sysdep.cc timer.cc switch.S
 
 USERPROG_SRC    :=      addrspace.cc bitmap.cc exception.cc progtest.cc console.cc \
-                        machine.cc mipssim.cc translate.cc synchconsole.cc
+                        machine.cc mipssim.cc translate.cc synchconsole.cc userthread.cc
 
 VM_SRC          :=
 
