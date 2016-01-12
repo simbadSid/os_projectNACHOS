@@ -72,11 +72,15 @@ int nbrUserThread = 0;
 	int do_UserThreadCreate(int func, int arg, int exitFunc)
 	{
 		ThreadCreationParameter *tcp;
-		char name[THREAD_NAME_MAX_SIZE];
-		int		tid		= initThreadName(name);
+//	char name[THREAD_NAME_MAX_SIZE];
+//		int		tid		= initThreadName(name);
+
+// TODO Hack to remove
+int tid = nbrUserThread;
+nbrUserThread ++;
 		int		stack	= -1;
-		int		newThreadStack=-1;
-		Thread	*t		= new Thread(name, tid);
+		int		newThreadStack	=-1;
+		Thread	*t		= new Thread("Created Thread (name to remove)", tid);
 
 //	#ifdef USER_PROG
 		machine->ReadMem(machine->ReadRegister(StackReg), sizeof(int), &stack);

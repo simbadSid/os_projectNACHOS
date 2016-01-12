@@ -169,7 +169,7 @@ Initialize (int argc, char **argv)
     machine			= new Machine (debugUserProg);				// this must come first
 	synchconsole	= new SynchConsole(NULL, NULL);
 	userThreadList	= new UserThreadList();
-    userThreadList->Append(0, currentThread);
+    userThreadList->Append(currentThread);
 #endif
 
 #ifdef FILESYS

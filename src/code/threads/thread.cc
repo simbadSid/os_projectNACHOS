@@ -420,7 +420,7 @@ Thread::RestoreUserState ()
 //----------------------------------------------------------------------
 int Thread::UserThreadCreate(int currentThreadStack)
 {
-	userThreadList->Append(this->tid, this);
+	userThreadList->Append(this);
 //TODO CHANGE THE 3 by a macros
 	this->stack	= (int*)currentThreadStack + PageSize * 3;						// Distinguish the new thread stack from the current thread stack
 	this->space	= (AddrSpace*)currentThread->space;
@@ -440,57 +440,80 @@ int Thread::UserThreadCreate(int currentThreadStack)
 // UserThreadList:
 // Class to store the set of all the threads currently existing
 // ------------------------------------------
+#ifdef USER_PROGRAM
 	UserThreadList::UserThreadList()
 	{
-		this->tid	= -1;
 		this->thread= NULL;
 		this->next	= NULL;
 	}
-	UserThreadList::UserThreadList(int TID, Thread *THREAD, UserThreadList *NEXT)
+	UserThreadList::UserThreadList(Thread *THREAD, UserThreadList *NEXT)
 	{
-		this->tid	= TID;
 		this->thread= THREAD;
 		this->next	= NEXT;
 	}
-	UserThreadList::~UserThreadList(){}
-	void UserThreadList::Append(int TID, Thread *THREAD)
+	UserThreadList::~UserThreadList()
+	{
+		if (this->next != NULL) delete this->next;
+	}
+	void UserThreadList::Append(Thread *THREAD)
 	{
 		if (this->thread == NULL)										// Case: empty list
 		{
 			this->thread	= THREAD;
-			this->tid		= TID;
+			this->next		= NULL;
 			return;
 		}
 		UserThreadList *NEXT;
 
-		NEXT = new UserThreadList(this->tid, this->thread, this->next);
-		this->tid		= TID;
+		NEXT = new UserThreadList(this->thread, this->next);
 		this->thread	= THREAD;
 		this->next		= NEXT;
 	}
 	// ------------------------------------------------
 	// Looks for the thread tid in the list.
-	// If the thread is found, true is returned and the thread is put in the thread parameter.
+	// If the thread is found, true is returned and the thread is put in the thread parameter (can be NULL).
 	// Else, false is returned.
 	// ------------------------------------------------
 	bool UserThreadList::Remove(int TID, Thread **THREAD)
 	{
-		if (this->thread	== NULL) return false;						// Case: empty list
-		if (this->tid		== TID)										// Case: thread found
+		if (this->thread			== NULL) return false;						// Case: empty list
+		if (this->thread->getTID()	== TID)										// Case: thread found
 		{
-			*THREAD = this->thread;
+			if (THREAD != NULL) *THREAD = this->thread;
 			if (this->next != NULL)
 			{
-				this->tid		= this->next->tid;
+				UserThreadList *tmpNext	= this->next;
 				this->thread	= this->next->thread;
 				this->next		= this->next->next;
+				delete tmpNext;
 			}
-			delete this->next;
+			else
+				this->thread 	= NULL;
 			return true;
 		}
-		if (this->next == NULL)	return false;							// Case: end of list reached
+		if (this->next == NULL)	return false;									// Case: end of list reached
 		else					return this->next->Remove(TID, THREAD);
 	}
+	bool UserThreadList::IsEmpty()
+	{
+		return (this->thread == NULL);
+	}
 
+	// ------------------------------------------------
+	// Checks for the thread with the given tid in the list.
+	// If the outputThread is not null and the thread is found in the list, it is put in the outputThread variable.
+	// ------------------------------------------------
+	bool UserThreadList::IsInList (int TID, Thread **outputThread)
+	{
+		if (this->thread			== NULL) return false;
+		if (this->thread->getTID()	== TID)
+		{
+			if (outputThread != NULL) *outputThread = this->thread;
+			return true;
+		}
+		if (this->next == NULL)	return false;
+		else					return this->next->IsInList(TID, outputThread);
+	}
+#endif
 // +e simbadSid 10.01.2016
 

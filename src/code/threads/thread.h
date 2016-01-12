@@ -127,21 +127,24 @@ class Thread
 // ------------------------------------------
 // Set of all the threads currently existing
 // ------------------------------------------
+#ifdef USER_PROGRAM
 class UserThreadList
 {
 	public:
 		UserThreadList();
-		UserThreadList(int TID, Thread *THREAD, UserThreadList *NEXT);
+		UserThreadList(Thread *THREAD, UserThreadList *NEXT);
 		~UserThreadList();
-		void	Append	(int tid, Thread *thread);
-		bool	Remove	(int tid, Thread **thread);
+		void	Append		(Thread *thread);
+		bool	Remove		(int tid, Thread **thread);
+		bool	IsEmpty		();
+		bool	IsInList	(int tid, Thread **outputThread);
 
 	private:
-		int				tid;
 		Thread			*thread;
 		UserThreadList	*next;
 
 };
+#endif
 // +e simbadSid 10.01.2016
 
 // Magical machine-dependent routines, defined in switch.s

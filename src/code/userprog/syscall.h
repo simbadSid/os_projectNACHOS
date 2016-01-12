@@ -194,12 +194,13 @@ int GetCharInt();  //+ TooFo 11012016
  */
 int UserThreadCreate(void f(void *arg), void *arg);
 
-/* UserThreadExit: Call the system function do_UserThreadExit which removes the thread data structure from nachos system.
+/* UserThreadExit: Call the system function do_UserThreadExit which does not remove the thread data structure from nachos system (maybe accessed for analyze purposes).
  * Needs to be lunched in user mode.
  */
 void UserThreadExit();
 
-/* UserThreadJoin: Call the system function do_UserThreadJoind to wait for the thread specified by tid to terminate.
+/* UserThreadJoin: Call the system function do_UserThreadJoine to wait for the thread specified by tid to terminate.
+ * This function also removes the memory allocated by the thread structure (NACHOS thread object).
  * If that thread has already terminated, then the function returns immediately.
  * Return 0 on success.
  * TODO describe the other return values
