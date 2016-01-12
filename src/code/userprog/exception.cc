@@ -61,32 +61,32 @@ UpdatePC ()
 //---------------------------------------------------------------------
 size_t copyStringFromMachine( int from, char *to, size_t size)
 {
-	size_t resSize;
-	int kernelStringPtr, userStringPtr = from;
-	int bufferChar;
-	bool test;
+    size_t resSize;
+    int kernelStringPtr, userStringPtr = from;
+    int bufferChar;
+    bool test;
 
-	if (size == 0)
+    if (size == 0)
 	{
-		*to = '\0';
-		return 0;
+	    *to = '\0';
+	    return 0;
 	}
-	for (resSize=0; resSize<size; resSize++)
+    for (resSize=0; resSize<size; resSize++)
 	{
-		kernelStringPtr	= WordToHost(userStringPtr);
-		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
-		if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
-		*to = (char)bufferChar;
-		if (bufferChar == '\0') break;
-		to++;
-		userStringPtr++;
+	    kernelStringPtr	= WordToHost(userStringPtr);
+	    test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
+	    if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
+	    *to = (char)bufferChar;
+	    if (bufferChar == '\0') break;
+	    to++;
+	    userStringPtr++;
 	}
-	if (resSize == size)								// Case: size char has been read without '\0'
+    if (resSize == size)								// Case: size char has been read without '\0'
 	{
-		*to= '\0';
-		return size;
+	    *to= '\0';
+	    return size;
 	}
-	else	return resSize=1;							// Case: the string is shorter than expected
+    else	return resSize=1;							// Case: the string is shorter than expected
 }
 //+e simbadSid 9.01.16
 
@@ -125,9 +125,15 @@ ExceptionHandler (ExceptionType which)
 		{
 		case SC_Halt:
 		    {
-			DEBUG('a', "Shutdown, initiated by user program.\n");
-			threads_alive->P_Count(); //+ goubetc 11.01.16
+			int currentTID = currentThread->getTID();
+			bool test = userThreadList->Remove(currentTID, NULL);
+			ASSERT(test);
+			DEBUG('t', "Shutdown, initiated by user program: name = \"%s\", tid = %d.\n", currentThread->getName(), currentTID);
+			DEBUG('t', "Start wating for the user threads to finish.\n");
+			while(!userThreadList->IsEmpty()) currentThread->Yield();
+			DEBUG('t', "End wating for the user threads.\n");
 			interrupt->Halt();
+			delete currentThread;
 			break;
 		    }
 		case SC_PutChar: {
@@ -181,6 +187,7 @@ ExceptionHandler (ExceptionType which)
 		    //+b simbadSid 10.01.16
 		case SC_UserThreadCreate:
 		    {
+			DEBUG('t', "Exception: user create.\n");
 			int func, arg;
 			ExceptionType eFunc, eArg;
 			int	userPtrFunc		= machine->ReadRegister(4);
@@ -203,16 +210,22 @@ ExceptionHandler (ExceptionType which)
 			    }
 			//				int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrExitFunc);
 			int res = do_UserThreadCreate(func, arg, userPtrExitFunc);
-			if (!res)
-			    threads_alive->Count(); //+ goubetc 11.01.16
-				
 			machine->WriteRegister(2, res);													// Write the output of the system call
 			break;
 		    }
 		case SC_UserThreadJoin:
 		    {
-			//TODO
-			while(true) currentThread->Yield();
+			Thread *threadToJoin;
+			int		threadToJoinTID	= machine->ReadRegister(4);
+			bool	test			= userThreadList->IsInList(threadToJoinTID, &threadToJoin);
+			if (!test)
+			    {
+				DEBUG('t', "Exception UserThreadJoin: can not find the user thread tid = %d.\n", threadToJoinTID);
+				// TODO manage the exception
+				return;
+			    }
+			DEBUG('t', "Exception UserThreadJoin: user thread joins tid = %d.\n", threadToJoinTID);
+			while(userThreadList->IsInList(threadToJoinTID, NULL)) currentThread->Yield();
 			break;
 		    }
 		case SC_UserThreadExit:
@@ -226,7 +239,6 @@ ExceptionHandler (ExceptionType which)
 			printf("Unexpected user mode exception %d %d\n", which, type);
 			ASSERT(FALSE);
 		    }
-
 		}
 	    
 	    UpdatePC();
