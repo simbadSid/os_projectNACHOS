@@ -211,7 +211,7 @@ int UserThreadJoin(int tid);
 /* UserThreadExit: Call the system function UserThreadExit to exit a thread.
  * Needs to be lunched in user mode.
  */
-void UserThreadExit()
+void UserThreadExit();
 //+ e goubetc 10.01.16
 #endif // IN_USER_MODE
 
