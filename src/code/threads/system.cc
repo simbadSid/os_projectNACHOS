@@ -203,6 +203,7 @@ Cleanup ()
     delete synchconsole;
 	//+e FoxTox 08.01.2016
 	//+b simbadSid 10.01.2016
+    userThreadList->FreeAllList();
     delete userThreadList;
 	//+e simbadSid 10.01.2016
 #endif
