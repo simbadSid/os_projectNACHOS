@@ -20,6 +20,8 @@
 #include "copyright.h"
 #include "thread.h"
 #include "list.h"
+//+ goubetc 12.01.16
+
 
 // The following class defines a "semaphore" whose value is a non-negative
 // integer.  The semaphore has only two operations P() and V():
@@ -92,6 +94,10 @@ class Lock
   private:
     const char *name;		// for debugging
     // plus some other stuff you'll need to define
+    //+b goubetc 12.01.16
+    bool busy;			// semaphore value, always >= 0
+    List *queue;		// threads waiting in P() for the value to be > 0
+    //+e goubetc 13.01.16
 };
 
 // The following class defines a "condition variable".  A condition

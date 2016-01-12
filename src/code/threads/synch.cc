@@ -24,6 +24,7 @@
 #include "copyright.h"
 #include "synch.h"
 #include "system.h"
+//+ goubetc 12.01.16
 
 //----------------------------------------------------------------------
 // Semaphore::Semaphore
@@ -162,18 +163,41 @@ Semaphore::V_Count ()
 // the test case in the network assignment won't work!
 Lock::Lock (const char *debugName)
 {
+    name = debugName;
+    busy = false;
+    queue = new List;
 }
 
 Lock::~Lock ()
 {
+    delete queue;
 }
 void
 Lock::Acquire ()
 {
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+    while (busy)
+      {				// semaphore not available
+	  queue->Append ((void *) currentThread);	// so go to sleep
+	  currentThread->Sleep ();
+      }
+    busy = true;			// semaphore available, 
+    // consume its value
+
+    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
+
 }
 void
 Lock::Release ()
 {
+    Thread *thread;
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);
+
+    thread = (Thread *) queue->Remove ();
+    if (thread != NULL)		// make thread ready, consuming the V immediately
+	scheduler->ReadyToRun (thread);
+    busy = false;
+    (void) interrupt->SetLevel (oldLevel);
 }
 
 Condition::Condition (const char *debugName)
