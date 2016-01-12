@@ -417,7 +417,13 @@ int Thread::UserThreadCreate(void f(void *arg), void *arg) {
 	Fork((VoidFunctionPtr) f, (int)arg);
 	return 0;
 }
+
+//
+//void Thread::StartUserThread () {
+//
+//}
 // +e FoxTox 10.01.2015
+
 #endif
 
 
