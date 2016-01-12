@@ -10,6 +10,8 @@
 #include "system.h"
 
 // FoxTox 08.01.2016
+// simbadSid 10.01.2016
+
 
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
@@ -35,6 +37,9 @@ Machine *machine;			// user program memory and registers
 //+b FoxTox 08.01.2016
 SynchConsole *synchconsole; // synchronised console
 //+e FoxTox 08.01.2016
+// +b simbadSid 10.01.2016
+UserThreadList	*userThreadList;
+// +e simbadSid 10.01.2016
 #endif
 
 #ifdef NETWORK
@@ -154,15 +159,17 @@ Initialize (int argc, char **argv)
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread
     // object to save its state. 
-    currentThread = new Thread ("main");
+    currentThread = new Thread ("main", 0);
     currentThread->setStatus (RUNNING);
 
     interrupt->Enable ();
     CallOnUserAbort (Cleanup);									// if user hits ctl-C
 
 #ifdef USER_PROGRAM
-    machine = new Machine (debugUserProg);						// this must come first
-	synchconsole = new SynchConsole(NULL, NULL);
+    machine			= new Machine (debugUserProg);				// this must come first
+	synchconsole	= new SynchConsole(NULL, NULL);
+	userThreadList	= new UserThreadList();
+    userThreadList->Append(0, currentThread);
 #endif
 
 #ifdef FILESYS
@@ -195,6 +202,9 @@ Cleanup ()
 	//+b FoxTox 08.01.2016
     delete synchconsole;
 	//+e FoxTox 08.01.2016
+	//+b simbadSid 10.01.2016
+    delete userThreadList;
+	//+e simbadSid 10.01.2016
 #endif
 
 #ifdef FILESYS_NEEDED

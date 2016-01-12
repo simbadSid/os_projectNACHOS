@@ -143,7 +143,6 @@ PutChar:
 
 	.globl PutString
 	.ent	PutString
-
 PutString:
 	addiu $2,$0,SC_PutString
 	syscall
@@ -163,7 +162,63 @@ GetCharInt:
 	.end GetCharInt
 //+e TooFo 11012016
 
-	
+	.globl GetString
+	.ent	GetString
+
+GetString:
+	addiu $2,$0,SC_GetString
+	syscall
+	j	$31
+	.end GetString
+
+	.globl GetInt
+	.ent	GetInt
+
+GetInt:
+	addiu $2,$0,SC_GetInt
+	syscall
+	j	$31
+	.end GetInt
+
+	.globl PutInt
+	.ent	PutInt
+
+PutInt:
+	addiu $2,$0,SC_PutInt
+	syscall
+	j	$31
+	.end PutInt
+
+//+b simbadSid 9.01.16
+
+	.globl	UserThreadCreate
+	.ent	UserThreadCreate
+UserThreadCreate:
+	addiu $2,$0,SC_UserThreadCreate
+    addiu $6,$0,UserThreadExit
+	syscall
+	j	$31
+	.end UserThreadCreate
+
+	.globl	UserThreadExit
+	.ent	UserThreadExit
+UserThreadExit:
+	addiu $2,$0,SC_UserThreadExit
+	syscall
+	j	$31
+	.end UserThreadExit
+
+	.globl	UserThreadJoin
+	.ent	UserThreadJoin
+UserThreadJoin:
+	addiu $2,$0,SC_UserThreadJoin
+	syscall
+	j	$31
+	.end UserThreadJoin
+
+//+e simbadSid 9.01.16
+
+
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main

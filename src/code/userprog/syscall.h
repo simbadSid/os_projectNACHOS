@@ -41,11 +41,13 @@
 #define SC_PutString		14
 #define SC_GetInt			15
 #define SC_PutInt			16
-#define SC_UserThreadCreate	17
-#define SC_GetCharInt		51  //+ TooFo 11012016 "Bonus Task
-
 //+e FoxTox 09.01.2016
-
+//+b simbadSid 10.01.2016
+#define SC_UserThreadCreate	17
+#define SC_UserThreadExit	18
+#define SC_UserThreadJoin	19
+//+e simbadSid 10.01.2016
+#define SC_GetCharInt		51  //+ TooFo 11012016 "Bonus Task
 
 #ifdef IN_USER_MODE
 
@@ -184,11 +186,27 @@ void PutInt(int n);
 
 int GetCharInt();  //+ TooFo 11012016
 
-//+b simbadSid 9.01.16
-/* UserThreadCreate: Call the system function UserThreadCreate to add a thread to current process.
+//+b simbadSid 10.01.16
+/* UserThreadCreate: Call the system function do_UserThreadCreate to add a thread to current process.
+ * Return the Thread identifier (tid) of the created thread.
+ * TODO describe the other return values
  * Needs to be lunched in user mode.
  */
-void UserThreadCreate(void f(void *arg), void *arg);
+int UserThreadCreate(void f(void *arg), void *arg);
+
+/* UserThreadExit: Call the system function do_UserThreadExit which removes the thread data structure from nachos system.
+ * Needs to be lunched in user mode.
+ */
+void UserThreadExit();
+
+/* UserThreadJoin: Call the system function do_UserThreadJoind to wait for the thread specified by tid to terminate.
+ * If that thread has already terminated, then the function returns immediately.
+ * Return 0 on success.
+ * TODO describe the other return values
+ * Needs to be lunched in user mode.
+ */
+int UserThreadJoin(int tid);
+
 //+e simbadSid 9.01.16
 
 

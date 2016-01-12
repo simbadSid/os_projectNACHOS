@@ -35,9 +35,10 @@
 //      "threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
 
-Thread::Thread (const char *threadName)
+Thread::Thread (const char *threadName, int threadID)
 {
 	name		= threadName;
+	tid			= threadID;
 	stackTop	= NULL;
 	stack		= NULL;
 	status		= JUST_CREATED;
@@ -99,20 +100,17 @@ Thread::Fork (VoidFunctionPtr func, int arg)
     StackAllocate (func, arg);
 
 #ifdef USER_PROGRAM
-
     // LB: The addrspace should be tramsitted here, instead of later in
     // StartProcess, so that the pageTable can be restored at
     // launching time. This is crucial if the thread is launched with
     // an already running program, as in the "fork" Unix system call. 
-    
+
     // LB: Observe that currentThread->space may be NULL at that time.
     this->space = currentThread->space;
-
 #endif // USER_PROGRAM
 
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
-    scheduler->ReadyToRun (this);	// ReadyToRun assumes that interrupts 
-    // are disabled!
+    scheduler->ReadyToRun (this);	// ReadyToRun assumes that interrupts are disabled!
     (void) interrupt->SetLevel (oldLevel);
 }
 
@@ -409,13 +407,90 @@ Thread::RestoreUserState ()
 	machine->WriteRegister (i, userRegisters[i]);
 }
 
+// +b FoxTox 10.01.2016
+//----------------------------------------------------------------------
+// - Initialize the memory space of the caller thread using the memory space of the current thread.
+// - Allocates space of the caller thread stack (according to the need of the function f and the arguments arg).
+// - Makes the pointer register of caller thread indicate the function f address.
+// Parameters:
+//		- func	: Kernel pointer on the function to executed by the new thread
+//		- arg	: Kernel pointer on the arguments
+//TODO Return
+// Return the stack pointer of the new stack in case of success
+//----------------------------------------------------------------------
+int Thread::UserThreadCreate(int currentThreadStack)
+{
+	userThreadList->Append(this->tid, this);
+//TODO CHANGE THE 3 by a macros
+	this->stack	= (int*)currentThreadStack + PageSize * 3;						// Distinguish the new thread stack from the current thread stack
+	this->space	= (AddrSpace*)currentThread->space;
 
-// +b FoxTox 10.01.2015
-int Thread::UserThreadCreate(void f(void *arg), void *arg) {
-	Fork((VoidFunctionPtr) f, (int)arg);
-	return 0;
+	currentThread->space->SaveState();
+
+	return (int)this->stack;
 }
-// +e FoxTox 10.01.2015
+
+// +e FoxTox 10.01.2016
 #endif
 
+
+// +b simbadSid 10.01.2016
+
+// ------------------------------------------
+// UserThreadList:
+// Class to store the set of all the threads currently existing
+// ------------------------------------------
+	UserThreadList::UserThreadList()
+	{
+		this->tid	= -1;
+		this->thread= NULL;
+		this->next	= NULL;
+	}
+	UserThreadList::UserThreadList(int TID, Thread *THREAD, UserThreadList *NEXT)
+	{
+		this->tid	= TID;
+		this->thread= THREAD;
+		this->next	= NEXT;
+	}
+	UserThreadList::~UserThreadList(){}
+	void UserThreadList::Append(int TID, Thread *THREAD)
+	{
+		if (this->thread == NULL)										// Case: empty list
+		{
+			this->thread	= THREAD;
+			this->tid		= TID;
+			return;
+		}
+		UserThreadList *NEXT;
+
+		NEXT = new UserThreadList(this->tid, this->thread, this->next);
+		this->tid		= TID;
+		this->thread	= THREAD;
+		this->next		= NEXT;
+	}
+	// ------------------------------------------------
+	// Looks for the thread tid in the list.
+	// If the thread is found, true is returned and the thread is put in the thread parameter.
+	// Else, false is returned.
+	// ------------------------------------------------
+	bool UserThreadList::Remove(int TID, Thread **THREAD)
+	{
+		if (this->thread	== NULL) return false;						// Case: empty list
+		if (this->tid		== TID)										// Case: thread found
+		{
+			*THREAD = this->thread;
+			if (this->next != NULL)
+			{
+				this->tid		= this->next->tid;
+				this->thread	= this->next->thread;
+				this->next		= this->next->next;
+			}
+			delete this->next;
+			return true;
+		}
+		if (this->next == NULL)	return false;							// Case: end of list reached
+		else					return this->next->Remove(TID, THREAD);
+	}
+
+// +e simbadSid 10.01.2016
 
