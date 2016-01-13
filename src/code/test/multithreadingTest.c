@@ -60,14 +60,15 @@ void threadFunction2(void *arg)
 void threadFunction3(void *arg)
 {
 	int		arg1 = *((int*) arg);
-	char	arg2 = *((char*) arg++);
+	int		arg2 = *((int*) arg+1);
 	char	*str = "Simple thread function with an int parameter: \0";
 
 	PutString(str, strlen(str));
 	PutInt(arg1);
-	str = " and a char parameter ";
-	PutChar(arg2);
-	str = "\n";
+	str = " and a char parameter: \0";
+	PutString(str, strlen(str));
+	PutChar((char)arg2);
+	str = "\n\0";
 	PutString(str, strlen(str));
 }
 
@@ -76,13 +77,13 @@ void threadFunction3(void *arg)
 // -------------------------------------
 int main ()
 {
-	int arg1[] = {34};
+	int arg2[] = {34};
+//	int arg3[] = {57, (int)'c'};
 
 	int tid0 = UserThreadCreate(threadFunction0, 0);
 	int tid1 = UserThreadCreate(threadFunction1, 0);
-	int tid2 = UserThreadCreate(threadFunction2, (void*)arg1);
-//	int arr[] = {1, 2, 3, 4, 5};
-//	int tid3 = UserThreadCreate(threadFunction3, arr);
+	int tid2 = UserThreadCreate(threadFunction2, (void*)arg2);
+//	int tid3 = UserThreadCreate(threadFunction3, (void*)arg3);
 
 	UserThreadJoin(tid0);
 	UserThreadJoin(tid1);

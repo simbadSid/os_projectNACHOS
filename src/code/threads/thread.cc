@@ -421,7 +421,7 @@ int Thread::UserThreadCreate(int currentThreadStack, int *createdThreadStack)
 {
 //TODO CHANGE THE 3 by a macros
 //TODO check the stack is in the address space
-	this->stack	= (int*)currentThreadStack + PageSize * 3;						// Distinguish the new thread stack from the current thread stack
+	this->stack	= (int*)currentThreadStack + PageSize * 4;						// Distinguish the new thread stack from the current thread stack
 	this->space	= (AddrSpace*)currentThread->space;
 
 	currentThread->space->SaveState();

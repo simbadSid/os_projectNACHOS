@@ -36,13 +36,13 @@ static Semaphore	*writeDone;
 //----------------------------------------------------------------------
 void freeConsoleTest()
 {
-	delete console;
-	delete readAvail;
-	delete writeDone;
+    delete console;
+    delete readAvail;
+    delete writeDone;
 }
 void freeSychConsoleTest()
 {
-	delete synchConsole;
+    delete synchConsole;
 }
 
 //----------------------------------------------------------------------
@@ -59,8 +59,8 @@ StartProcess (char *filename)
 
 	if (executable == NULL)
 	{
-		printf ("Unable to open file %s\n", filename);
-		return;
+	    printf ("Unable to open file %s\n", filename);
+	    return;
 	}
 	space				= new AddrSpace (executable);
 	currentThread->space= space;
@@ -109,16 +109,16 @@ ConsoleTest (char *in, char *out)
 
     for (;;)
 	{
-		readAvail->P ();									// wait for character to arrive
-		ch = console->GetChar ();
-		switch (ch)
+	    readAvail->P ();									// wait for character to arrive
+	    ch = console->GetChar ();
+	    switch (ch)
 		{
-			case 'q':	freeConsoleTest(); return;		// if q, quit
-			case EOF:	freeConsoleTest(); return;
-			default:	break;
+		case 'q':	freeConsoleTest(); return;		// if q, quit
+		case EOF:	freeConsoleTest(); return;
+		default:	break;
 		}
-		console->PutChar (ch);								// echo it!
-		writeDone->P ();									// wait for write to finish
+	    console->PutChar (ch);								// echo it!
+	    writeDone->P ();									// wait for write to finish
 	}
 }
 //----------------------------------------------------------------------
@@ -136,13 +136,13 @@ SynchConsoleTest (char *in, char *out)
 
     for (;;)
 	{
-		ch = synchConsole->SynchGetChar ();
-		switch (ch)
+	    ch = synchConsole->SynchGetChar ();
+	    switch (ch)
 		{
-			case 'q':	freeSychConsoleTest(); return;		// if q, quit
-			case EOF:	freeSychConsoleTest(); return;
-			default:	break;
+		case 'q':	freeSychConsoleTest(); return;		// if q, quit
+		case EOF:	freeSychConsoleTest(); return;
+		default:	break;
 		}
-		synchConsole->SynchPutChar (ch);					// echo it!
+	    synchConsole->SynchPutChar (ch);					// echo it!
 	}
 }

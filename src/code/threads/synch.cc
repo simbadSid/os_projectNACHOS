@@ -24,6 +24,7 @@
 #include "copyright.h"
 #include "synch.h"
 #include "system.h"
+//+ goubetc 12.01.16
 
 //----------------------------------------------------------------------
 // Semaphore::Semaphore
@@ -65,7 +66,6 @@ void
 Semaphore::P ()
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
-
     while (value == 0)
       {				// semaphore not available
 	  queue->Append ((void *) currentThread);	// so go to sleep
@@ -98,23 +98,106 @@ Semaphore::V ()
     (void) interrupt->SetLevel (oldLevel);
 }
 
+//+b goubetc 11.01.16
+//----------------------------------------------------------------------
+// Semaphore::P2
+//      Waits until semaphore value == 0.  
+//      Note that Thread::Sleep assumes that interrupts are disabled
+//      when it is called.
+//----------------------------------------------------------------------
+
+void
+Semaphore::P_Count ()
+{
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+    value--;
+    while (value > 0)
+      {				// semaphore not available
+	  queue->Append ((void *) currentThread);	// so go to sleep
+	  currentThread->Sleep ();
+      }
+
+    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
+}
+
+
+//----------------------------------------------------------------------
+// Semaphore::P_Count
+//      Increments semaphore value.  
+//----------------------------------------------------------------------
+
+void
+Semaphore::Count ()
+{
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);
+    value++;
+    (void) interrupt->SetLevel (oldLevel);
+}
+
+
+//----------------------------------------------------------------------
+// Semaphore::V2
+//      Decrement semaphore value
+//      As with P(), this operation must be atomic, so we need to disable
+//      interrupts.  Scheduler::ReadyToRun() assumes that threads
+//      are disabled when it is called.
+//----------------------------------------------------------------------
+
+void
+Semaphore::V_Count ()
+{
+    Thread *thread;
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);
+
+    thread = (Thread *) queue->Remove ();
+    if (thread != NULL)		// make thread ready, consuming the V immediately
+	scheduler->ReadyToRun (thread);
+    value--;
+    (void) interrupt->SetLevel (oldLevel);
+}
+
+//+e goubetc 11.01.16
+
 // Dummy functions -- so we can compile our later assignments 
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
 Lock::Lock (const char *debugName)
 {
+    name = debugName;
+    busy = false;
+    queue = new List;
 }
 
 Lock::~Lock ()
 {
+    delete queue;
 }
 void
 Lock::Acquire ()
 {
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+    while (busy)
+      {				// semaphore not available
+	  queue->Append ((void *) currentThread);	// so go to sleep
+	  currentThread->Sleep ();
+      }
+    busy = true;			// semaphore available, 
+    // consume its value
+
+    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
+
 }
 void
 Lock::Release ()
 {
+    Thread *thread;
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);
+
+    thread = (Thread *) queue->Remove ();
+    if (thread != NULL)		// make thread ready, consuming the V immediately
+	scheduler->ReadyToRun (thread);
+    busy = false;
+    (void) interrupt->SetLevel (oldLevel);
 }
 
 Condition::Condition (const char *debugName)

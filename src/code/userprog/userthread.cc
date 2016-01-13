@@ -6,8 +6,6 @@
  */
 #include "userthread.h"
 
-
-
 #define THREAD_NAME_MAX_SIZE	100
 
 static int nbrUserThread = 0;
@@ -119,3 +117,4 @@ int tid = nbrUserThread;
 		sprintf(name, "User Thread %d", tid);
 		return tid;
 	}
+

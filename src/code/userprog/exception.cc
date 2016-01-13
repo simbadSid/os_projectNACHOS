@@ -24,13 +24,16 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "synch.h" //+ goubetc 11.01.16
+//#include "machine.h"
 #include "userthread.h"
+
 
 
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
-
+// goubetc 11.01.16
 
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
@@ -58,32 +61,32 @@ UpdatePC ()
 //---------------------------------------------------------------------
 size_t copyStringFromMachine( int from, char *to, size_t size)
 {
-	size_t resSize;
-	int kernelStringPtr, userStringPtr = from;
-	int bufferChar;
-	bool test;
+    size_t resSize;
+    int kernelStringPtr, userStringPtr = from;
+    int bufferChar;
+    bool test;
 
-	if (size == 0)
+    if (size == 0)
 	{
-		*to = '\0';
-		return 0;
+	    *to = '\0';
+	    return 0;
 	}
-	for (resSize=0; resSize<size; resSize++)
+    for (resSize=0; resSize<size; resSize++)
 	{
-		kernelStringPtr	= WordToHost(userStringPtr);
-		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
-		if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
-		*to = (char)bufferChar;
-		if (bufferChar == '\0') break;
-		to++;
-		userStringPtr++;
+	    kernelStringPtr	= WordToHost(userStringPtr);
+	    test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
+	    if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
+	    *to = (char)bufferChar;
+	    if (bufferChar == '\0') break;
+	    to++;
+	    userStringPtr++;
 	}
-	if (resSize == size)								// Case: size char has been read without '\0'
+    if (resSize == size)								// Case: size char has been read without '\0'
 	{
-		*to= '\0';
-		return size;
+	    *to= '\0';
+	    return size;
 	}
-	else	return resSize=1;							// Case: the string is shorter than expected
+    else	return resSize=1;							// Case: the string is shorter than expected
 }
 //+e simbadSid 9.01.16
 
@@ -113,12 +116,12 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 void
 ExceptionHandler (ExceptionType which)
 {
-//+b FoxTox 08.01.2016
-    int type = machine->ReadRegister(2);
-
+    //+b FoxTox 08.01.2016
+    int type = machine->ReadRegister(2);			
+//    Semaphore *threads_alive = new Semaphore("threads_alive", 1);  //+ goubetc 11.01.16
     if (which == SyscallException)
-    {
-		switch (type)
+	{
+	    switch (type)
 		{
 			case SC_Halt:
 			{
@@ -158,32 +161,32 @@ while(!userThreadList->IsEmpty())  currentThread->Yield();
 //+e simbadSid 9.01.16
 			}
 		    //+b FoxTox 09.01.2016
-			case SC_GetString: {
-				int n = machine->ReadRegister(4);
-				char *result = new char[n + 1];
-				synchconsole->SynchGetString(result, n);
-				int address = machine->ReadRegister(4);
-				if (*result == EOF) {
-					machine->WriteMem(address, 1, (int)*result);
-					break;
-				}
-				for (int i = 0; i < n + 1; ++i) {
-					if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
-						break;
-				}
-				break;
-			}
-			case SC_GetInt: {
-				int addr = machine->ReadRegister(4);
-				int *n = new int[MAX_INT_DIGITS];
-				synchconsole->SynchGetInt(n);
-				machine->WriteMem(addr, 4, *n);
-				break;
-			}
-			case SC_PutInt: {
-				synchconsole->SynchPutInt(machine->ReadRegister(4));
-				break;
-			}
+		case SC_GetString: {
+		    int n = machine->ReadRegister(4);
+		    char *result = new char[n + 1];
+		    synchconsole->SynchGetString(result, n);
+		    int address = machine->ReadRegister(4);
+		    if (*result == EOF) {
+			machine->WriteMem(address, 1, (int)*result);
+			break;
+		    }
+		    for (int i = 0; i < n + 1; ++i) {
+			if (!machine->WriteMem(address + i, 1, (int)*(result + i)))
+			    break;
+		    }
+		    break;
+		}
+		case SC_GetInt: {
+		    int addr = machine->ReadRegister(4);
+		    int *n = new int[MAX_INT_DIGITS];
+		    synchconsole->SynchGetInt(n);
+		    machine->WriteMem(addr, 4, *n);
+		    break;
+		}
+		case SC_PutInt: {
+		    synchconsole->SynchPutInt(machine->ReadRegister(4));
+		    break;
+		}
 		    //+b FoxTox 09.01.2016
 //+b simbadSid 10.01.16
 			case SC_UserThreadCreate:
@@ -263,8 +266,9 @@ while(userThreadList->IsInList(threadToJoinTID, NULL)) currentThread->Yield();
 				ASSERT(FALSE);
 			}
 		}
-		UpdatePC();
-    }
-//+e FoxTox 08.01.2016
+	    
+	    UpdatePC();
+	}
+    //+e FoxTox 08.01.2016
 
 }
