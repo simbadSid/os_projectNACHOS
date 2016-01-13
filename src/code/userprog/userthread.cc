@@ -8,9 +8,7 @@
 
 
 
-#define THREAD_NAME_MAX_SIZE	100
-
-int nbrUserThread = 0;
+static int nbrUserThread = 0;
 
 
 
@@ -65,30 +63,30 @@ int nbrUserThread = 0;
 	// - Allocates space of the caller thread stack (according to the need of the function f and the arguments arg).
 	// - Makes the pointer register of caller thread indicate the function f address.
 	// Parameters:
-	//		- func	: Kernel pointer on the function to executed by the new thread
-	//		- arg	: Kernel pointer on the arguments
-	//TODO Return
+	//		* func	: Kernel pointer on the function to executed by the new thread
+	//		* arg	: Kernel pointer on the arguments
+	// Returns:
+	//		* TID of the created thread in case of success (TID > 0)
+	//		* -1 if the new thread stack can not be allocated(only error detected is the lack of memory for the stack allocation)
 	//----------------------------------------------------------------------
 	int do_UserThreadCreate(int func, int arg, int exitFunc)
 	{
 		ThreadCreationParameter *tcp;
-//	char name[THREAD_NAME_MAX_SIZE];
-//		int		tid		= initThreadName(name);
+		char name[THREAD_NAME_MAX_SIZE];
+		int	tid	= initThreadName(name);
 
 // TODO Hack to remove
-int tid = nbrUserThread;
-nbrUserThread ++;
-		int		stack	= -1;
+//nbrUserThread ++;
+//int tid = nbrUserThread;
 		int		newThreadStack	=-1;
-		Thread	*t		= new Thread("Created Thread (name to remove)", tid);
+		Thread	*t				= new Thread(name, tid);
+		int		stack			= -1;
+		int		test;
 
-//	#ifdef USER_PROG
-		machine->ReadMem(machine->ReadRegister(StackReg), sizeof(int), &stack);
-		newThreadStack	= t->UserThreadCreate(stack);
-		// TODO manage the mistke cases
-//	#endif
-
-		if (newThreadStack < 0)	return newThreadStack;
+		machine->ReadMem(machine->ReadRegister(StackReg), sizeof(int), &stack);		// Get the stack pointer of the current thread from the processos (may be != from the one in the object currentThread)
+		test = t->UserThreadCreate(stack, &newThreadStack);							// Allocate space for the new thread stack pointer in the currentThread Address space
+		if (test < 0)	return test;
+		userThreadList->Append(t);
 		tcp = new ThreadCreationParameter((void*)func, (void*)arg, (void*)exitFunc, newThreadStack);
 		t->Fork(StartUserThread, (int)tcp);
 		return tid;
@@ -105,7 +103,6 @@ nbrUserThread ++;
 
 		ASSERT(test);
 		ASSERT(currentThread == thread);
-	    DEBUG ('t', "Exiting the current thread \"%s\"\n", thread->getName());
 // MANAGE the address space of the thread
 		thread->Finish();
 	}
@@ -115,9 +112,10 @@ nbrUserThread ++;
 // ----------------------------------------------------
 	int initThreadName(char *name)
 	{
+		nbrUserThread ++;
 		int tid = nbrUserThread;
 
 		sprintf(name, "User Thread %d", tid);
-		nbrUserThread ++;
 		return tid;
 	}
+

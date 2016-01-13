@@ -49,6 +49,7 @@
 #endif
 
 
+#define THREAD_NAME_MAX_SIZE	100
 #define MachineStateSize 18								// CPU register state to be saved on context switch.
 														// The SPARC and MIPS only need 10 registers, but the Snake needs 18.
 														// For simplicity, this is just the max over all architectures.
@@ -101,7 +102,7 @@ class Thread
     // some of the private data for this class is listed above
     int *stack;											// Bottom of the stack NULL if this is the main thread (If NULL, don't deallocate stack)
     ThreadStatus status;								// ready, running or blocked
-    const char *name;
+    char name[THREAD_NAME_MAX_SIZE];
     int tid;
     void StackAllocate (VoidFunctionPtr func, int arg);	// Allocate a stack for thread. Used internally by Fork()
 
@@ -116,7 +117,7 @@ class Thread
     void SaveUserState ();								// save user-level register state
     void RestoreUserState ();							// restore user-level register state
     // +b FoxTox 10.01.2016
-    int UserThreadCreate(int currentThreadStack);
+    int UserThreadCreate(int currentThreadStack, int *createdThreadStack);
     // +e FoxTox 10.01.2016
    AddrSpace *space;									// User code this thread is running.
 #endif
@@ -132,12 +133,15 @@ class UserThreadList
 {
 	public:
 		UserThreadList();
-		UserThreadList(Thread *THREAD, UserThreadList *NEXT);
-		~UserThreadList();
-		void	Append		(Thread *thread);
-		bool	Remove		(int tid, Thread **thread);
-		bool	IsEmpty		();
-		bool	IsInList	(int tid, Thread **outputThread);
+		UserThreadList(UserThreadList *list);
+		~UserThreadList(){};											// Only free 1 cell.  To free all the memory use FreeAllList
+		void	Append			(Thread *thread);
+		bool	Remove			(int tid, Thread **thread);
+		bool	IsEmpty			();
+		bool	IsInList		(int tid, Thread **outputThread);
+		int		GetNbrThread	();
+		void	DebugPrintList	();
+		void	FreeAllList		();
 
 	private:
 		Thread			*thread;
@@ -145,7 +149,12 @@ class UserThreadList
 
 };
 #endif
-// +e simbadSid 10.01.2016
+
+
+
+
+
+
 
 // Magical machine-dependent routines, defined in switch.s
 

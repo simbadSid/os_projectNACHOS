@@ -20,6 +20,8 @@
 #include "copyright.h"
 #include "thread.h"
 #include "list.h"
+//+ goubetc 12.01.16
+
 
 // The following class defines a "semaphore" whose value is a non-negative
 // integer.  The semaphore has only two operations P() and V():
@@ -48,11 +50,15 @@ class Semaphore
 
     void P ();			// these are the only operations on a semaphore
     void V ();			// they are both *atomic*
-
+    void P_Count ();            // operation for semaphores
+    void Count ();              // that waits while
+    void V_Count ();            // semaphore valure not null (counts number of items)
   private:
     const char *name;		// useful for debugging
+    //+b goubetc 11.01.16
     int value;			// semaphore value, always >= 0
     List *queue;		// threads waiting in P() for the value to be > 0
+    //+e goubetc 11.01.16
 };
 
 // The following class defines a "lock".  A lock can be BUSY or FREE.
@@ -84,10 +90,16 @@ class Lock
     // holds this lock.  Useful for
     // checking in Release, and in
     // Condition variable ops below.
+    //+b FoxTox 13.01.16
+    List *queue;		// threads waiting in P() for the value to be > 0
+    //+e FoxTox 13.01.16
 
   private:
     const char *name;		// for debugging
     // plus some other stuff you'll need to define
+    //+b goubetc 12.01.16
+    bool busy;			// semaphore value, always >= 0
+    //+e goubetc 13.01.16
 };
 
 // The following class defines a "condition variable".  A condition
@@ -130,7 +142,7 @@ class Condition
      ~Condition ();		// deallocate the condition
     const char *getName ()
     {
-	return (name);
+    	return (name);
     }
 
     void Wait (Lock * conditionLock);	// these are the 3 operations on 

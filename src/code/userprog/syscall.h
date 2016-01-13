@@ -37,8 +37,8 @@
 //+b FoxTox 09.01.2016
 #define SC_PutChar			11
 #define SC_GetChar			12
-#define SC_GetString		13
-#define SC_PutString		14
+#define SC_GetString	        	13
+#define SC_PutString		        14
 #define SC_GetInt			15
 #define SC_PutInt			16
 //+e FoxTox 09.01.2016
@@ -188,8 +188,8 @@ int GetCharInt();  //+ TooFo 11012016
 
 //+b simbadSid 10.01.16
 /* UserThreadCreate: Call the system function do_UserThreadCreate to add a thread to current process.
- * Return the Thread identifier (tid) of the created thread.
- * TODO describe the other return values
+ * Returns the Thread identifier (tid) of the created thread (< 0).
+ * Returns -1 in case of error (only error detected is the lack of memory for the stack allocation)
  * Needs to be lunched in user mode.
  */
 int UserThreadCreate(void f(void *arg), void *arg);
@@ -210,7 +210,12 @@ int UserThreadJoin(int tid);
 
 //+e simbadSid 9.01.16
 
-
+//+ b goubetc 10.01.16
+/* UserThreadExit: Call the system function UserThreadExit to exit a thread.
+ * Needs to be lunched in user mode.
+ */
+void UserThreadExit();
+//+ e goubetc 10.01.16
 #endif // IN_USER_MODE
 
 #endif /* SYSCALL_H */

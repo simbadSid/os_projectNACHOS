@@ -24,13 +24,16 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "synch.h" //+ goubetc 11.01.16
+//#include "machine.h"
 #include "userthread.h"
+
 
 
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
-
+// goubetc 11.01.16
 
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
@@ -58,32 +61,32 @@ UpdatePC ()
 //---------------------------------------------------------------------
 size_t copyStringFromMachine( int from, char *to, size_t size)
 {
-	size_t resSize;
-	int kernelStringPtr, userStringPtr = from;
-	int bufferChar;
-	bool test;
+    size_t resSize;
+    int kernelStringPtr, userStringPtr = from;
+    int bufferChar;
+    bool test;
 
-	if (size == 0)
+    if (size == 0)
 	{
-		*to = '\0';
-		return 0;
+	    *to = '\0';
+	    return 0;
 	}
-	for (resSize=0; resSize<size; resSize++)
+    for (resSize=0; resSize<size; resSize++)
 	{
-		kernelStringPtr	= WordToHost(userStringPtr);
-		test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
-		if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
-		*to = (char)bufferChar;
-		if (bufferChar == '\0') break;
-		to++;
-		userStringPtr++;
+	    kernelStringPtr	= WordToHost(userStringPtr);
+	    test			= machine->ReadMem(kernelStringPtr, 1, &bufferChar);
+	    if (!test) return -1;							// Case corrupted address: Exception raised by the machine->Read (dead code)
+	    *to = (char)bufferChar;
+	    if (bufferChar == '\0') break;
+	    to++;
+	    userStringPtr++;
 	}
-	if (resSize == size)								// Case: size char has been read without '\0'
+    if (resSize == size)								// Case: size char has been read without '\0'
 	{
-		*to= '\0';
-		return size;
+	    *to= '\0';
+	    return size;
 	}
-	else	return resSize=1;							// Case: the string is shorter than expected
+    else	return resSize=1;							// Case: the string is shorter than expected
 }
 //+e simbadSid 9.01.16
 
@@ -113,24 +116,28 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 void
 ExceptionHandler (ExceptionType which)
 {
-//+b FoxTox 08.01.2016
-    int type = machine->ReadRegister(2);
-
+    //+b FoxTox 08.01.2016
+    int type = machine->ReadRegister(2);			
+    //Semaphore *threads_alive = new Semaphore("threads_alive", 1);  //+ goubetc 11.01.16
+    Condition *condition = new Condition("Condition variable for alive threads");
+    Lock *listIsNotEmpty = new Lock("Lock variable for alive threads");
     if (which == SyscallException)
-    {
-		switch (type)
+	{
+	    switch (type)
 		{
 			case SC_Halt:
 			{
 				int currentTID = currentThread->getTID();
-				bool test = userThreadList->Remove(currentTID, NULL);
-				ASSERT(test);
-				DEBUG('t', "Shutdown, initiated by user program: name = \"%s\", tid = %d.\n", currentThread->getName(), currentTID);
-				DEBUG('t', "Start wating for the user threads to finish.\n");
-				while(!userThreadList->IsEmpty()) currentThread->Yield();
-				DEBUG('t', "End wating for the user threads.\n");
+				DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n",
+						currentThread->getName(), currentTID);
+				userThreadList->Remove(currentTID, NULL);
+				condition->Signal(listIsNotEmpty);
+				DEBUG('e', "\t->Start wating for the %d user threads to finish.\n", userThreadList->GetNbrThread());
+				while (!userThreadList->IsEmpty()) {
+					condition->Wait(listIsNotEmpty);
+				}
+				DEBUG('e', "\t->End wating for the user threads.\n");
 				interrupt->Halt();
-				delete currentThread;
 				break;
 			}
 			case SC_PutChar: {
@@ -154,6 +161,7 @@ ExceptionHandler (ExceptionType which)
 //+e simbadSid 9.01.16
 			}
 		    //+b FoxTox 09.01.2016
+
 			case SC_GetString: {
 				int n = machine->ReadRegister(4);
 				char *result = new char[n + 1];
@@ -189,54 +197,73 @@ ExceptionHandler (ExceptionType which)
 				synchconsole->SynchPutInt(machine->ReadRegister(4));
 				break;
 			}
-		    //+b FoxTox 09.01.2016
 //+b simbadSid 10.01.16
 			case SC_UserThreadCreate:
 			{
-DEBUG('t', "Exception: user create.\n");
-				int func, arg;
-				ExceptionType eFunc, eArg;
+				DEBUG('e', "Exception: user thread create");
+
+				int func, arg, returnFun;
+				ExceptionType eFunc, eArg, eReturnFun;
 				int	userPtrFunc		= machine->ReadRegister(4);
 				int	userPtrArg		= machine-> ReadRegister(5);
-				int	userPtrExitFunc	= machine-> ReadRegister(6);
+				int	userPtrReturnFun= machine-> ReadRegister(6);
+
+				DEBUG('e', "\t->user space addresses: function: %d, arg: %d, returnAddr: %d.\n", userPtrFunc, userPtrArg, userPtrReturnFun);
+
 				int	kernelPtrFunc	= WordToHost(userPtrFunc);
 				int	kernelPtrArg	= WordToHost(userPtrArg);
-//TODO translate exit function
+				int	kernelPtrReturnFun= WordToHost(userPtrReturnFun);
+// TODO manage the exceptions and print them
 				eFunc				= machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
 				if (eFunc != NoException)														// Case corrupted function address
 				{
 					machine->RaiseException(eFunc, kernelPtrFunc);
-					return;
+					break;
 				}
 				eArg				= machine->Translate(kernelPtrArg, &arg, sizeof(void*), false);
 				if (eArg != NoException)														// Case corrupted argument address
 				{
 					machine->RaiseException(eArg, kernelPtrArg);
-					return;
+					break;
 				}
-//				int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrExitFunc);
-				int res = do_UserThreadCreate(func, arg, userPtrExitFunc);
-				machine->WriteRegister(2, res);													// Write the output of the system call
-				break;
-			}
-			case SC_UserThreadJoin:
-			{
-				Thread *threadToJoin;
-				int		threadToJoinTID	= machine->ReadRegister(4);
-				bool	test			= userThreadList->IsInList(threadToJoinTID, &threadToJoin);
-				if (!test)
+				eReturnFun			= machine->Translate(kernelPtrReturnFun, &returnFun, sizeof(void*), false);
+				if (eReturnFun != NoException)													// Case corrupted argument address
 				{
-					DEBUG('t', "Exception UserThreadJoin: can not find the user thread tid = %d.\n", threadToJoinTID);
-// TODO manage the exception
-					return;
+					machine->RaiseException(eReturnFun, kernelPtrReturnFun);
+					break;
 				}
-				DEBUG('t', "Exception UserThreadJoin: user thread joins tid = %d.\n", threadToJoinTID);
-				while(userThreadList->IsInList(threadToJoinTID, NULL)) currentThread->Yield();
+
+				DEBUG('e', "\t->kernel  space addresses: function: %d, arg: %d, returnAddr: %d.\n", userPtrFunc, userPtrArg, userPtrReturnFun);
+
+				int res = do_UserThreadCreate(func, arg, kernelPtrReturnFun);
+				machine->WriteRegister(2, res);													// Write the output of the system call
 				break;
 			}
 			case SC_UserThreadExit:
 			{
+				DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n", currentThread->getTID(), currentThread->getName());
 				do_UserThreadExit();
+				break;
+			}
+			case SC_UserThreadJoin:
+			{
+				int		threadToJoinTID	= machine->ReadRegister(4);
+				bool	test			= userThreadList->IsInList(threadToJoinTID, NULL);
+
+				DEBUG('e', "Exception: user thread join the thread: tid = %d initiated by user thread: name = \"%s\", tid = %d.\n", threadToJoinTID, currentThread->getName(), currentThread->getTID());
+				if (!test)
+				{
+					DEBUG('e', "\t-> The user thread tid = %d has already exited \n", threadToJoinTID);
+// TODO manage the exception by changing the written return value 0
+					machine->WriteRegister(2, 0);												// Write the output of the system call
+					break;
+				}
+// TODO
+// TODO use cond var to sleep and wake up when userThreadList is empty
+while(userThreadList->IsInList(threadToJoinTID, NULL)) currentThread->Yield();
+// TODO
+				DEBUG('e', "\t-> End of join for the thread tid = %d.\n", threadToJoinTID);
+				machine->WriteRegister(2, 0);													// Write the output of the system call
 				break;
 			}
 //+e simbadSid 10.01.16
@@ -246,8 +273,9 @@ DEBUG('t', "Exception: user create.\n");
 				ASSERT(FALSE);
 			}
 		}
-		UpdatePC();
-    }
-//+e FoxTox 08.01.2016
+	    
+	    UpdatePC();
+	}
+    //+e FoxTox 08.01.2016
 
 }

@@ -18,6 +18,7 @@
 
 
 
+
 // ------------------------------------------
 // Class used to communicate data to the delayed thread management handlers
 // ------------------------------------------
@@ -46,6 +47,7 @@ extern void	do_UserThreadExit	();
 // Auxiliary functions
 // ----------------------------------------------------
 int initThreadName(char *name);
+
 
 
 #endif

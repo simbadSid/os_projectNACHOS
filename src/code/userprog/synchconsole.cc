@@ -5,10 +5,8 @@
 
 
 
-// FoxTox 9.01.16
 // simbadSid 9.01.16
-
-// goubetc 10.01.16
+// goubetc 10.01.16 12.01.16
 // FoxTox 09.01.2016
 
 
@@ -17,8 +15,8 @@
 // -------------------------------------------------------------
 static Semaphore *readAvail;
 static Semaphore *writeDone;
-static Semaphore *reading; //+ goubetc 10.01.16
-static Semaphore *writing; //+ goubetc 10.01.16
+static Lock *reading; //+ goubetc 12.01.16
+static Lock *writing; //+ goubetc 12.01.16
 
 // -------------------------------------------------------------
 // Local static functions
@@ -34,8 +32,8 @@ SynchConsole::SynchConsole(char *readFile, char *writeFile)
     readAvail	= new Semaphore("read avail", 0);
     writeDone	= new Semaphore("write done", 0);
     console		= new Console(readFile, writeFile, ReadAvail, WriteDone, 0	);
-    reading = new Semaphore("reading avail", 1); //+ goubetc 10.01.16
-    writing = new Semaphore("writing avail", 1); //+ goubetc 10.01.16
+    reading = new Lock("reading avail"); //+ goubetc 12.01.16
+    writing = new Lock("writing avail"); //+ goubetc 12.01.16
     //multi thread protaction
 }
 
@@ -51,25 +49,27 @@ SynchConsole::~SynchConsole()
 // -------------------------------------------------------------
 void SynchConsole::SynchPutChar(const char ch)
 {
-    writing->P ();     //+ goubetc 10.01.16
+    writing->Acquire ();     //+ goubetc 12.01.16
     console->PutChar (ch);
     writeDone->P ();
-    writing->V ();    //+ goubetc 10.01.16
+    writing->Release ();    //+ goubetc 12.01.16
 }
 
 char SynchConsole::SynchGetChar()
 {
-    reading->P ();   //+e goubetc 10.01.16
+    reading->Acquire ();   //+ goubetc 12.01.16
+    readAvail->P ();
     console->CheckCharAvail();
-    reading->V ();   //+ goubetc 10.01.16
-    return console->GetChar ();
+    char c = console->GetChar ();
+    reading->Release ();   //+ goubetc 12.01.16
+    return c;
     
 }
 
 //+b simbadSid 9.01.16
 void SynchConsole::SynchPutString(const char s[])
 {
-    writing->P (); //+ goubetc 10.01.16
+    writing->Acquire (); //+ goubetc 12.01.16
     ASSERT(s != NULL);
     if (s[0] == '\0') return;							// Case empty string
     
@@ -79,7 +79,7 @@ void SynchConsole::SynchPutString(const char s[])
 	    console->PutChar (s[i]);
 	    writeDone->P (); 
 	}
-    writing->V (); //+ goubetc 10.01.16
+    writing->Release (); //+ goubetc 12.01.16
 }
 //+e simbadSid 9.01.16
 
@@ -88,7 +88,7 @@ void SynchConsole::SynchPutString(const char s[])
 
 void SynchConsole::SynchGetString(char *s, int n)
 {
-    reading->P (); //+ goubetc 10.01.16
+    reading->Acquire (); //+ goubetc 12.01.16
     char c;
     size_t i;
 
@@ -104,7 +104,7 @@ void SynchConsole::SynchGetString(char *s, int n)
     *(s + i + 1) = 0;
     if (i == 0 || c == EOF)
     	*s = EOF;
-    reading->V (); //+ goubetc 10.01.16
+    reading->Release (); //+ goubetc 12.01.16
 }
 
 //+e FoxTox 9.01.16
