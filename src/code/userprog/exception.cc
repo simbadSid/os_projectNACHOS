@@ -119,6 +119,8 @@ ExceptionHandler (ExceptionType which)
     //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);			
     //Semaphore *threads_alive = new Semaphore("threads_alive", 1);  //+ goubetc 11.01.16
+    Condition *condition = new Condition("Condition variable for alive threads");
+    Lock *listIsNotEmpty = new Lock("Lock variable for alive threads");
     if (which == SyscallException)
 	{
 	    switch (type)
@@ -126,15 +128,14 @@ ExceptionHandler (ExceptionType which)
 			case SC_Halt:
 			{
 				int currentTID = currentThread->getTID();
-				DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n", currentThread->getName(), currentTID);
-				bool test = userThreadList->Remove(currentTID, NULL);
-				ASSERT(test);
+				DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n",
+						currentThread->getName(), currentTID);
+				userThreadList->Remove(currentTID, NULL);
+				condition->Signal(listIsNotEmpty);
 				DEBUG('e', "\t->Start wating for the %d user threads to finish.\n", userThreadList->GetNbrThread());
-
-// TODO
-// TODO use cond var to sleep and wake up when userThreadList is empty
-while(!userThreadList->IsEmpty())  currentThread->Yield();
-// TODO
+				while (!userThreadList->IsEmpty()) {
+					condition->Wait(listIsNotEmpty);
+				}
 				DEBUG('e', "\t->End wating for the user threads.\n");
 				interrupt->Halt();
 				delete currentThread;

@@ -446,11 +446,13 @@ int Thread::UserThreadCreate(int currentThreadStack, int *createdThreadStack)
 		this->thread= NULL;
 		this->next	= NULL;
 	}
+
 	UserThreadList::UserThreadList(UserThreadList *list)
 	{
 		this->thread= list->thread;
 		this->next	= list->next;
 	}
+
 	void UserThreadList::Append(Thread *THREAD)
 	{
 		if (this->thread == NULL)										// Case: empty list
@@ -464,6 +466,7 @@ int Thread::UserThreadCreate(int currentThreadStack, int *createdThreadStack)
 		this->thread	= THREAD;
 		this->next		= NEXT;
 	}
+
 	// ------------------------------------------------
 	// Looks for the thread tid in the list.
 	// If the thread is found, true is returned and the thread is put in the thread parameter (can be NULL).
@@ -489,6 +492,7 @@ int Thread::UserThreadCreate(int currentThreadStack, int *createdThreadStack)
 		if (this->next == NULL)	return false;									// Case: end of list reached
 		else					return this->next->Remove(TID, THREAD);
 	}
+
 	bool UserThreadList::IsEmpty()
 	{
 		return (this->thread == NULL);
@@ -509,12 +513,14 @@ int Thread::UserThreadCreate(int currentThreadStack, int *createdThreadStack)
 		if (this->next == NULL)	return false;
 		else					return this->next->IsInList(TID, outputThread);
 	}
+
 	int UserThreadList::GetNbrThread()
 	{
 		if (this->thread== NULL)	return 0;										// Case empty list
 		if (this->next	== NULL)	return 1;
 		else						return 1 + this->next->GetNbrThread();
 	}
+
 	void UserThreadList::DebugPrintList()
 	{
 		if (this->thread == NULL)
@@ -525,6 +531,7 @@ int Thread::UserThreadCreate(int currentThreadStack, int *createdThreadStack)
 		DEBUG ('t', "\tThread \"%s\", tid = %d\n", this->thread->getName (), this->thread->getTID());
 	    if (this->next != NULL) this->next->DebugPrintList();
 	}
+
 	void UserThreadList::FreeAllList()
 	{
 		if (this->next == NULL) return;
