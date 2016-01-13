@@ -37,11 +37,12 @@
 
 Thread::Thread (const char *threadName, int threadID)
 {
-	name		= threadName;
 	tid			= threadID;
 	stackTop	= NULL;
 	stack		= NULL;
 	status		= JUST_CREATED;
+	sprintf(name, "%s", threadName);
+
 #ifdef USER_PROGRAM
 	this->space = NULL;
 	// FBT: Need to initialize special registers of simulator to 0
@@ -69,8 +70,7 @@ Thread::~Thread ()
     DEBUG ('t', "Deleting thread \"%s\"\n", name);
 
     ASSERT (this != currentThread);
-    if (stack != NULL)
-	DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+    if (stack != NULL)DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
 }
 
 //----------------------------------------------------------------------

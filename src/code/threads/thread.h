@@ -49,6 +49,7 @@
 #endif
 
 
+#define THREAD_NAME_MAX_SIZE	100
 #define MachineStateSize 18								// CPU register state to be saved on context switch.
 														// The SPARC and MIPS only need 10 registers, but the Snake needs 18.
 														// For simplicity, this is just the max over all architectures.
@@ -101,7 +102,7 @@ class Thread
     // some of the private data for this class is listed above
     int *stack;											// Bottom of the stack NULL if this is the main thread (If NULL, don't deallocate stack)
     ThreadStatus status;								// ready, running or blocked
-    const char *name;
+    char name[THREAD_NAME_MAX_SIZE];
     int tid;
     void StackAllocate (VoidFunctionPtr func, int arg);	// Allocate a stack for thread. Used internally by Fork()
 
@@ -148,7 +149,6 @@ class UserThreadList
 
 };
 #endif
-// +e simbadSid 10.01.2016
 
 
 

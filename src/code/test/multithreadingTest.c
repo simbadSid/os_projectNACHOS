@@ -72,11 +72,17 @@ void threadFunction3(void *arg)
 	str = "\n\0";
 	PutString(str, strlen(str));
 }
+void threadFunctionJoin(void *arg)
+{
+	int	tid = *((int*) arg);
+	UserThreadJoin(tid);
+
+}
 
 // -------------------------------------
-// Main function
+// Function to test a specific part of the code
 // -------------------------------------
-int main ()
+void testCreation()
 {
 	int arg2[] = {34};
 
@@ -91,6 +97,24 @@ int main ()
 	UserThreadJoin(tid1);
 	UserThreadJoin(tid2);
 //	UserThreadJoin(tid3);
+}
+void testJoin()
+{
+	int arg0[]	= {57, (int)'c'};
+	int tid0	= UserThreadCreate(threadFunction3,		(void*)arg0);
+	int arg1[]	= {tid0};
+	int tid1	= UserThreadCreate(threadFunctionJoin,	(void*)arg1);
+
+	UserThreadJoin(tid1);
+
+}
+// -------------------------------------
+// Main function
+// -------------------------------------
+int main ()
+{
+	testCreation();
+//		testJoin();
 
 	Halt ();
 

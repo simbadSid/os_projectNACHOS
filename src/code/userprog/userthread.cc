@@ -6,7 +6,7 @@
  */
 #include "userthread.h"
 
-#define THREAD_NAME_MAX_SIZE	100
+
 
 static int nbrUserThread = 0;
 
@@ -72,14 +72,14 @@ static int nbrUserThread = 0;
 	int do_UserThreadCreate(int func, int arg, int exitFunc)
 	{
 		ThreadCreationParameter *tcp;
-//	char name[THREAD_NAME_MAX_SIZE];
-//		int		tid		= initThreadName(name);
+		char name[THREAD_NAME_MAX_SIZE];
+		int	tid	= initThreadName(name);
 
 // TODO Hack to remove
-nbrUserThread ++;
-int tid = nbrUserThread;
+//nbrUserThread ++;
+//int tid = nbrUserThread;
 		int		newThreadStack	=-1;
-		Thread	*t				= new Thread("Created Thread (name to remove)", tid);
+		Thread	*t				= new Thread(name, tid);
 		int		stack			= -1;
 		int		test;
 
