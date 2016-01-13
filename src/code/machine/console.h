@@ -27,6 +27,7 @@
 #include "utility.h"
 
 
+
 // The following class defines a hardware console device.
 // Input and output to the device is simulated by reading 
 // and writing to UNIX files ("readFile" and "writeFile").
@@ -51,6 +52,9 @@ class Console {
 									// available, return it.  Otherwise, return EOF.
     								// "readHandler" is called whenever there is
 									// a char to be gotten
+    bool feof();					//+ TooFo 11012016
+    int GetCharInt();	 			//+ TooFo 11012016
+    void CheckCharIntAvail();    	//+ TooFo 11012016
 
 // internal emulation routines -- DO NOT call these. 
     void WriteDone();	 			// internal routines to signal I/O completion
@@ -70,6 +74,7 @@ class Console {
     char incoming;					// Contains the character to be read,
 									// if there is one available.
 									// Otherwise contains EOF.
+    int incomingInt;
 
 };
 
