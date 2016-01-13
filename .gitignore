@@ -10,3 +10,5 @@ src/code/TAGS
 
 src/code/#*#
 src/code/*/#*#
+src/code/*~
+src/code/*/*~
