@@ -33,7 +33,7 @@
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
-// goubetc 11.01.16
+// goubetc 11.01.16 13.01.16
 
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
@@ -118,9 +118,6 @@ ExceptionHandler (ExceptionType which)
 {
     //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);			
-    //Semaphore *threads_alive = new Semaphore("threads_alive", 1);  //+ goubetc 11.01.16
-    Condition *condition = new Condition("Condition variable for alive threads");
-    Lock *listIsNotEmpty = new Lock("Lock variable for alive threads");
     if (which == SyscallException)
 	{
 	    switch (type)
