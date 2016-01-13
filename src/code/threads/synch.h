@@ -90,13 +90,15 @@ class Lock
     // holds this lock.  Useful for
     // checking in Release, and in
     // Condition variable ops below.
+    //+b FoxTox 13.01.16
+    List *queue;		// threads waiting in P() for the value to be > 0
+    //+e FoxTox 13.01.16
 
   private:
     const char *name;		// for debugging
     // plus some other stuff you'll need to define
     //+b goubetc 12.01.16
     bool busy;			// semaphore value, always >= 0
-    List *queue;		// threads waiting in P() for the value to be > 0
     //+e goubetc 13.01.16
 };
 
@@ -140,7 +142,7 @@ class Condition
      ~Condition ();		// deallocate the condition
     const char *getName ()
     {
-	return (name);
+    	return (name);
     }
 
     void Wait (Lock * conditionLock);	// these are the 3 operations on 

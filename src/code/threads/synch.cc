@@ -24,7 +24,10 @@
 #include "copyright.h"
 #include "synch.h"
 #include "system.h"
+
 //+ goubetc 12.01.16
+//+ FoxTox 13.01.2015
+
 
 //----------------------------------------------------------------------
 // Semaphore::Semaphore
@@ -200,8 +203,11 @@ Lock::Release ()
     (void) interrupt->SetLevel (oldLevel);
 }
 
+
+// +b FoxTox 13.01.2015
 Condition::Condition (const char *debugName)
 {
+	name = debugName;
 }
 
 Condition::~Condition ()
@@ -210,14 +216,22 @@ Condition::~Condition ()
 void
 Condition::Wait (Lock * conditionLock)
 {
-    ASSERT (FALSE);
+	conditionLock->Acquire();
 }
 
 void
 Condition::Signal (Lock * conditionLock)
 {
+	conditionLock->Release();
 }
+
 void
 Condition::Broadcast (Lock * conditionLock)
 {
+	IntStatus oldLevel = interrupt->SetLevel (IntOff);
+	while (!conditionLock->queue->IsEmpty()) {
+		scheduler->ReadyToRun((Thread *)conditionLock->queue->Remove ());
+	}
+    (void) interrupt->SetLevel (oldLevel);
 }
+// +e FoxTox 13.01.2015
