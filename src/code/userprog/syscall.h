@@ -186,8 +186,8 @@ void PutInt(int n);
 
 //+b simbadSid 10.01.16
 /* UserThreadCreate: Call the system function do_UserThreadCreate to add a thread to current process.
- * Return the Thread identifier (tid) of the created thread.
- * TODO describe the other return values
+ * Returns the Thread identifier (tid) of the created thread (< 0).
+ * Returns -1 in case of error (only error detected is the lack of memory for the stack allocation)
  * Needs to be lunched in user mode.
  */
 int UserThreadCreate(void f(void *arg), void *arg);
