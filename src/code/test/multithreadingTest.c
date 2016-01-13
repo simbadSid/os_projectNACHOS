@@ -54,6 +54,7 @@ void threadFunction2(void *arg)
 	char *str = "\tFunction 2: Simple thread function with 1 int parameter: \0";
 
 	PutString(str, strlen(str));
+	//arg1 = strlen(str);
 	PutInt(arg1);
 	str = "\n\0";
 	PutString(str, strlen(str));
@@ -62,12 +63,13 @@ void threadFunction3(void *arg)
 {
 	int		arg1 = *((int*) arg);
 	int		arg2 = *((int*) arg+1);
-	char	*str = "\tFunction 2: Simple thread function with an int parameter: \0";
+	char	*str = "\tFunction 3: Simple thread function with an int parameter: \0";
 
 	PutString(str, strlen(str));
 	PutInt(arg1);
 	str = " and a char parameter: \0";
 	PutString(str, strlen(str));
+	//PutInt(strlen(str));
 	PutChar((char)arg2);
 	str = "\n\0";
 	PutString(str, strlen(str));
