@@ -27,6 +27,7 @@ int strlen(char *str)
 	}
 	return res;
 }
+
 // -------------------------------------
 // Handler of the thread creation
 // -------------------------------------
@@ -86,7 +87,7 @@ void testCreation()
 {
 	int arg2[] = {34};
 
-	//	int arg3[] = {57, (int)'c'};
+//	int arg3[] = {57, (int)'c'};
 
 	int tid0 = UserThreadCreate(threadFunction0, 0);
 	int tid1 = UserThreadCreate(threadFunction1, 0);
@@ -111,10 +112,11 @@ void testJoin()
 // -------------------------------------
 // Main function
 // -------------------------------------
-int main ()
+int main (int argc, char **argv)
 {
 	testCreation();
-//		testJoin();
+//	testJoin();
+
 
 	Halt ();
 

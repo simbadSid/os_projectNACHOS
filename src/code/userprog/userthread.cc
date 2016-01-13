@@ -103,7 +103,8 @@ static int nbrUserThread = 0;
 
 		ASSERT(test);
 		ASSERT(currentThread == thread);
-// MANAGE the address space of the thread
+// TODO MANAGE the address space of the thread
+// TODO to check: do nothink
 		thread->Finish();
 	}
 
