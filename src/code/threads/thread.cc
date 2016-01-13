@@ -411,23 +411,23 @@ Thread::RestoreUserState ()
 //----------------------------------------------------------------------
 // - Initialize the memory space of the caller thread using the memory space of the current thread.
 // - Allocates space of the caller thread stack (according to the need of the function f and the arguments arg).
-// - Makes the pointer register of caller thread indicate the function f address.
 // Parameters:
-//		- func	: Kernel pointer on the function to executed by the new thread
-//		- arg	: Kernel pointer on the arguments
+//		- currentThreadStck	: input	: kernel pointer on the current thread stack pointer (value in the processor register: may be != from the value contained in the object currentThread)
+//		- createdThreadStack: output: return the kernel pointer on the stack pointer of the created thread
 //TODO Return
 // Return the stack pointer of the new stack in case of success
 //----------------------------------------------------------------------
-int Thread::UserThreadCreate(int currentThreadStack)
+int Thread::UserThreadCreate(int currentThreadStack, int *createdThreadStack)
 {
-	userThreadList->Append(this);
 //TODO CHANGE THE 3 by a macros
-	this->stack	= (int*)currentThreadStack + PageSize * 3;						// Distinguish the new thread stack from the current thread stack
+//TODO check the stack is in the address space
+	this->stack	= (int*)currentThreadStack + PageSize * 4;						// Distinguish the new thread stack from the current thread stack
 	this->space	= (AddrSpace*)currentThread->space;
 
 	currentThread->space->SaveState();
 
-	return (int)this->stack;
+	*createdThreadStack = (int)this->stack;
+	return 0;
 }
 
 // +e FoxTox 10.01.2015
@@ -446,14 +446,10 @@ int Thread::UserThreadCreate(int currentThreadStack)
 		this->thread= NULL;
 		this->next	= NULL;
 	}
-	UserThreadList::UserThreadList(Thread *THREAD, UserThreadList *NEXT)
+	UserThreadList::UserThreadList(UserThreadList *list)
 	{
-		this->thread= THREAD;
-		this->next	= NEXT;
-	}
-	UserThreadList::~UserThreadList()
-	{
-		if (this->next != NULL) delete this->next;
+		this->thread= list->thread;
+		this->next	= list->next;
 	}
 	void UserThreadList::Append(Thread *THREAD)
 	{
@@ -463,9 +459,8 @@ int Thread::UserThreadCreate(int currentThreadStack)
 			this->next		= NULL;
 			return;
 		}
-		UserThreadList *NEXT;
-
-		NEXT = new UserThreadList(this->thread, this->next);
+		UserThreadList *NEXT;											// Case else: add the new at the beginning of the list
+		NEXT			= new UserThreadList(this);
 		this->thread	= THREAD;
 		this->next		= NEXT;
 	}
@@ -479,16 +474,16 @@ int Thread::UserThreadCreate(int currentThreadStack)
 		if (this->thread			== NULL) return false;						// Case: empty list
 		if (this->thread->getTID()	== TID)										// Case: thread found
 		{
-			if (THREAD != NULL) *THREAD = this->thread;
-			if (this->next != NULL)
+			if (THREAD != NULL) *THREAD = this->thread;							//		Write the found thread in the output parameter
+			if (this->next != NULL)												//		Case: the list contains more than 1 element
 			{
-				UserThreadList *tmpNext	= this->next;
+				UserThreadList *tmpNext;
+				tmpNext			= this->next;
 				this->thread	= this->next->thread;
 				this->next		= this->next->next;
 				delete tmpNext;
 			}
-			else
-				this->thread 	= NULL;
+			else this->thread 	= NULL;
 			return true;
 		}
 		if (this->next == NULL)	return false;									// Case: end of list reached
@@ -514,6 +509,29 @@ int Thread::UserThreadCreate(int currentThreadStack)
 		if (this->next == NULL)	return false;
 		else					return this->next->IsInList(TID, outputThread);
 	}
+	int UserThreadList::GetNbrThread()
+	{
+		if (this->thread== NULL)	return 0;										// Case empty list
+		if (this->next	== NULL)	return 1;
+		else						return 1 + this->next->GetNbrThread();
+	}
+	void UserThreadList::DebugPrintList()
+	{
+		if (this->thread == NULL)
+		{
+			DEBUG ('t', "\t(Empty list)\n");
+			return;
+		}
+		DEBUG ('t', "\tThread \"%s\", tid = %d\n", this->thread->getName (), this->thread->getTID());
+	    if (this->next != NULL) this->next->DebugPrintList();
+	}
+	void UserThreadList::FreeAllList()
+	{
+		if (this->next == NULL) return;
+		this->next->FreeAllList();
+		delete this->next;
+	}
+
 #endif
 // +e simbadSid 10.01.2016
 

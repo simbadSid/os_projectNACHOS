@@ -116,7 +116,7 @@ class Thread
     void SaveUserState ();								// save user-level register state
     void RestoreUserState ();							// restore user-level register state
     // +b FoxTox 10.01.2016
-    int UserThreadCreate(int currentThreadStack);
+    int UserThreadCreate(int currentThreadStack, int *createdThreadStack);
     // +e FoxTox 10.01.2016
    AddrSpace *space;									// User code this thread is running.
 #endif
@@ -132,12 +132,15 @@ class UserThreadList
 {
 	public:
 		UserThreadList();
-		UserThreadList(Thread *THREAD, UserThreadList *NEXT);
-		~UserThreadList();
-		void	Append		(Thread *thread);
-		bool	Remove		(int tid, Thread **thread);
-		bool	IsEmpty		();
-		bool	IsInList	(int tid, Thread **outputThread);
+		UserThreadList(UserThreadList *list);
+		~UserThreadList(){};											// Only free 1 cell.  To free all the memory use FreeAllList
+		void	Append			(Thread *thread);
+		bool	Remove			(int tid, Thread **thread);
+		bool	IsEmpty			();
+		bool	IsInList		(int tid, Thread **outputThread);
+		int		GetNbrThread	();
+		void	DebugPrintList	();
+		void	FreeAllList		();
 
 	private:
 		Thread			*thread;
@@ -146,6 +149,12 @@ class UserThreadList
 };
 #endif
 // +e simbadSid 10.01.2016
+
+
+
+
+
+
 
 // Magical machine-dependent routines, defined in switch.s
 
