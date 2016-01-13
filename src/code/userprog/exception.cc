@@ -137,7 +137,6 @@ while(!userThreadList->IsEmpty())  currentThread->Yield();
 // TODO
 				DEBUG('e', "\t->End wating for the user threads.\n");
 				interrupt->Halt();
-				delete currentThread;
 				break;
 			}
 			case SC_PutChar: {
@@ -226,15 +225,13 @@ while(!userThreadList->IsEmpty())  currentThread->Yield();
 
 				DEBUG('e', "\t->kernel  space addresses: function: %d, arg: %d, returnAddr: %d.\n", userPtrFunc, userPtrArg, userPtrReturnFun);
 
-//				int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrExitFunc);
 				int res = do_UserThreadCreate(func, arg, kernelPtrReturnFun);
 				machine->WriteRegister(2, res);													// Write the output of the system call
-// TODO manage the exceptions
 				break;
 			}
 			case SC_UserThreadExit:
 			{
-				DEBUG('e', "Exception: user thread exit initiated by user thread: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID());
+				DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n", currentThread->getTID(), currentThread->getName());
 				do_UserThreadExit();
 				break;
 			}

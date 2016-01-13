@@ -37,11 +37,12 @@
 
 Thread::Thread (const char *threadName, int threadID)
 {
-	name		= threadName;
 	tid			= threadID;
 	stackTop	= NULL;
 	stack		= NULL;
 	status		= JUST_CREATED;
+	sprintf(name, "%s", threadName);
+
 #ifdef USER_PROGRAM
 	this->space = NULL;
 	// FBT: Need to initialize special registers of simulator to 0
@@ -69,8 +70,7 @@ Thread::~Thread ()
     DEBUG ('t', "Deleting thread \"%s\"\n", name);
 
     ASSERT (this != currentThread);
-    if (stack != NULL)
-	DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+    if (stack != NULL)DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
 }
 
 //----------------------------------------------------------------------
@@ -414,8 +414,9 @@ Thread::RestoreUserState ()
 // Parameters:
 //		- currentThreadStck	: input	: kernel pointer on the current thread stack pointer (value in the processor register: may be != from the value contained in the object currentThread)
 //		- createdThreadStack: output: return the kernel pointer on the stack pointer of the created thread
-//TODO Return
-// Return the stack pointer of the new stack in case of success
+// Return
+//		* 0 in case of success
+//		* -1 if the new thread stack can not be allocated(only error detected is the lack of memory for the stack allocation)
 //----------------------------------------------------------------------
 int Thread::UserThreadCreate(int currentThreadStack, int *createdThreadStack)
 {
