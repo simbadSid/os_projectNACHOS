@@ -72,7 +72,7 @@ void SynchConsole::SynchPutString(const char s[])
     writing->Acquire (); //+ goubetc 12.01.16
     ASSERT(s != NULL);
     if (s[0] == '\0') return;							// Case empty string
-    
+    DEBUG('c', "thread wrighting string: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
     size_t i;
     for (i=0; s[i] != '\0'; i++)
 	{
@@ -91,7 +91,7 @@ void SynchConsole::SynchGetString(char *s, int n)
     reading->Acquire (); //+ goubetc 12.01.16
     char c;
     size_t i;
-
+    
     for (i=0; i<(size_t)n; ++i)
 	{
 	    readAvail->P ();

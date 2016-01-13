@@ -101,10 +101,16 @@ static int nbrUserThread = 0;
 		int		tid	= currentThread->getTID();
 		bool	test= userThreadList->Remove(tid, &thread);
 
+		//+b goubetc 13.01.16			
+		variableCondition->Signal(haltCondition);
+		variableCondition->Broadcast(joinCondition);
+		//+e goubetc
+
 		ASSERT(test);
 		ASSERT(currentThread == thread);
 // MANAGE the address space of the thread
 		thread->Finish();
+			
 	}
 
 // ----------------------------------------------------

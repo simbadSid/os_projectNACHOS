@@ -8,10 +8,11 @@
 
 #include "copyright.h"
 #include "system.h"
+#include "synch.h"
 
 // FoxTox 08.01.2016
 // simbadSid 10.01.2016
-
+// goubetc 13.01.2016
 
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
@@ -40,6 +41,11 @@ SynchConsole *synchconsole; // synchronised console
 // +b simbadSid 10.01.2016
 UserThreadList	*userThreadList;
 // +e simbadSid 10.01.2016
+//+b goubetc 13.01.16
+Lock *joinCondition; 
+Lock *haltCondition;
+Condition *variableCondition;
+//+e goubetc 13.01.16
 #endif
 
 #ifdef NETWORK
@@ -167,8 +173,13 @@ Initialize (int argc, char **argv)
 
 #ifdef USER_PROGRAM
     machine			= new Machine (debugUserProg);				// this must come first
-	synchconsole	= new SynchConsole(NULL, NULL);
-	userThreadList	= new UserThreadList();
+    synchconsole	= new SynchConsole(NULL, NULL);
+    //+b goubetc 13.01.16
+    joinCondition = new Lock("joinCondition");  
+    haltCondition = new Lock("haltCondition");
+    variableCondition = new Condition("Condition variable"); 
+    //+e goubetc 13.01.16
+    userThreadList	= new UserThreadList();
     userThreadList->Append(currentThread);
 #endif
 
