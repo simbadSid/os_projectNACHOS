@@ -236,6 +236,7 @@ void
 Condition::Broadcast (Lock * conditionLock)
 {
 	IntStatus oldLevel = interrupt->SetLevel (IntOff);
+	conditionLock->Release();
 	while (!conditionLock->queue->IsEmpty()) {
 		scheduler->ReadyToRun((Thread *)conditionLock->queue->Remove ());
 	}
