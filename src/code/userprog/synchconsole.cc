@@ -88,7 +88,6 @@ void SynchConsole::SynchPutString(const char s[])
 
 void SynchConsole::SynchGetString(char *s, int n)
 {
-    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     reading->Acquire (); //+ goubetc 12.01.16
     char c;
     size_t i;
@@ -106,7 +105,6 @@ void SynchConsole::SynchGetString(char *s, int n)
     if (i == 0 || c == EOF)
     	*s = EOF;
     reading->Release (); //+ goubetc 12.01.16
-    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
 }
 
 //+e FoxTox 9.01.16
