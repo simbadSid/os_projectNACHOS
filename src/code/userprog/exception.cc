@@ -172,6 +172,7 @@ ExceptionHandler (ExceptionType which)
 
 			//+b TooFo 11012016
 			case SC_GetCharInt: {
+				synchconsole->SynchPutString("came to exception!");
 				synchconsole->SynchGetCharInt();
 				break;
 			}

@@ -58,7 +58,7 @@ Console::Console(char *readFile, char *writeFile, VoidFunctionPtr readAvail,
     handlerArg		= callArg;
     putBusy			= FALSE;
     incoming		= EOF;
-    incomingInt		= EOF;
+    incomingInt		= intEOF;
 
     interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime, ConsoleReadInt);// start polling for incoming packets
 }
@@ -178,7 +178,7 @@ Console::CheckCharIntAvail()
     // schedule the next time to poll for a packet
     interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime,
 			ConsoleReadInt);
-
+//    PutChar((char)incomingInt);
     // do nothing if character is already buffered, or none to be read
     if (incomingInt != intEOF || !PollFile(readFileNo) )
 	return;

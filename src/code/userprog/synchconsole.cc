@@ -133,5 +133,24 @@ int SynchConsole::SynchGetCharInt()
     console->CheckCharIntAvail();
     return (int)console->GetCharInt ();
     reading->V ();   //+ goubetc 10.01.16
+
+    /*reading->P (); //+ goubetc 10.01.16
+    char c;
+    size_t i;
+
+    for (i=0; i<(size_t)n; ++i)
+	{
+	    readAvail->P ();
+	    if ((c = console->GetChar()) == EOF)
+	    	break;
+	    *(s + i) = c;
+	    if (c == '\n')
+	    	break;
+	}
+    *(s + i + 1) = 0;
+    if (i == 0 || c == EOF)
+    	*s = EOF;
+    reading->V (); //+ goubetc 10.01.16
+    return (int)c; */
 }
 //+e TooFo 11012016
