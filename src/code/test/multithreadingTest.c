@@ -51,7 +51,7 @@ void threadFunction1(void *arg)
 void threadFunction2(void *arg)
 {
 	int arg1 = *((int*) arg);
-	char *str = "\tFunction 2: Simple thread function with 1 int parameter: \0";
+	char *str = "\tFunction 2: Simple thread function with int parameter: \0";
 
 	PutString(str, strlen(str));
 	//arg1 = strlen(str);

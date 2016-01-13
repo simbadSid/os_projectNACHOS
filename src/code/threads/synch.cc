@@ -209,13 +209,6 @@ Lock::Release ()
     busy = false;
     (void) interrupt->SetLevel (oldLevel);
 }
-//+b goubetc 13.01.16
-void
-Lock::SetBusy ()
-{
-    busy = true;
-}
-//+e goubetc 13.01.16
  
 //+b FoxTox 13.01.2015
 Condition::Condition (const char *debugName)
@@ -231,7 +224,6 @@ void
 Condition::Wait (Lock * conditionLock)
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
-    conditionLock->SetBusy(); //+ goubetc 13.01.16
     conditionLock->Acquire();
     (void) interrupt->SetLevel (oldLevel);
 }
@@ -246,7 +238,7 @@ void
 Condition::Broadcast (Lock * conditionLock)
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
-    conditionLock->Release();
+    conditionLock->Release(); //+ goubetc 13.01.16
     while (!conditionLock->queue->IsEmpty()) {
 	scheduler->ReadyToRun((Thread *)conditionLock->queue->Remove ());
     }
