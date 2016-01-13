@@ -24,7 +24,7 @@
 #include "copyright.h"
 #include "synch.h"
 #include "system.h"
-//+ goubetc 12.01.16
+//+ goubetc 12.01.16 13.01.16
 
 //----------------------------------------------------------------------
 // Semaphore::Semaphore
@@ -68,6 +68,7 @@ Semaphore::P ()
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     while (value == 0)
       {				// semaphore not available
+	  DEBUG('s', "Semaphore: Semaphore value null, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
 	  queue->Append ((void *) currentThread);	// so go to sleep
 	  currentThread->Sleep ();
       }
@@ -92,8 +93,12 @@ Semaphore::V ()
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
 
     thread = (Thread *) queue->Remove ();
-    if (thread != NULL)		// make thread ready, consuming the V immediately
+    if (thread != NULL){		// make thread ready, consuming the V immediately
 	scheduler->ReadyToRun (thread);
+	DEBUG('s', "Semaphore: Semaphore value++ (%d), waking up thread: name = \"%s\", tid = %d.\n", value, thread->getName(), thread->getTID()); //+ goubetc 13.01.16
+    } else {
+	DEBUG('s', "Semaphore: Semaphore value++ by name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
+    }
     value++;
     (void) interrupt->SetLevel (oldLevel);
 }
@@ -178,6 +183,7 @@ Lock::Acquire ()
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     while (busy)
       {				// semaphore not available
+	  DEBUG('s', "Lock: Lock busy, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
 	  queue->Append ((void *) currentThread);	// so go to sleep
 	  currentThread->Sleep ();
       }
@@ -194,8 +200,10 @@ Lock::Release ()
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
 
     thread = (Thread *) queue->Remove ();
-    if (thread != NULL)		// make thread ready, consuming the V immediately
+    if (thread != NULL){		// make thread ready, consuming the V immediately
 	scheduler->ReadyToRun (thread);
+	DEBUG('s', "Lock: Lock free, waking up thread: name = \"%s\", tid = %d.\n", thread->getName(), thread->getTID()); //+ goubetc 13.01.16
+    }
     busy = false;
     (void) interrupt->SetLevel (oldLevel);
 }
