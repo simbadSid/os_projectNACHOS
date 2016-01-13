@@ -119,6 +119,8 @@ ExceptionHandler (ExceptionType which)
     //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);			
     //Semaphore *threads_alive = new Semaphore("threads_alive", 1);  //+ goubetc 11.01.16
+    Condition *condition = new Condition("Condition variable for alive threads");
+    Lock *listIsNotEmpty = new Lock("Lock variable for alive threads");
     if (which == SyscallException)
 	{
 	    switch (type)
@@ -126,10 +128,11 @@ ExceptionHandler (ExceptionType which)
 		case SC_Halt:
 		    {
 			int currentTID = currentThread->getTID();
-			DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n", currentThread->getName(), currentTID);
-			bool test = userThreadList->Remove(currentTID, NULL);
-			// ASSERT(test);
-			DEBUG('e', "\t->Start wating for the %d user threads to finish.\n", userThreadList->GetNbrThread());
+			DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n",
+			      currentThread->getName(), currentTID);
+			userThreadList->Remove(currentTID, NULL);
+			DEBUG('e', "\t->Start wating for the %d user threads to finish.\n",
+			      userThreadList->GetNbrThread());
 
 			while(!userThreadList->IsEmpty())  variableCondition->Wait(haltCondition);
 			DEBUG('e', "\t->End wating for the user threads.\n");
@@ -202,36 +205,33 @@ ExceptionHandler (ExceptionType which)
 			int	kernelPtrReturnFun= WordToHost(userPtrReturnFun);
 			// TODO manage the exceptions and print them
 			eFunc				= machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
-			if (eFunc != NoException)														// Case corrupted function address
-			    {
-				machine->RaiseException(eFunc, kernelPtrFunc);
-				break;
-			    }
+			if (eFunc != NoException){						// Case corrupted function address
+			    machine->RaiseException(eFunc, kernelPtrFunc);
+			    break;
+			}
 			eArg				= machine->Translate(kernelPtrArg, &arg, sizeof(void*), false);
-			if (eArg != NoException)														// Case corrupted argument address
-			    {
-				machine->RaiseException(eArg, kernelPtrArg);
-				break;
-			    }
+			if (eArg != NoException){		// Case corrupted argument address
+			    machine->RaiseException(eArg, kernelPtrArg);
+			    break;
+			}
 			eReturnFun			= machine->Translate(kernelPtrReturnFun, &returnFun, sizeof(void*), false);
-			if (eReturnFun != NoException)													// Case corrupted argument address
-			    {
-				machine->RaiseException(eReturnFun, kernelPtrReturnFun);
-				break;
-			    }
+			if (eReturnFun != NoException){		// Case corrupted argument address
+			    machine->RaiseException(eReturnFun, kernelPtrReturnFun);
+			    break;
+			}
 
-			DEBUG('e', "\t->kernel  space addresses: function: %d, arg: %d, returnAddr: %d.\n", userPtrFunc, userPtrArg, userPtrReturnFun);
+			DEBUG('e', "\t->kernel  space addresses: function: %d, arg: %d, returnAddr: %d.\n",
+			      userPtrFunc, userPtrArg, userPtrReturnFun);
 
 			int res = do_UserThreadCreate(func, arg, kernelPtrReturnFun);
-			machine->WriteRegister(2, res);													// Write the output of the system call
+			machine->WriteRegister(2, res);		// Write the output of the system call
 			break;
 		    }
 		case SC_UserThreadExit:
 		    {
-			DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n", currentThread->getTID(), currentThread->getName());
-
+			DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
+			      currentThread->getTID(), currentThread->getName());
 			do_UserThreadExit();
-			
 			break;
 		    }
 		case SC_UserThreadJoin:
@@ -244,7 +244,7 @@ ExceptionHandler (ExceptionType which)
 			    {
 				DEBUG('e', "\t-> The user thread tid = %d has already exited \n", threadToJoinTID);
 				// TODO manage the exception by changing the written return value 0
-				machine->WriteRegister(2, 0);												// Write the output of the system call
+				machine->WriteRegister(2, 0);		// Write the output of the system call
 				break;
 			    }
 			while(userThreadList->IsInList(threadToJoinTID, NULL)){
@@ -253,7 +253,7 @@ ExceptionHandler (ExceptionType which)
 			}
 			
 			DEBUG('e', "\t-> End of join for the thread tid = %d.\n", threadToJoinTID);
-			machine->WriteRegister(2, 0);													// Write the output of the system call
+			machine->WriteRegister(2, 0);		    // Write the output of the system call
 			break;
 		    }
 		    //+e simbadSid 10.01.16
