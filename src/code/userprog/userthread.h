@@ -25,13 +25,13 @@
 class ThreadCreationParameter
 {
 	public:
-		ThreadCreationParameter(void *FUNC, void *ARG,  void *EXIT_FUNC, int STACK_POINTER);
+		ThreadCreationParameter(int FUNC, int ARG,  int EXIT_FUNC, int *STACK_POINTER);
 		~ThreadCreationParameter();
 
-		void*	func;
-		void*	arg;
-		void*	exitFunc;
-		int		stackPointer;
+		int func;
+		int arg;
+		int exitFunc;
+		int	*stackPointer;
 
 };
 

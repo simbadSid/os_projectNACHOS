@@ -55,7 +55,6 @@ void threadFunction2(void *arg)
 	char *str = "\tFunction 2: Simple thread function with 1 int parameter: \0";
 
 	PutString(str, strlen(str));
-	//arg1 = strlen(str);
 	PutInt(arg1);
 	str = "\n\0";
 	PutString(str, strlen(str));
@@ -65,12 +64,21 @@ void threadFunction3(void *arg)
 	int		arg1 = *((int*) arg);
 	int		arg2 = *((int*) arg+1);
 	char	*str = "\tFunction 3: Simple thread function with an int parameter: \0";
+PutChar(arg2);
+PutChar('a');
+PutChar('b');
+PutChar('c');
+PutChar('d');
+PutChar('e');
+PutChar('f');
+PutChar('g');
+PutChar('h');
+PutChar('j');
 
 	PutString(str, strlen(str));
 	PutInt(arg1);
 	str = " and a char parameter: \0";
 	PutString(str, strlen(str));
-	//PutInt(strlen(str));
 	PutChar((char)arg2);
 	str = "\n\0";
 	PutString(str, strlen(str));
@@ -79,7 +87,6 @@ void threadFunctionJoin(void *arg)
 {
 	int	tid = *((int*) arg);
 	UserThreadJoin(tid);
-
 }
 
 // -------------------------------------
@@ -87,18 +94,17 @@ void threadFunctionJoin(void *arg)
 // -------------------------------------
 void testCreation()
 {
-	int arg2[] = {34};
+//	int arg2[] = {76};
+	int arg3[] = {57, (int)'c'};
 
-//	int arg3[] = {57, (int)'c'};
+//	int tid0 = UserThreadCreate(threadFunction0, 0);
+//	int tid1 = UserThreadCreate(threadFunction1, 0);
+//	int tid2 = UserThreadCreate(threadFunction2, (void*)arg2);
+	UserThreadCreate(threadFunction3, (void*)arg3);
 
-	int tid0 = UserThreadCreate(threadFunction0, 0);
-	int tid1 = UserThreadCreate(threadFunction1, 0);
-	int tid2 = UserThreadCreate(threadFunction2, (void*)arg2);
-//	int tid3 = UserThreadCreate(threadFunction3, (void*)arg3);
-
-	UserThreadJoin(tid0);
-	UserThreadJoin(tid1);
-	UserThreadJoin(tid2);
+//	UserThreadJoin(tid0);
+//	UserThreadJoin(tid1);
+//	UserThreadJoin(tid2);
 //	UserThreadJoin(tid3);
 }
 void testJoin()
