@@ -1,10 +1,5 @@
 #include "syscall.h"
 
-
-// FoxTox 08.01.2016
-// FoxTox 09.01.2016
-
-
 //+b FoxTox 08.01.2016
 //void print(char c, int n)
 void print_chars()
@@ -24,10 +19,6 @@ void print_chars()
     //Halt();
 }
 
-//+e FoxTox 08.01.2016
-
-
-//+b FoxTox 09.01.2016
 int
 main()
 {

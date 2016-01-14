@@ -84,10 +84,7 @@ class Lock
     }				// debugging assist
 
     void Acquire ();		// these are the only operations on a lock
-    void Release ();		// they are both *atomic*
-    //+ goubetc 13.01.16
-    void SetBusy ();    // sets busy true
-    
+    void Release ();		// they are both *atomic*    
     
     bool isHeldByCurrentThread ();	// true if the current thread
     // holds this lock.  Useful for
