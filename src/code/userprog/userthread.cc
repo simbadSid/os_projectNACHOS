@@ -104,7 +104,7 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 // TODO to check: do nothink
 		//+b goubetc 13.01.16
 		variableCondition->Broadcast(joinCondition);
-		variableCondition->Signal(haltCondition);
+		variableCondition->Broadcast(haltCondition);
 		//+e goubetc
 
 		DEBUG('e', "\tEnd of user thread exit\n");

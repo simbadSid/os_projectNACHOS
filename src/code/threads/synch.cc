@@ -184,8 +184,8 @@ Lock::Acquire ()
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     while (busy)
-	{				// semaphore not available
-	    DEBUG('s', "Lock: Lock busy, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
+    	{				// semaphore not available
+	    DEBUG('s', "Lock name(%s): Lock busy, setting thread to sleep: name = \"%s\", tid = %d.\n",name, currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
 	    queue->Append ((void *) currentThread);	// so go to sleep
 	    currentThread->Sleep ();
 	}
@@ -204,7 +204,7 @@ Lock::Release ()
     thread = (Thread *) queue->Remove ();
     if (thread != NULL){		// make thread ready, consuming the V immediately
 	scheduler->ReadyToRun (thread);
-	DEBUG('s', "Lock: Lock free, waking up thread: name = \"%s\", tid = %d.\n :: current thread: %d", thread->getName(), thread->getTID(), currentThread->getTID()); //+ goubetc 13.01.16
+	DEBUG('s', "Lock name(%s): Lock free, waking up thread: name = \"%s\", tid = %d.\n :: current thread: %d", name, thread->getName(), thread->getTID(), currentThread->getTID()); //+ goubetc 13.01.16
     }
     busy = false;
     (void) interrupt->SetLevel (oldLevel);
@@ -240,7 +240,8 @@ Condition::Broadcast (Lock * conditionLock)
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
     conditionLock->Release(); //+ goubetc 13.01.16
     while (!conditionLock->queue->IsEmpty()) {
-	scheduler->ReadyToRun((Thread *)conditionLock->queue->Remove ());
+	conditionLock->Release(); //+ goubetc 15.01.16
+	//scheduler->ReadyToRun((Thread *)conditionLock->queue->Remove ());
     }
     (void) interrupt->SetLevel (oldLevel);
 }

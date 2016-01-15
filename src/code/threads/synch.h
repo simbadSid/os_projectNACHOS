@@ -50,9 +50,9 @@ class Semaphore
 
     void P ();			// these are the only operations on a semaphore
     void V ();			// they are both *atomic*
-    void P_Count ();            // operation for semaphores
-    void Count ();              // that waits while
-    void V_Count ();            // semaphore valure not null (counts number of items)
+    //    void P_Count ();            // operation for semaphores
+    //    void Count ();              // that waits while
+//   void V_Count ();            // semaphore valure not null (counts number of items)
   private:
     const char *name;		// useful for debugging
     //+b goubetc 11.01.16
