@@ -199,7 +199,7 @@ Thread::Yield ()
 
     ASSERT (this == currentThread);
 
-    // TODO DEBUG ('t', "Yielding thread \"%s\"\n", getName ());
+    DEBUG ('t', "Yielding thread \"%s\"\n", getName ());
     nextThread = scheduler->FindNextToRun ();
     if (nextThread != NULL)
       {
@@ -425,7 +425,7 @@ int Thread::UserThreadCreate(int *currentThreadStack, int **createdThreadStack)
 
 //TODO CHANGE THE 3 by a macros
 //TODO check the stack is in the address space
-	this->stack	= currentThreadStack + PageSize * 2;	// Distinguish the new thread stack from the current thread stack
+	this->stack	= currentThreadStack + PageSize * 3;	// Distinguish the new thread stack from the current thread stack
 	this->space	= (AddrSpace*)currentThread->space;
 
 	currentThread->space->SaveState();
