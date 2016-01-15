@@ -64,6 +64,9 @@ StartProcess (char *filename)
 	}
 	space				= new AddrSpace (executable);
 	currentThread->space= space;
+//#ifdef USER_PROGRAM
+//	currentThread->UserThreadCreate(NULL);
+//#endif
 
 	delete executable;					// close file
 

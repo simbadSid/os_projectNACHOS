@@ -117,7 +117,7 @@ class Thread
     void SaveUserState ();								// save user-level register state
     void RestoreUserState ();							// restore user-level register state
     // +b FoxTox 10.01.2016
-    int UserThreadCreate(int *currentThreadStack, int **createdThreadStack);
+    int UserThreadCreate(int **createdThreadStack);
     // +e FoxTox 10.01.2016
    AddrSpace *space;									// User code this thread is running.
 #endif

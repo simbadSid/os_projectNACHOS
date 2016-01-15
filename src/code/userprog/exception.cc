@@ -230,6 +230,7 @@ ExceptionHandler (ExceptionType which)
 			      userPtrFunc, userPtrArg, userPtrReturnFun);
 
 			int res = do_UserThreadCreate(func, userPtrArg, kernelPtrReturnFun);		// Create the thread and add its delayed execution
+			if (res < 0)	DEBUG('e', "\t->Creation failed: %d\n", res);
 			machine->WriteRegister(2, res);												// Write the output of the system call
 			break;
 	    }
@@ -250,7 +251,6 @@ ExceptionHandler (ExceptionType which)
 			if (!test)
 		    {
 				DEBUG('e', "\t-> The user thread tid = %d has already exited \n", threadToJoinTID);
-// TODO manage the exception by changing the written return value 0
 				machine->WriteRegister(2, 0);											// Write the output of the system call
 				break;
 		    }

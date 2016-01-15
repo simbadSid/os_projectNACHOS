@@ -77,11 +77,9 @@ static int nbrUserThread = 0;
 
 		Thread	*t				= new Thread(name, tid);
 		int		*newThreadStack	= NULL;
-		int		*stack			= NULL;
 		int		test;
 
-		machine->ReadMem(machine->ReadRegister(StackReg), sizeof(stack), (int*)&stack);	// Get the stack pointer of the current thread from the processos (may be != from the one in the object currentThread)
-		test = t->UserThreadCreate(stack, &newThreadStack);							// Allocate space for the new thread stack pointer in the currentThread Address space
+		test = t->UserThreadCreate(&newThreadStack);			// Allocate space for the new thread stack pointer in the currentThread Address space
 		if (test < 0)	return test;
 		userThreadList->Append(t);
 		tcp = new ThreadCreationParameter(func, arg, exitFunc, newThreadStack);

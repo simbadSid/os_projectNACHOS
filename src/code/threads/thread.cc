@@ -351,7 +351,7 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
 #ifdef HOST_i386
     // the 80386 passes the return address on the stack.  In order for
     // SWITCH() to go to ThreadRoot when we switch to this thread, the
-    // return addres used in SWITCH() must be the starting address of
+    // return address used in SWITCH() must be the starting address of
     // ThreadRoot.
     *(--stackTop) = (int) ThreadRoot;
 #endif
@@ -418,19 +418,24 @@ Thread::RestoreUserState ()
 //		* 0 in case of success
 //		* -1 if the new thread stack can not be allocated(only error detected is the lack of memory for the stack allocation)
 //----------------------------------------------------------------------
-int Thread::UserThreadCreate(int *currentThreadStack, int **createdThreadStack)
+int Thread::UserThreadCreate(int **createdThreadStack)
 {
-//int *stackTop;										// the current stack pointer
-//int *stack;											// Bottom of the stack NULL if this is the main thread (If NULL, don't deallocate stack)
-
 //TODO CHANGE THE 3 by a macros
 //TODO check the stack is in the address space
-	this->stack	= currentThreadStack + PageSize * 3;	// Distinguish the new thread stack from the current thread stack
-	this->space	= (AddrSpace*)currentThread->space;
 
+	this->space		= (AddrSpace*)currentThread->space;
+	int newStack	= this->space->AllocateThreadStack(2);		// Distinguish the new thread stack from the current thread stack
+	if (newStack == -1)	return -1;								// Case no memory left for the stack
+	else
+	{
+		this->stack = (int*)newStack;
+		if (createdThreadStack != NULL)
+			*createdThreadStack	= this->stack;
+	}
 	currentThread->space->SaveState();
 
-	*createdThreadStack = this->stack;
+	DEBUG ('t', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",
+			currentThread->stack, this->stack, this->space->GetSize());
 	return 0;
 }
 
