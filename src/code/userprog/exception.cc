@@ -30,6 +30,10 @@
 
 
 
+
+
+
+
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
@@ -117,27 +121,30 @@ void
 ExceptionHandler (ExceptionType which)
 {
     //+b FoxTox 08.01.2016
-    int type = machine->ReadRegister(2);			
+    int type = machine->ReadRegister(2);
     if (which == SyscallException)
 	{
 	    switch (type)
 		{
 		case SC_Halt:
-		    {
+	    {
 			int currentTID = currentThread->getTID();
-			DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n", currentThread->getName(), currentTID);
+			DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n",
+					currentThread->getName(), currentTID);
 			userThreadList->Remove(currentTID, NULL);
-			DEBUG('e', "\t->Start wating for the %d user threads to finish.\n",
+			DEBUG('e', "\t->Start wating for %d user threads to finish.\n",
 			      userThreadList->GetNbrThread());
 
-			while(!userThreadList->IsEmpty())
-				variableCondition->Wait(haltCondition);
+			while(!userThreadList->IsEmpty()) variableCondition->Wait(haltCondition);
+
 			DEBUG('e', "\t->End wating for the user threads.\n");
 			interrupt->Halt();
 			break;
-		    }
-		case SC_PutChar: {
+	    }
+		case SC_PutChar:
+		{
 		    char c = (char)machine->ReadRegister(4);
+			DEBUG('e', "Exception: put char \'%c\'initiated by user program: name = \"%s\", tid = %d.\n", c, currentThread->getName(), currentThread->getTID());
 		    synchconsole->SynchPutChar(c);
 		    break;
 		}
@@ -146,16 +153,17 @@ ExceptionHandler (ExceptionType which)
 		    break;
 		}
 		case SC_PutString:
-		    {
+		{
 			//+b simbadSid 9.01.16
 			size_t size	= (size_t)machine->ReadRegister(5);			// Reads the size of the string
 			int strAddr	= (int)machine->ReadRegister(4);			// Reads the user address of the string
+			DEBUG('e', "Exception: put string of size \'%d\' at address %d initiated by user program: name = \"%s\", tid = %d.\n", size, strAddr, currentThread->getName(), currentThread->getTID());
 			char buffer[size+1];
 			copyStringFromMachine(strAddr, (char*)buffer, size);	// Transform user addr to kernel and access the string
 			synchconsole->SynchPutString(buffer);
 			break;
 			//+e simbadSid 9.01.16
-		    }
+		}
 		    //+b FoxTox 09.01.2016
 		case SC_GetString: {
 		    int n = machine->ReadRegister(4);
@@ -179,15 +187,19 @@ ExceptionHandler (ExceptionType which)
 		    machine->WriteMem(addr, 4, *n);
 		    break;
 		}
-		case SC_PutInt: {
-		    synchconsole->SynchPutInt(machine->ReadRegister(4));
+		case SC_PutInt:
+		{
+			int i = machine->ReadRegister(4);
+			DEBUG('e', "Exception: put int \'%d\'initiated by user program: name = \"%s\", tid = %d.\n",
+					i, currentThread->getName(), currentThread->getTID());
+		    synchconsole->SynchPutInt(i);
 		    break;
 		}
 		    //+b FoxTox 09.01.2016
 		    //+b simbadSid 10.01.16
 		case SC_UserThreadCreate:
 		{
-			DEBUG('e', "Exception: user thread create");
+			DEBUG('e', "Exception: user thread create\n");
 
 			int func, returnFun;
 			ExceptionType eFunc, eReturnFun;
@@ -195,7 +207,8 @@ ExceptionHandler (ExceptionType which)
 			int	userPtrArg		= machine-> ReadRegister(5);
 			int	userPtrReturnFun= machine-> ReadRegister(6);
 
-			DEBUG('e', "\t->user space addresses: function: %d, arg: %d, returnAddr: %d.\n", userPtrFunc, userPtrArg, userPtrReturnFun);
+			DEBUG('e', "\t->user space addresses\t\t: function: %d, arg: %d, returnAddr: %d.\n",
+					userPtrFunc, userPtrArg, userPtrReturnFun);
 
 			int	kernelPtrFunc	= WordToHost(userPtrFunc);								// User to kernel translate of function and return function ptr
 			int	kernelPtrReturnFun= WordToHost(userPtrReturnFun);						// ! do not translate argument ptr
@@ -213,10 +226,10 @@ ExceptionHandler (ExceptionType which)
 			    break;
 			}
 
-			DEBUG('e', "\t->kernel  space addresses: function: %d, arg: %d, returnAddr: %d.\n",
+			DEBUG('e', "\t->kernel space addresses\t: function: %d, arg: %d, returnAddr: %d.\n",
 			      userPtrFunc, userPtrArg, userPtrReturnFun);
 
-			int res = do_UserThreadCreate(func, userPtrArg, kernelPtrReturnFun);				// Create the thread and add its delayed execution
+			int res = do_UserThreadCreate(func, userPtrArg, kernelPtrReturnFun);		// Create the thread and add its delayed execution
 			machine->WriteRegister(2, res);												// Write the output of the system call
 			break;
 	    }
@@ -224,7 +237,7 @@ ExceptionHandler (ExceptionType which)
 		{
 			DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
 			      currentThread->getTID(), currentThread->getName());
-			do_UserThreadExit();
+			do_UserThreadExit();														// Does not returns
 			break;
 		}
 		case SC_UserThreadJoin:
@@ -232,7 +245,8 @@ ExceptionHandler (ExceptionType which)
 			int		threadToJoinTID	= machine->ReadRegister(4);
 			bool	test			= userThreadList->IsInList(threadToJoinTID, NULL);
 
-			DEBUG('e', "Exception: user thread join the thread: tid = %d initiated by user thread: name = \"%s\", tid = %d.\n", threadToJoinTID, currentThread->getName(), currentThread->getTID());
+			DEBUG('e', "Exception: user thread join the thread: tid = %d initiated by user thread: name = \"%s\", tid = %d.\n",
+					threadToJoinTID, currentThread->getName(), currentThread->getTID());
 			if (!test)
 		    {
 				DEBUG('e', "\t-> The user thread tid = %d has already exited \n", threadToJoinTID);
@@ -240,12 +254,11 @@ ExceptionHandler (ExceptionType which)
 				machine->WriteRegister(2, 0);											// Write the output of the system call
 				break;
 		    }
+
 			while(userThreadList->IsInList(threadToJoinTID, NULL))
 			{
 			    variableCondition->Wait(joinCondition);  //+ goubetc 13.01.16
-			    DEBUG('s', "\t-> call to join thread tid = %d.\n", currentThread->getTID());
 			}
-			
 			DEBUG('e', "\t-> End of join for the thread tid = %d.\n", threadToJoinTID);
 			machine->WriteRegister(2, 0);												// Write the output of the system call
 			break;
@@ -257,7 +270,6 @@ ExceptionHandler (ExceptionType which)
 			ASSERT(FALSE);
 		}
 		}
-	    
 	    UpdatePC();
 	}
     //+e FoxTox 08.01.2016

@@ -75,9 +75,6 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 		char name[THREAD_NAME_MAX_SIZE];
 		int	tid	= initThreadName(name);
 
-// TODO Hack to remove
-//nbrUserThread ++;
-//int tid = nbrUserThread;
 		Thread	*t				= new Thread(name, tid);
 		int		*newThreadStack	= NULL;
 		int		*stack			= NULL;
@@ -101,16 +98,18 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 		int		tid	= currentThread->getTID();
 		bool	test= userThreadList->Remove(tid, &thread);
 
-		//+b goubetc 13.01.16			
-		variableCondition->Signal(haltCondition);
-		variableCondition->Broadcast(joinCondition);
-		//+e goubetc
-
 		ASSERT(test);
 		ASSERT(currentThread == thread);
 // TODO MANAGE the address space of the thread
 // TODO to check: do nothink
+		//+b goubetc 13.01.16
+		variableCondition->Broadcast(joinCondition);
+		variableCondition->Signal(haltCondition);
+		//+e goubetc
+
+		DEBUG('e', "\tEnd of user thread exit\n");
 		thread->Finish();
+
 			
 	}
 

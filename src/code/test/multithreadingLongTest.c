@@ -1,11 +1,13 @@
 /*
- * multithreadingTest.c
+ * multithreadingLongTest.c
  *
- *  Created on: Jan 10, 2016
+ *  Created on: Jan 15, 2016
  *      Author: littlegirle
  */
 
-// simbadSid 9.01.16
+
+
+// simbadSid 14.01.16
 
 
 #include "syscall.h"
@@ -46,44 +48,38 @@ void threadFunction0(void *arg)
 }
 void threadFunction1(void *arg)
 {
-	PutChar('\n');
-	PutChar('\t');
-	PutChar('z');
-	PutChar('z');
-	PutChar('z');
-	PutChar('z');
-	PutChar('z');
-	PutChar('y');
-	PutChar('\n');
+	char *str = "\tFunction 1: Simple thread function without parameters\n\0";
+	PutString(str, strlen(str));
 }
 void threadFunction2(void *arg)
 {
 	int arg1 = *((int*) arg);
+	char *str = "\tFunction 2: Simple thread function with int parameter: \0";
 
+	PutString(str, strlen(str));
 	PutInt(arg1);
-	PutChar('\n');
+	str = "\n\0";
+	PutString(str, strlen(str));
 }
 void threadFunction3(void *arg)
 {
 	int		arg1 = *((int*) arg);
 	int		arg2 = *((int*) arg+1);
+	char	*str = "\tFunction 3: Simple thread function with an int parameter: \0";
 
+	PutString(str, strlen(str));
 	PutInt(arg1);
-	PutChar(arg2);
-	PutChar('\n');
+	str = " and a char parameter: \0";
+	PutString(str, strlen(str));
+	PutChar((char)arg2);
+	str = "\n\0";
+	PutString(str, strlen(str));
 }
-void threadFunctionJoin(void *arg)
-{
-	int	tid = *((int*) arg);
-	UserThreadJoin(tid);
-}
-
 // -------------------------------------
-// Function to test a specific part of the code
+// Main function
 // -------------------------------------
-void testCreation()
+int main (int argc, char **argv)
 {
-PutString("xxx\0", 4);
 	int arg2[] = {76};
 	int arg3[] = {57, (int)'c'};
 
@@ -96,27 +92,9 @@ PutString("xxx\0", 4);
 	UserThreadJoin(tid1);
 	UserThreadJoin(tid2);
 	UserThreadJoin(tid3);
-}
-void testJoin()
-{
-	int arg0[]	= {57, (int)'c'};
-	int tid0	= UserThreadCreate(threadFunction3,		(void*)arg0);
-	int arg1[]	= {tid0};
-	int tid1	= UserThreadCreate(threadFunctionJoin,	(void*)arg1);
-
-	UserThreadJoin(tid1);
-}
-// -------------------------------------
-// Main function
-// -------------------------------------
-int main (int argc, char **argv)
-{
-//	testCreation();
-	testJoin();
 
 	Halt ();
 
 	/* not reached */
 	return 0;
 }
-

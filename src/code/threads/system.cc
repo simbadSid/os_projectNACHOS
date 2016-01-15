@@ -172,12 +172,12 @@ Initialize (int argc, char **argv)
     CallOnUserAbort (Cleanup);									// if user hits ctl-C
 
 #ifdef USER_PROGRAM
-    machine			= new Machine (debugUserProg);				// this must come first
-    synchconsole	= new SynchConsole(NULL, NULL);
+    machine				= new Machine (debugUserProg);				// this must come first
+    synchconsole		= new SynchConsole(NULL, NULL);
     //+b goubetc 13.01.16
-    joinCondition = new Lock("joinCondition");  
-    haltCondition = new Lock("haltCondition");
-    variableCondition = new Condition("Condition variable"); 
+    joinCondition		= new Lock("joinCondition");
+    haltCondition		= new Lock("haltCondition");
+    variableCondition	= new Condition("Condition variable");
     //+e goubetc 13.01.16
     userThreadList	= new UserThreadList();
     userThreadList->Append(currentThread);
