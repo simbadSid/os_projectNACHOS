@@ -20,14 +20,14 @@ static int nbrUserThread = 0;
 // ThreadCreationParameter:
 // Class used to communicate data to the delayed thread management handlers
 // ------------------------------------------
-	ThreadCreationParameter::ThreadCreationParameter(int FUNC, int ARG,  int EXIT_FUNC, int *STACK_POINTER)
-	{
-		this->func			= FUNC;
-		this->arg			= ARG;
-		this->exitFunc		= EXIT_FUNC;
-		this->stackPointer	= STACK_POINTER;
-	}
-	ThreadCreationParameter::~ThreadCreationParameter() {}
+ThreadCreationParameter::ThreadCreationParameter(int FUNC, int ARG,  int EXIT_FUNC, int *STACK_POINTER)
+{
+    this->func			= FUNC;
+    this->arg			= ARG;
+    this->exitFunc		= EXIT_FUNC;
+    this->stackPointer	= STACK_POINTER;
+}
+ThreadCreationParameter::~ThreadCreationParameter() {}
 
 
 // ------------------------------------------
