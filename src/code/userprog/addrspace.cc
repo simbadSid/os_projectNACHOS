@@ -22,9 +22,14 @@
 
 #include <strings.h>		/* for bzero */
 
+
+// +b simbadSid 15.01.2015
+
+
+
 //----------------------------------------------------------------------
 // SwapHeader
-//      Do little endian to big endian conversion on the bytes in the 
+//      Do little endian to big endian conversion on the bytes in the
 //      object file header, in case the file was generated on a little
 //      endian machine, and we're now running on a big endian machine.
 //----------------------------------------------------------------------
@@ -46,6 +51,27 @@ SwapHeader (NoffHeader * noffH)
 }
 
 // +b simbadSid 15.01.2015
+// --------------------------------------------------------------------
+// Reads in the input file numBytes starting at the given position.
+// The read bytes are stored at the given virtual address in the
+// memory described by (pageTable, numPages)
+// --------------------------------------------------------------------
+static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position, TranslationEntry *pageTable, unsigned numPages)
+{
+	IntStatus oldLevel		= interrupt->SetLevel(IntOff);
+	machine->pageTable		= pageTable;
+	machine->pageTableSize	= numPages;
+	interrupt->SetLevel(oldLevel);
+
+	char buffer[numBytes];
+	int nbrRedBytes	= executable->ReadAt(buffer, numBytes, position);
+	int virtualByteShift;
+
+    oldLevel = interrupt->SetLevel(IntOff);
+    for(virtualByteShift=0; virtualByteShift<nbrRedBytes; virtualByteShift++)
+        machine->WriteMem(virtualaddr+virtualByteShift, 1, buffer[virtualByteShift]);
+    interrupt->SetLevel(oldLevel);
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::AddrSpace
@@ -70,6 +96,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	executable->ReadAt ((char *) &noffH, sizeof (noffH), 0);								// Reads the header of the executable file
 	if ((noffH.noffMagic != NOFFMAGIC) && (WordToHost (noffH.noffMagic) == NOFFMAGIC))		// Convert the header to the host endian
 		SwapHeader (&noffH);
+
 //TODO ask why
 	ASSERT (noffH.noffMagic == NOFFMAGIC);													// Ensure that the executable has the good file type
 //TODO ask why
@@ -80,7 +107,6 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	numPages	= divRoundUp (size, PageSize);
 	pageBitmap	= new BitMap(numPages);
 	size		= numPages * PageSize;
-
 	ASSERT (numPages <= NumPhysPages);														// check we're not trying to run anything too big --
 																							// TODO at least until we have virtual memory
 
@@ -98,9 +124,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 																							//		a separate page, we could set its pages to be read-only
 	}
 
-//TODO ask why
 	bzero (machine->mainMemory, size);														// zero out the entire address space
-//TODO ask why
 
 	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
 	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
@@ -108,17 +132,30 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	{
 		DEBUG ('a', "Initializing code segment, at 0x%x, size %d\n",
 				noffH.code.virtualAddr, noffH.code.size);
-		executable->ReadAt (&(machine->mainMemory[noffH.code.virtualAddr]),
-				noffH.code.size, noffH.code.inFileAddr);
-		for (i=0; i<nbrCodePages; i++)	this->pageBitmap->Mark(i);							// Notify the code pages as used
+// TODO test for the step 4 question I.3
+//		executable->ReadAt (&(machine->mainMemory[noffH.code.virtualAddr]),					//		Writes the file code section in memory
+//				noffH.code.size, noffH.code.inFileAddr);
+		ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size,					//		Writes the file code section in memory
+				noffH.code.inFileAddr, pageTable, numPages);
+// TODO end test for the step 4 question I.3
+		for (i=0; i<nbrCodePages; i++)
+		{
+			this->pageBitmap->Mark(i);														//		Notify the code pages as used
+			pageTable[i].readOnly	= FALSE;												//		Ensure that the code will not be corrupted
+		}
 	}
 	if (noffH.initData.size > 0)															// Copy data segments of the executable into addrSpace
 	{
 		DEBUG ('a', "Initializing data segment, at 0x%x, size %d\n",
 				noffH.initData.virtualAddr, noffH.initData.size);
-		executable->ReadAt (&(machine->mainMemory[noffH.initData.virtualAddr]),
-				noffH.initData.size, noffH.initData.inFileAddr);
-		for (i=0; i<nbrDataPages; i++)	this->pageBitmap->Mark(i+nbrCodePages);				// Notify the data pages as used
+// TODO test for the step 4 question I.3
+//		executable->ReadAt (&(machine->mainMemory[noffH.initData.virtualAddr]),				//		Writes the file datd section in memory
+//				noffH.initData.size, noffH.initData.inFileAddr);
+		ReadAtVirtual(executable, noffH.initData.virtualAddr, noffH.initData.size,			//		Writes the file data section in memory
+				noffH.initData.inFileAddr, pageTable, numPages);
+// TODO end test for the step 4 question I.3
+
+		for (i=0; i<nbrDataPages; i++)	this->pageBitmap->Mark(i+nbrCodePages);				//		Notify the data pages as used
 	}
 	int remainingCode	= nbrCodePages % PageSize;
 	int remainingData	= nbrDataPages % PageSize;
@@ -237,4 +274,3 @@ int AddrSpace::GetSize()
 	return this->numPages*PageSize;
 }
 
-// +e simbadSid 15.01.2016

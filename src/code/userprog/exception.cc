@@ -230,7 +230,7 @@ ExceptionHandler (ExceptionType which)
 			      userPtrFunc, userPtrArg, userPtrReturnFun);
 
 			int res = do_UserThreadCreate(func, userPtrArg, kernelPtrReturnFun);		// Create the thread and add its delayed execution
-			if (res < 0)	DEBUG('e', "\t->Creation failed: %d\n", res);
+			if (res < 0)	DEBUG('e', "\t*** User thread creation failed: %d ***\n", res);
 			machine->WriteRegister(2, res);												// Write the output of the system call
 			break;
 	    }

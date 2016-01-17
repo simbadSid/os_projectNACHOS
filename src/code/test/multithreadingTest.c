@@ -35,8 +35,8 @@ void threadFunction1(void *arg)
 {
 	PutChar('\n');
 	PutChar('\t');
-	PutChar('a');
-	PutChar('a');
+	PutChar('1');
+	PutChar('-');
 	PutChar('a');
 	PutChar('a');
 	PutChar('a');
@@ -46,10 +46,9 @@ void threadFunction1(void *arg)
 }
 void threadFunction2(void *arg)
 {
-	PutChar('\n');
 	PutChar('\t');
-	PutChar('z');
-	PutChar('z');
+	PutChar('2');
+	PutChar('-');
 	PutChar('z');
 	PutChar('z');
 	PutChar('z');
@@ -60,6 +59,7 @@ void threadFunction3(void *arg)
 {
 	int arg1 = *((int*) arg);
 
+	PutChar('\t');
 	PutInt(arg1);
 	PutChar('\n');
 }
@@ -68,7 +68,9 @@ void threadFunction4(void *arg)
 	int		arg1 = *((int*) arg);
 	int		arg2 = *((int*) arg+1);
 
+	PutChar('\t');
 	PutInt(arg1);
+	PutChar(' ');
 	PutChar(arg2);
 	PutChar('\n');
 }
@@ -83,9 +85,9 @@ void threadFunctionJoin(void *arg)
 // -------------------------------------
 void testCreation()
 {
-	int arg3[] = {76};
-	int arg4[] = {57, (int)'c'};
-
+	int arg3[] = {3};
+	int arg4[] = {4, (int)'c'};
+/*
 	int tid1 = UserThreadCreate(threadFunction1, 0);
 	if (tid1 <= 0)
 	{
@@ -98,21 +100,21 @@ void testCreation()
 		PutString("\n****Failed to create thread tid2***\n", 100);
 		return;
 	}
-	int tid3 = UserThreadCreate(threadFunction3, (void*)arg3);
+*/	int tid3 = UserThreadCreate(threadFunction3, (void*)arg3);
 	if (tid3 <= 0)
 	{
 		PutString("\n****Failed to create thread tid3***\n", 100);
 		return;
 	}
-	int tid4 = UserThreadCreate(threadFunction3, (void*)arg4);
+	int tid4 = UserThreadCreate(threadFunction4, (void*)arg4);
 	if (tid4 <= 0)
 	{
 		PutString("\n****Failed to create thread tid4***\n", 100);
 		return;
 	}
 
-	UserThreadJoin(tid1);
-	UserThreadJoin(tid2);
+//	UserThreadJoin(tid1);
+//	UserThreadJoin(tid2);
 	UserThreadJoin(tid3);
 	UserThreadJoin(tid4);
 }

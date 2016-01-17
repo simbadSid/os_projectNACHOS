@@ -79,7 +79,7 @@ static int nbrUserThread = 0;
 		int		*newThreadStack	= NULL;
 		int		test;
 
-		test = t->UserThreadCreate(&newThreadStack);			// Allocate space for the new thread stack pointer in the currentThread Address space
+		test = t->UserThreadCreate(currentThread, &newThreadStack);			// Allocate space for the new thread stack pointer in the currentThread Address space
 		if (test < 0)	return test;
 		userThreadList->Append(t);
 		tcp = new ThreadCreationParameter(func, arg, exitFunc, newThreadStack);
@@ -98,8 +98,8 @@ static int nbrUserThread = 0;
 
 		ASSERT(test);
 		ASSERT(currentThread == thread);
-// TODO MANAGE the address space of the thread
-// TODO to check: do nothink
+		thread->UserThreadExit();											// Unallocates the space allocated for the stack
+
 		//+b goubetc 13.01.16
 		variableCondition->Broadcast(joinCondition);
 		variableCondition->Signal(haltCondition);
