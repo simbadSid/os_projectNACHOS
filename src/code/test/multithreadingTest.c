@@ -87,7 +87,7 @@ void testCreation()
 {
 	int arg3[] = {3};
 	int arg4[] = {4, (int)'c'};
-/*
+
 	int tid1 = UserThreadCreate(threadFunction1, 0);
 	if (tid1 <= 0)
 	{
@@ -100,7 +100,7 @@ void testCreation()
 		PutString("\n****Failed to create thread tid2***\n", 100);
 		return;
 	}
-*/	int tid3 = UserThreadCreate(threadFunction3, (void*)arg3);
+	int tid3 = UserThreadCreate(threadFunction3, (void*)arg3);
 	if (tid3 <= 0)
 	{
 		PutString("\n****Failed to create thread tid3***\n", 100);
@@ -113,8 +113,8 @@ void testCreation()
 		return;
 	}
 
-//	UserThreadJoin(tid1);
-//	UserThreadJoin(tid2);
+	UserThreadJoin(tid1);
+	UserThreadJoin(tid2);
 	UserThreadJoin(tid3);
 	UserThreadJoin(tid4);
 }

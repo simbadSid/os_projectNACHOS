@@ -54,7 +54,6 @@ static int nbrUserThread = 0;
 		machine->Run();
 	}
 
-
 //----------------------------------------------------------------------
 // System functions to manage the thread
 //----------------------------------------------------------------------
@@ -107,8 +106,6 @@ static int nbrUserThread = 0;
 
 		DEBUG('e', "\tEnd of user thread exit\n");
 		thread->Finish();
-
-			
 	}
 
 // ----------------------------------------------------

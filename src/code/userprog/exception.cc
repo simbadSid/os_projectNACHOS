@@ -122,8 +122,10 @@ ExceptionHandler (ExceptionType which)
 {
     //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
-    if (which == SyscallException)
-	{
+    switch(which)
+    {
+    case SyscallException:
+    {
 	    switch (type)
 		{
 		case SC_Halt:
@@ -212,24 +214,28 @@ ExceptionHandler (ExceptionType which)
 
 			int	kernelPtrFunc	= WordToHost(userPtrFunc);								// User to kernel translate of function and return function ptr
 			int	kernelPtrReturnFun= WordToHost(userPtrReturnFun);						// ! do not translate argument ptr
-// TODO manage the exceptions and print them
-			eFunc				= machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
+			eFunc = machine->Translate(kernelPtrFunc, &func, sizeof(func), false);
 			if (eFunc != NoException)													// Case corrupted function address
 			{
 			    machine->RaiseException(eFunc, kernelPtrFunc);
+				DEBUG('e', "\t*** User thread creation failed: wrong\
+						 function address: %d ***\n", userPtrFunc);
 			    break;
 			}
-			eReturnFun			= machine->Translate(kernelPtrReturnFun, &returnFun, sizeof(void*), false);
+			eReturnFun = machine->Translate(kernelPtrReturnFun, &returnFun, sizeof(void*), false);
 			if (eReturnFun != NoException)												// Case corrupted argument address
 			{
 			    machine->RaiseException(eReturnFun, kernelPtrReturnFun);
+				DEBUG('e', "\t*** User thread creation failed: wrong\
+						 return function address: %d ***\n", userPtrReturnFun);
 			    break;
 			}
 
 			DEBUG('e', "\t->kernel space addresses\t: function: %d, arg: %d, returnAddr: %d.\n",
 			      userPtrFunc, userPtrArg, userPtrReturnFun);
 
-			int res = do_UserThreadCreate(func, userPtrArg, kernelPtrReturnFun);		// Create the thread and add its delayed execution
+//			int res = do_UserThreadCreate(func, userPtrArg, kernelPtrReturnFun);		// Create the thread and add its delayed execution
+			int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrReturnFun);	// Create the thread and add its delayed execution
 			if (res < 0)	DEBUG('e', "\t*** User thread creation failed: %d ***\n", res);
 			machine->WriteRegister(2, res);												// Write the output of the system call
 			break;
@@ -266,12 +272,59 @@ ExceptionHandler (ExceptionType which)
 		//+e simbadSid 10.01.16
 		default:
 		{
-			printf("Unexpected user mode exception %d %d\n", which, type);
+			printf("***Unexpected user mode exception %d %d***\n", which, type);
 			ASSERT(FALSE);
 		}
 		}
-	    UpdatePC();
-	}
+	    break;
+    }
+    case NoException:
+    {
+        printf("***NoException***\n");
+        break;
+    }
+    case PageFaultException:
+    {
+        printf("***PageFaultException***\n");
+        interrupt->Halt();
+        break;
+    }
+    case ReadOnlyException:
+    {
+        printf("***ReadOnlyException***\n");
+        interrupt->Halt();
+        break;
+    }
+    case BusErrorException:
+    {
+        printf("***BusErrorException***\n");
+        break;
+    }
+    case AddressErrorException:
+    {
+        printf("***AddressErrorException***\n");
+        interrupt->Halt();
+        break;
+    }
+    case OverflowException:
+    {
+        printf("***OverflowException***\n");
+        interrupt->Halt();
+        break;
+    }
+    case IllegalInstrException:
+    {
+        printf("***IllegalInstrException***\n");
+        interrupt->Halt();
+        break;
+    }
+    case NumExceptionTypes:
+    {
+        printf("***NumExceptionTypes***\n");
+        break;
+    }
+    }
+    UpdatePC();
     //+e FoxTox 08.01.2016
 
 }

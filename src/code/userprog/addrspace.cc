@@ -69,7 +69,9 @@ static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, i
 
     oldLevel = interrupt->SetLevel(IntOff);
     for(virtualByteShift=0; virtualByteShift<nbrRedBytes; virtualByteShift++)
+    {
         machine->WriteMem(virtualaddr+virtualByteShift, 1, buffer[virtualByteShift]);
+    }
     interrupt->SetLevel(oldLevel);
 }
 
@@ -109,6 +111,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	size		= numPages * PageSize;
 	ASSERT (numPages <= NumPhysPages);														// check we're not trying to run anything too big --
 																							// TODO at least until we have virtual memory
+	ASSERT (frameProvider->NumAvailFrame() >= numPages);									// check we're not trying to run anything too big --
 
 	DEBUG ('a', "Initializing address space, num pages %d, size %d\n", numPages, size);
 // first, set up the translation
@@ -116,46 +119,48 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	for (i = 0; i < numPages; i++)
 	{
 		pageTable[i].virtualPage	= i;													//		TODO for now, virtual page # = phys page #
-		pageTable[i].physicalPage	= i;
+		pageTable[i].physicalPage	= frameProvider->GetEmptyFrame();
 		pageTable[i].valid			= TRUE;
 		pageTable[i].use			= FALSE;
 		pageTable[i].dirty			= FALSE;
 		pageTable[i].readOnly		= FALSE;												//		if the code segment was entirely on
 																							//		a separate page, we could set its pages to be read-only
+		DEBUG ('a', "\t->Virtual page %d\t<-> physical page %d\n",
+				pageTable[i].virtualPage, pageTable[i].physicalPage);
 	}
 
-	bzero (machine->mainMemory, size);														// zero out the entire address space
+//	bzero (machine->mainMemory, size);														// zero out the entire address space
 
 	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
 	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
 	if (noffH.code.size > 0)																// Copy code and segments of the executable into addrSpace
-	{
-		DEBUG ('a', "Initializing code segment, at 0x%x, size %d\n",
-				noffH.code.virtualAddr, noffH.code.size);
-// TODO test for the step 4 question I.3
-//		executable->ReadAt (&(machine->mainMemory[noffH.code.virtualAddr]),					//		Writes the file code section in memory
-//				noffH.code.size, noffH.code.inFileAddr);
-		ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size,					//		Writes the file code section in memory
-				noffH.code.inFileAddr, pageTable, numPages);
-// TODO end test for the step 4 question I.3
-		for (i=0; i<nbrCodePages; i++)
+	{																						//		Writes the file code section in memory
+		ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr, pageTable, numPages);
+		this->codeFirstPage	= noffH.code.virtualAddr/ PageSize;
+		this->codeNbrPage	= noffH.code.size		/ PageSize;
+        DEBUG ('a', "Initializing code segment: size %d (bytes)\n", noffH.code.size);
+		DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.code.virtualAddr);
+		DEBUG ('a', "\t-> First page:\t\t%d\n", 			this->codeFirstPage);
+		DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->codeNbrPage);
+		for (i=codeFirstPage; i<codeFirstPage+codeNbrPage; i++)
 		{
 			this->pageBitmap->Mark(i);														//		Notify the code pages as used
-			pageTable[i].readOnly	= FALSE;												//		Ensure that the code will not be corrupted
+			pageTable[i].readOnly	= true;													//		Ensure that the code will not be corrupted
 		}
 	}
 	if (noffH.initData.size > 0)															// Copy data segments of the executable into addrSpace
-	{
-		DEBUG ('a', "Initializing data segment, at 0x%x, size %d\n",
-				noffH.initData.virtualAddr, noffH.initData.size);
-// TODO test for the step 4 question I.3
-//		executable->ReadAt (&(machine->mainMemory[noffH.initData.virtualAddr]),				//		Writes the file datd section in memory
-//				noffH.initData.size, noffH.initData.inFileAddr);
-		ReadAtVirtual(executable, noffH.initData.virtualAddr, noffH.initData.size,			//		Writes the file data section in memory
-				noffH.initData.inFileAddr, pageTable, numPages);
-// TODO end test for the step 4 question I.3
-
-		for (i=0; i<nbrDataPages; i++)	this->pageBitmap->Mark(i+nbrCodePages);				//		Notify the data pages as used
+	{																						//		Writes the file data section in memory
+		ReadAtVirtual(executable, noffH.initData.virtualAddr, noffH.initData.size, noffH.initData.inFileAddr, pageTable, numPages);
+		this->dataFirstPage	= noffH.initData.virtualAddr/ PageSize;
+		this->dataNbrPage	= noffH.initData.size		/ PageSize;
+        DEBUG ('a', "Initializing data segment: size %d (bytes)\n", noffH.initData.size);
+		DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.initData.virtualAddr);
+		DEBUG ('a', "\t-> First page:\t\t%d\n", 			this->dataFirstPage);
+		DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->dataNbrPage);
+		for (i=dataFirstPage; i<dataFirstPage+dataNbrPage; i++)
+		{
+			this->pageBitmap->Mark(i);														//		Notify the data pages as used
+		}
 	}
 	int remainingCode	= nbrCodePages % PageSize;
 	int remainingData	= nbrDataPages % PageSize;
@@ -171,11 +176,14 @@ AddrSpace::AddrSpace (OpenFile * executable)
 
 AddrSpace::~AddrSpace ()
 {
-  // LB: Missing [] for delete
-  // delete pageTable;
-  delete [] pageTable;
-  // End of modification
-  delete pageBitmap;
+	unsigned int i;
+
+	for (i = 0; i < numPages; i++)
+	{
+		frameProvider->ReleaseFrame(pageTable[i].physicalPage);			// Mark the phisycal page as free
+	}
+	delete [] pageTable;
+	delete pageBitmap;
 }
 
 //----------------------------------------------------------------------

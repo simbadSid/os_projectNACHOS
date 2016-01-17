@@ -36,15 +36,17 @@ extern Timer *timer;							// the hardware alarm clock
 #include "synchconsole.h"
 #include "userthread.h"
 #include "synch.h"
+#include "frameprovider.h"
 extern Machine			*machine;				// user program memory and registers
 extern SynchConsole		*synchconsole;
-extern UserThreadList	*userThreadList;		// Set of all the pointers currently existing
-// condition variable for use of join
+extern UserThreadList	*userThreadList;		// Set of all the threads currently existing
+extern FrameProvider	*frameProvider;			// Physical frame manager
 //+b goubetc 13.01.16
-extern Lock *joinCondition;              
+extern Lock *joinCondition;              		// condition variable for use of join
 extern Lock *haltCondition;
 extern Condition *variableCondition;
 //+e goubetc 13.01.16
+
 #endif
 
 #ifdef FILESYS_NEEDED							// FILESYS or FILESYS_STUB

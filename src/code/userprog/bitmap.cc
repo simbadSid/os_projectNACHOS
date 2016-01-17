@@ -147,7 +147,7 @@ BitMap::FindLast (int nbrBits)
 	ASSERT(nbrBits >= 0);
 	int j=0, i=0;
 
-	for (i = numBits-1; i > nbrBits; i--)
+	for (i = numBits-1; i > nbrBits-1; i--)
 	{
 		if (!Test (i))
 		{
@@ -179,6 +179,24 @@ BitMap::NumClear ()
 	    count++;
     return count;
 }
+
+// +b simbadSid 15.01.2015
+// ----------------------------------------------------------------------
+// Return the number of free bits and put them indexes in freeBitIndex.
+// ----------------------------------------------------------------------
+int BitMap::GetFreeBits(int freeBitIndex[])
+{
+	int count = 0;
+
+	for (int i = 0; i < numBits; i++)
+	{
+		if (Test (i)) continue;
+		freeBitIndex[count] = i;
+		count++;
+	}
+	return count;
+}
+// +e simbadSid 15.01.2015
 
 //----------------------------------------------------------------------
 // BitMap::Print

@@ -48,6 +48,7 @@ class BitMap
 											// If no bits are clear, return -1.
 // +e simbadSid 15.01.2015
 	int NumClear ();						// Return the number of clear bits
+	int GetFreeBits(int freeBitIndex[]);	// Return the number of free bits and put them indexes in freeBitIndex
 	void Print ();							// Print contents of bitmap
 
     // These aren't needed until FILESYS, when we will need to read and 
