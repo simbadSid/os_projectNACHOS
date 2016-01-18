@@ -351,7 +351,7 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
 #ifdef HOST_i386
     // the 80386 passes the return address on the stack.  In order for
     // SWITCH() to go to ThreadRoot when we switch to this thread, the
-    // return addres used in SWITCH() must be the starting address of
+    // return address used in SWITCH() must be the starting address of
     // ThreadRoot.
     *(--stackTop) = (int) ThreadRoot;
 #endif
@@ -410,31 +410,50 @@ Thread::RestoreUserState ()
 // +b FoxTox 10.01.2016
 //----------------------------------------------------------------------
 // - Initialize the memory space of the caller thread using the memory space of the current thread.
-// - Allocates space of the caller thread stack (according to the need of the function f and the arguments arg).
+// - Allocates space for the caller thread stack (empirical size for the created thread stack).
 // Parameters:
-//		- currentThreadStck	: input	: kernel pointer on the current thread stack pointer (value in the processor register: may be != from the value contained in the object currentThread)
+//		- existingThread	: input	: One thread sharing the same process as the created thread (my not be the first thread)
 //		- createdThreadStack: output: return the kernel pointer on the stack pointer of the created thread
 // Return
 //		* 0 in case of success
 //		* -1 if the new thread stack can not be allocated(only error detected is the lack of memory for the stack allocation)
 //----------------------------------------------------------------------
-int Thread::UserThreadCreate(int *currentThreadStack, int **createdThreadStack)
+int Thread::UserThreadCreate(Thread *existingThread, int **createdThreadStack)
 {
-//int *stackTop;										// the current stack pointer
-//int *stack;											// Bottom of the stack NULL if this is the main thread (If NULL, don't deallocate stack)
-
-//TODO CHANGE THE 3 by a macros
-//TODO check the stack is in the address space
-	this->stack	= currentThreadStack + PageSize * 3;	// Distinguish the new thread stack from the current thread stack
-	this->space	= (AddrSpace*)currentThread->space;
-
+	this->space		= (AddrSpace*)existingThread->space;
+	int newStack	= this->space->AllocateThreadStack(USER_THREAD_STACK_PAGES);// Distinguish the new thread stack from the current thread stack
+	if (newStack == -1)	return -1;												// Case: no memory left for the stack
+	else
+	{
+		this->stack = (int*)newStack;
+		if (createdThreadStack != NULL)
+			*createdThreadStack	= this->stack;
+	}
 	currentThread->space->SaveState();
 
-	*createdThreadStack = this->stack;
+	DEBUG ('t', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",
+			existingThread->stack, this->stack, this->space->GetSize());
 	return 0;
 }
 
 // +e FoxTox 10.01.2015
+
+// +b simbadSid 15.01.2015
+
+void Thread::UserThreadExit()
+{
+	DEBUG ('t', "\t->Thread stack free: stack to free: %d\n", this->stack);
+// TODO finish
+/*
+	bool test;
+	test = this->space->FreeThreadStack(this->stack, USER_THREAD_STACK_PAGES);
+	ASSERT (test);
+// TODO if this thread is the last thread of the process, free the address space
+// TODO to be done in the destructor of the class Thread
+*/
+}
+// +e simbadSid 15.01.2015
+
 #endif
 
 
@@ -525,15 +544,15 @@ int Thread::UserThreadCreate(int *currentThreadStack, int **createdThreadStack)
 		else						return 1 + this->next->GetNbrThread();
 	}
 
-	void UserThreadList::DebugPrintList()
+	void UserThreadList::PrintList()
 	{
 		if (this->thread == NULL)
 		{
-			DEBUG ('t', "\t(Empty list)\n");
+			printf("\t(Empty list)\n");
 			return;
 		}
-		DEBUG ('t', "\tThread \"%s\", tid = %d\n", this->thread->getName (), this->thread->getTID());
-	    if (this->next != NULL) this->next->DebugPrintList();
+		printf("\tThread \"%s\", tid = %d\n", this->thread->getName (), this->thread->getTID());
+	    if (this->next != NULL) this->next->PrintList();
 	}
 
 	void UserThreadList::FreeAllList()

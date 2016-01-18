@@ -54,7 +54,6 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 		machine->Run();
 	}
 
-
 //----------------------------------------------------------------------
 // System functions to manage the thread
 //----------------------------------------------------------------------
@@ -77,11 +76,9 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 
 		Thread	*t				= new Thread(name, tid);
 		int		*newThreadStack	= NULL;
-		int		*stack			= NULL;
 		int		test;
 
-		machine->ReadMem(machine->ReadRegister(StackReg), sizeof(stack), (int*)&stack);	// Get the stack pointer of the current thread from the processos (may be != from the one in the object currentThread)
-		test = t->UserThreadCreate(stack, &newThreadStack);							// Allocate space for the new thread stack pointer in the currentThread Address space
+		test = t->UserThreadCreate(currentThread, &newThreadStack);			// Allocate space for the new thread stack pointer in the currentThread Address space
 		if (test < 0)	return test;
 		userThreadList->Append(t);
 		tcp = new ThreadCreationParameter(func, arg, exitFunc, newThreadStack);
@@ -100,8 +97,8 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 
 		ASSERT(test);
 		ASSERT(currentThread == thread);
-// TODO MANAGE the address space of the thread
-// TODO to check: do nothink
+		thread->UserThreadExit();											// Unallocates the space allocated for the stack
+
 		//+b goubetc 13.01.16
 		variableCondition->Broadcast(joinCondition);
 		variableCondition->Signal(haltCondition);
@@ -109,8 +106,6 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 
 		DEBUG('e', "\tEnd of user thread exit\n");
 		thread->Finish();
-
-			
 	}
 
 // ----------------------------------------------------

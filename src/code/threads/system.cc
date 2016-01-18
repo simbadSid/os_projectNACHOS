@@ -33,14 +33,17 @@ FileSystem *fileSystem;
 SynchDisk *synchDisk;
 #endif
 
-#ifdef USER_PROGRAM			// requires either FILESYS or FILESYS_STUB
-Machine *machine;			// user program memory and registers
+#ifdef USER_PROGRAM					// requires either FILESYS or FILESYS_STUB
+Machine *machine;					// user program memory and registers
 //+b FoxTox 08.01.2016
-SynchConsole *synchconsole; // synchronised console
+SynchConsole *synchconsole;			// synchronised console
 //+e FoxTox 08.01.2016
 // +b simbadSid 10.01.2016
-UserThreadList	*userThreadList;
+UserThreadList	*userThreadList;	// List of allocated user thread list
 // +e simbadSid 10.01.2016
+// +b simbadSid 15.01.2016			//		different from running thread
+FrameProvider	*frameProvider;		// Physical frame manager
+// +e simbadSid 15.01.2016
 //+b goubetc 13.01.16
 Lock *joinCondition; 
 Lock *haltCondition;
@@ -172,15 +175,16 @@ Initialize (int argc, char **argv)
     CallOnUserAbort (Cleanup);									// if user hits ctl-C
 
 #ifdef USER_PROGRAM
-    machine				= new Machine (debugUserProg);				// this must come first
+    machine				= new Machine (debugUserProg);			// this must come first
     synchconsole		= new SynchConsole(NULL, NULL);
     //+b goubetc 13.01.16
     joinCondition		= new Lock("joinCondition");
     haltCondition		= new Lock("haltCondition");
     variableCondition	= new Condition("Condition variable");
     //+e goubetc 13.01.16
-    userThreadList	= new UserThreadList();
+    userThreadList		= new UserThreadList();
     userThreadList->Append(currentThread);
+    frameProvider		= new FrameProvider(NumPhysPages);
 #endif
 
 #ifdef FILESYS

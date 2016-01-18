@@ -80,18 +80,18 @@ void threadFunction3(void *arg)
 // -------------------------------------
 int main (int argc, char **argv)
 {
-	int arg2[] = {76};
-	int arg3[] = {57, (int)'c'};
+//	int arg2[] = {76};
+//	int arg3[] = {57, (int)'c'};
 
 	int tid0 = UserThreadCreate(threadFunction0, 0);
 	int tid1 = UserThreadCreate(threadFunction1, 0);
-	int tid2 = UserThreadCreate(threadFunction2, (void*)arg2);
-	int tid3 = UserThreadCreate(threadFunction3, (void*)arg3);
+//	int tid2 = UserThreadCreate(threadFunction2, (void*)arg2);
+//	int tid3 = UserThreadCreate(threadFunction3, (void*)arg3);
 
 	UserThreadJoin(tid0);
 	UserThreadJoin(tid1);
-	UserThreadJoin(tid2);
-	UserThreadJoin(tid3);
+//	UserThreadJoin(tid2);
+//	UserThreadJoin(tid3);
 
 	Halt ();
 

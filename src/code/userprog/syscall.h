@@ -37,8 +37,8 @@
 //+b FoxTox 09.01.2016
 #define SC_PutChar			11
 #define SC_GetChar			12
-#define SC_GetString	        	13
-#define SC_PutString		        14
+#define SC_GetString		13
+#define SC_PutString		14
 #define SC_GetInt			15
 #define SC_PutInt			16
 //+e FoxTox 09.01.2016

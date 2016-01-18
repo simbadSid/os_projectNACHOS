@@ -26,7 +26,6 @@ int main()
     int tid1 = UserThreadCreate(print_chars, (void *) arg);
     int tid2 = UserThreadCreate(print_chars, (void *) arg);
 
-    PutChar('!');
 
     UserThreadJoin(tid0);
     UserThreadJoin(tid1);
