@@ -26,7 +26,6 @@
 // +b simbadSid 15.01.2015
 
 
-
 //----------------------------------------------------------------------
 // SwapHeader
 //      Do little endian to big endian conversion on the bytes in the
@@ -129,10 +128,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 				pageTable[i].virtualPage, pageTable[i].physicalPage);
 	}
 
-//	bzero (machine->mainMemory, size);														// zero out the entire address space
 
-	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
-	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
 	if (noffH.code.size > 0)																// Copy code and segments of the executable into addrSpace
 	{																						//		Writes the file code section in memory
 		ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr, pageTable, numPages);
@@ -162,13 +158,16 @@ AddrSpace::AddrSpace (OpenFile * executable)
 			this->pageBitmap->Mark(i);														//		Notify the data pages as used
 		}
 	}
+
 /*
+	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
+	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
 // TODO to change
 	int remainingCode	= nbrCodePages % PageSize;
 	int remainingData	= nbrDataPages % PageSize;
 	if ((remainingCode != 0) && (remainingData != 0) && ((remainingCode + remainingData) > PageSize))
 		 this->pageBitmap->Mark(nbrCodePages + nbrDataPages - 1);
-		 */
+*/
 }
 // +e simbadSid 15.01.2015
 
