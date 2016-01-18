@@ -431,7 +431,8 @@ int Thread::UserThreadCreate(Thread *existingThread, int **createdThreadStack)
 	}
 	currentThread->space->SaveState();
 
-	DEBUG ('t', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",
+//TODO
+DEBUG ('z', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",
 			existingThread->stack, this->stack, this->space->GetSize());
 	return 0;
 }
@@ -442,7 +443,7 @@ int Thread::UserThreadCreate(Thread *existingThread, int **createdThreadStack)
 
 void Thread::UserThreadExit()
 {
-	DEBUG ('t', "\t->Thread stack free: stack to free: %d\n", this->stack);
+DEBUG ('z', "\t->Thread stack free: stack to free: %d\n", this->stack);
 // TODO finish
 /*
 	bool test;

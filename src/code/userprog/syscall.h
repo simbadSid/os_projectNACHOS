@@ -46,6 +46,7 @@
 #define SC_UserThreadCreate	17
 #define SC_UserThreadExit	18
 #define SC_UserThreadJoin	19
+#define SC_ForkExec			20
 //+e simbadSid 10.01.2016
 #define SC_GetCharInt		51  //+ TooFo 11012016 "Bonus Task
 
@@ -207,6 +208,12 @@ void UserThreadExit();
  * Needs to be lunched in user mode.
  */
 int UserThreadJoin(int tid);
+
+
+/* Call the system call function do_ForkExec
+ * TODO
+ */
+int ForkExec(char *executable);
 
 //+e simbadSid 9.01.16
 

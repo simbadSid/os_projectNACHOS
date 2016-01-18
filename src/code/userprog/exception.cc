@@ -270,6 +270,13 @@ ExceptionHandler (ExceptionType which)
 			break;
 		}
 		//+e simbadSid 10.01.16
+		//+b simbadSid 18.01.16
+		case SC_ForkExec:
+	    {
+//			int	userPtrFunc = machine->ReadRegister(4);
+	    	break;
+	    }
+		//+e simbadSid 18.01.16
 		default:
 		{
 			printf("***Unexpected user mode exception %d %d***\n", which, type);
