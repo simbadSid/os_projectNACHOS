@@ -113,7 +113,7 @@ int main (int argc, char **argv)
 {
 //	testCreation();
 	testJoin();
-
+	testCreation();
 	Halt ();
 
 	/* not reached */
