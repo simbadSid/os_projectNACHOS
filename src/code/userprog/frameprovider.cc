@@ -107,28 +107,30 @@ unsigned int FrameProvider::NumAvailFrame()
 //--------------------------------------------------------------
 // Frame allocation methodes
 //--------------------------------------------------------------
-	int FrameProvider::GetEmptyFrame_FirstFree()
-	{
-		int res = this->frameUsage->FindFirst(1);
+int FrameProvider::GetEmptyFrame_FirstFree()
+{
+	int res = this->frameUsage->FindFirst(1);
 
-		if (res != -1)	this->frameUsage->Mark(res);
-		return res;
-	}
-	int FrameProvider::GetEmptyFrame_LastFree()
-	{
-		int res = this->frameUsage->FindLast(1);
+	if (res != -1)	this->frameUsage->Mark(res);
+	return res;
+}
 
-		if (res != -1)	this->frameUsage->Mark(res);
-		return res;
-	}
-	int FrameProvider::GetEmptyFrame_RandomFree()
-	{
-		int freeIndexes[NumPhysPages], nbrFreeIndexes;
+int FrameProvider::GetEmptyFrame_LastFree()
+{
+	int res = this->frameUsage->FindLast(1);
 
-		nbrFreeIndexes = this->frameUsage->GetFreeBits(freeIndexes);
-		if (nbrFreeIndexes == 0) return -1;
+	if (res != -1)	this->frameUsage->Mark(res);
+	return res;
+}
 
-		int res = freeIndexes[Random()%nbrFreeIndexes];
-		this->frameUsage->Mark(res);
-		return res;
-	}
+int FrameProvider::GetEmptyFrame_RandomFree()
+{
+	int freeIndexes[NumPhysPages], nbrFreeIndexes;
+
+	nbrFreeIndexes = this->frameUsage->GetFreeBits(freeIndexes);
+	if (nbrFreeIndexes == 0) return -1;
+
+	int res = freeIndexes[Random()%nbrFreeIndexes];
+	this->frameUsage->Mark(res);
+	return res;
+}

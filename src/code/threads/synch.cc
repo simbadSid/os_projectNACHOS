@@ -223,9 +223,7 @@ Condition::~Condition ()
 void
 Condition::Wait (Lock * conditionLock)
 {
-    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     conditionLock->Acquire();
-    (void) interrupt->SetLevel (oldLevel);
 }
 
 void

@@ -56,7 +56,8 @@ SwapHeader (NoffHeader * noffH)
 // The read bytes are stored at the given virtual address in the
 // memory described by (pageTable, numPages)
 // --------------------------------------------------------------------
-static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position, TranslationEntry *pageTable, unsigned numPages)
+static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position,
+						  TranslationEntry *pageTable, unsigned numPages)
 {
 	IntStatus oldLevel		= interrupt->SetLevel(IntOff);
 	machine->pageTable		= pageTable;
@@ -65,10 +66,9 @@ static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, i
 
 	char buffer[numBytes];
 	int nbrRedBytes	= executable->ReadAt(buffer, numBytes, position);
-	int virtualByteShift;
 
     oldLevel = interrupt->SetLevel(IntOff);
-    for(virtualByteShift=0; virtualByteShift<nbrRedBytes; virtualByteShift++)
+    for(int virtualByteShift = 0; virtualByteShift < nbrRedBytes; ++virtualByteShift)
     {
         machine->WriteMem(virtualaddr+virtualByteShift, 1, buffer[virtualByteShift]);
     }
@@ -162,10 +162,12 @@ AddrSpace::AddrSpace (OpenFile * executable)
 			this->pageBitmap->Mark(i);														//		Notify the data pages as used
 		}
 	}
+/*
 	int remainingCode	= nbrCodePages % PageSize;
 	int remainingData	= nbrDataPages % PageSize;
 	if ((remainingCode != 0) && (remainingData != 0) && ((remainingCode + remainingData) > PageSize))
 		 this->pageBitmap->Mark(nbrCodePages + nbrDataPages - 1);
+		 */
 }
 // +e simbadSid 15.01.2015
 
