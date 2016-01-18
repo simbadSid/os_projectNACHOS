@@ -95,7 +95,7 @@ BitMap::Test (int which)
 //----------------------------------------------------------------------
 
 int
-BitMap::Find ()
+BitMap::FindAndMark ()
 {
     for (int i = 0; i < numBits; i++)
 	if (!Test (i))
@@ -105,6 +105,63 @@ BitMap::Find ()
 	  }
     return -1;
 }
+
+// +b simbadSid 15.01.2015
+
+//----------------------------------------------------------------------
+// BitMap::Find first
+//      Return the number of the first bit which is clear and has nbrBits free before.
+//      If no bits are clear, return -1.
+//----------------------------------------------------------------------
+
+int
+BitMap::FindFirst (int nbrBits)
+{
+	ASSERT(nbrBits >= 0);
+	int j=0, i=0;
+
+	for (i = 0; i <= numBits-nbrBits; i++)
+	{
+		if (!Test (i))
+		{
+			for (j=1; j<nbrBits; j++)
+			{
+				if (Test(i+j)) break;
+			}
+			if (j == nbrBits) return i;
+			i += j-1;
+		}
+    }
+    return -1;
+}
+
+//----------------------------------------------------------------------
+// BitMap::FindLast
+//      Return the number of the last bit which is clear and has nbrBits free before.
+//      If no bits are clear, return -1.
+//----------------------------------------------------------------------
+
+int
+BitMap::FindLast (int nbrBits)
+{
+	ASSERT(nbrBits >= 0);
+	int j=0, i=0;
+
+	for (i = numBits-1; i > nbrBits-1; i--)
+	{
+		if (!Test (i))
+		{
+			for (j=1; j<nbrBits; j++)
+			{
+				if (Test(i-j)) break;
+			}
+			if (j == nbrBits) return i;
+			i -= j+1;
+		}
+    }
+    return -1;
+}
+// +e simbadSid 15.01.2015
 
 //----------------------------------------------------------------------
 // BitMap::NumClear
@@ -122,6 +179,24 @@ BitMap::NumClear ()
 	    count++;
     return count;
 }
+
+// +b simbadSid 15.01.2015
+// ----------------------------------------------------------------------
+// Return the number of free bits and put them indexes in freeBitIndex.
+// ----------------------------------------------------------------------
+int BitMap::GetFreeBits(int freeBitIndex[])
+{
+	int count = 0;
+
+	for (int i = 0; i < numBits; i++)
+	{
+		if (Test (i)) continue;
+		freeBitIndex[count] = i;
+		count++;
+	}
+	return count;
+}
+// +e simbadSid 15.01.2015
 
 //----------------------------------------------------------------------
 // BitMap::Print

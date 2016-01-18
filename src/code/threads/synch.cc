@@ -69,11 +69,11 @@ Semaphore::P ()
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     while (value == 0)
-      {				// semaphore not available
-	  DEBUG('s', "Semaphore: Semaphore value null, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
-	  queue->Append ((void *) currentThread);	// so go to sleep
-	  currentThread->Sleep ();
-      }
+	{				// semaphore not available
+	    DEBUG('s', "Semaphore: Semaphore value null, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
+	    queue->Append ((void *) currentThread);	// so go to sleep
+	    currentThread->Sleep ();
+	}
     value--;			// semaphore available, 
     // consume its value
 
@@ -97,9 +97,9 @@ Semaphore::V ()
     thread = (Thread *) queue->Remove ();
     if (thread != NULL){		// make thread ready, consuming the V immediately
 	scheduler->ReadyToRun (thread);
-	DEBUG('s', "Semaphore: Semaphore value++ (%d), waking up thread: name = \"%s\", tid = %d.\n", value, thread->getName(), thread->getTID()); //+ goubetc 13.01.16
+	DEBUG('s', "Semaphore: Semaphore value++ (%d), waking up thread: name = \"%s\", tid = %d. \n", (value+1), thread->getName(), thread->getTID(), currentThread->getTID()); //+ goubetc 13.01.16
     } else {
-	DEBUG('s', "Semaphore: Semaphore value++ by name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
+	DEBUG('s', "Semaphore: Semaphore value++ by name = \"%s\", tid = %d.\n", currentThread->getName()); //+ goubetc 13.01.16
     }
     value++;
     (void) interrupt->SetLevel (oldLevel);
@@ -113,55 +113,55 @@ Semaphore::V ()
 //      when it is called.
 //----------------------------------------------------------------------
 
-void
-Semaphore::P_Count ()
-{
-    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
-    value--;
-    while (value > 0)
-      {				// semaphore not available
-	  queue->Append ((void *) currentThread);	// so go to sleep
-	  currentThread->Sleep ();
-      }
+// void
+// Semaphore::P_Count ()
+// {
+//     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+//     value--;
+//     while (value > 0)
+//       {				// semaphore not available
+// 	  queue->Append ((void *) currentThread);	// so go to sleep
+// 	  currentThread->Sleep ();
+//       }
 
-    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
-}
-
-
-//----------------------------------------------------------------------
-// Semaphore::P_Count
-//      Increments semaphore value.  
-//----------------------------------------------------------------------
-
-void
-Semaphore::Count ()
-{
-    IntStatus oldLevel = interrupt->SetLevel (IntOff);
-    value++;
-    (void) interrupt->SetLevel (oldLevel);
-}
+//     (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
+// }
 
 
-//----------------------------------------------------------------------
-// Semaphore::V2
-//      Decrement semaphore value
-//      As with P(), this operation must be atomic, so we need to disable
-//      interrupts.  Scheduler::ReadyToRun() assumes that threads
-//      are disabled when it is called.
-//----------------------------------------------------------------------
+// //----------------------------------------------------------------------
+// // Semaphore::P_Count
+// //      Increments semaphore value.  
+// //----------------------------------------------------------------------
 
-void
-Semaphore::V_Count ()
-{
-    Thread *thread;
-    IntStatus oldLevel = interrupt->SetLevel (IntOff);
+// void
+// Semaphore::Count ()
+// {
+//     IntStatus oldLevel = interrupt->SetLevel (IntOff);
+//     value++;
+//     (void) interrupt->SetLevel (oldLevel);
+// }
 
-    thread = (Thread *) queue->Remove ();
-    if (thread != NULL)		// make thread ready, consuming the V immediately
-	scheduler->ReadyToRun (thread);
-    value--;
-    (void) interrupt->SetLevel (oldLevel);
-}
+
+// //----------------------------------------------------------------------
+// // Semaphore::V2
+// //      Decrement semaphore value
+// //      As with P(), this operation must be atomic, so we need to disable
+// //      interrupts.  Scheduler::ReadyToRun() assumes that threads
+// //      are disabled when it is called.
+// //----------------------------------------------------------------------
+
+// void
+// Semaphore::V_Count ()
+// {
+//     Thread *thread;
+//     IntStatus oldLevel = interrupt->SetLevel (IntOff);
+
+//     thread = (Thread *) queue->Remove ();
+//     if (thread != NULL)		// make thread ready, consuming the V immediately
+// 	scheduler->ReadyToRun (thread);
+//     value--;
+//     (void) interrupt->SetLevel (oldLevel);
+// }
 
 //+e goubetc 11.01.16
 
@@ -184,11 +184,11 @@ Lock::Acquire ()
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     while (busy)
-      {				// semaphore not available
-	  DEBUG('s', "Lock: Lock busy, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
-	  queue->Append ((void *) currentThread);	// so go to sleep
-	  currentThread->Sleep ();
-      }
+	{				// semaphore not available
+	    DEBUG('s', "Lock: Lock busy, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
+	    queue->Append ((void *) currentThread);	// so go to sleep
+	    currentThread->Sleep ();
+	}
     busy = true;			// semaphore available, 
     // consume its value
 
@@ -204,32 +204,34 @@ Lock::Release ()
     thread = (Thread *) queue->Remove ();
     if (thread != NULL){		// make thread ready, consuming the V immediately
 	scheduler->ReadyToRun (thread);
-	DEBUG('s', "Lock: Lock free, waking up thread: name = \"%s\", tid = %d.\n", thread->getName(), thread->getTID()); //+ goubetc 13.01.16
+	DEBUG('s', "Lock: Lock free, waking up thread: name = \"%s\", tid = %d.\n :: current thread: %d", thread->getName(), thread->getTID(), currentThread->getTID()); //+ goubetc 13.01.16
     }
     busy = false;
     (void) interrupt->SetLevel (oldLevel);
 }
-
-
-// +b FoxTox 13.01.2015
+ 
+//+b FoxTox 13.01.2015
 Condition::Condition (const char *debugName)
 {
-	name = debugName;
+    name = debugName;
 }
 
 Condition::~Condition ()
 {
 }
+
 void
 Condition::Wait (Lock * conditionLock)
 {
-	conditionLock->Acquire();
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+    conditionLock->Acquire();
+    (void) interrupt->SetLevel (oldLevel);
 }
 
 void
 Condition::Signal (Lock * conditionLock)
 {
-	conditionLock->Release();
+    conditionLock->Release();
 }
 
 void

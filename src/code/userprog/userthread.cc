@@ -20,7 +20,7 @@ static int nbrUserThread = 0;
 // ThreadCreationParameter:
 // Class used to communicate data to the delayed thread management handlers
 // ------------------------------------------
-	ThreadCreationParameter::ThreadCreationParameter(void *FUNC, void *ARG,  void *EXIT_FUNC, int STACK_POINTER)
+	ThreadCreationParameter::ThreadCreationParameter(int FUNC, int ARG,  int EXIT_FUNC, int *STACK_POINTER)
 	{
 		this->func			= FUNC;
 		this->arg			= ARG;
@@ -54,7 +54,6 @@ static int nbrUserThread = 0;
 		machine->Run();
 	}
 
-
 //----------------------------------------------------------------------
 // System functions to manage the thread
 //----------------------------------------------------------------------
@@ -75,19 +74,14 @@ static int nbrUserThread = 0;
 		char name[THREAD_NAME_MAX_SIZE];
 		int	tid	= initThreadName(name);
 
-// TODO Hack to remove
-//nbrUserThread ++;
-//int tid = nbrUserThread;
-		int		newThreadStack	=-1;
 		Thread	*t				= new Thread(name, tid);
-		int		stack			= -1;
+		int		*newThreadStack	= NULL;
 		int		test;
 
-		machine->ReadMem(machine->ReadRegister(StackReg), sizeof(int), &stack);		// Get the stack pointer of the current thread from the processos (may be != from the one in the object currentThread)
-		test = t->UserThreadCreate(stack, &newThreadStack);							// Allocate space for the new thread stack pointer in the currentThread Address space
+		test = t->UserThreadCreate(currentThread, &newThreadStack);			// Allocate space for the new thread stack pointer in the currentThread Address space
 		if (test < 0)	return test;
 		userThreadList->Append(t);
-		tcp = new ThreadCreationParameter((void*)func, (void*)arg, (void*)exitFunc, newThreadStack);
+		tcp = new ThreadCreationParameter(func, arg, exitFunc, newThreadStack);
 		t->Fork(StartUserThread, (int)tcp);
 		return tid;
 	}
@@ -103,7 +97,14 @@ static int nbrUserThread = 0;
 
 		ASSERT(test);
 		ASSERT(currentThread == thread);
-// MANAGE the address space of the thread
+		thread->UserThreadExit();											// Unallocates the space allocated for the stack
+
+		//+b goubetc 13.01.16
+		variableCondition->Broadcast(joinCondition);
+		variableCondition->Signal(haltCondition);
+		//+e goubetc
+
+		DEBUG('e', "\tEnd of user thread exit\n");
 		thread->Finish();
 	}
 

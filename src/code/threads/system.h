@@ -19,6 +19,7 @@
 
 // FoxTox 08.01.2016
 // simbadSid 10.01.2016
+// goubetc 13.01.2016
 
 // Initialization and cleanup routines
 extern void Initialize (int argc, char **argv);	// Initialization, called before anything else
@@ -34,9 +35,18 @@ extern Timer *timer;							// the hardware alarm clock
 #include "machine.h"
 #include "synchconsole.h"
 #include "userthread.h"
+#include "synch.h"
+#include "frameprovider.h"
 extern Machine			*machine;				// user program memory and registers
 extern SynchConsole		*synchconsole;
-extern UserThreadList	*userThreadList;		// Set of all the pointers currently existing
+extern UserThreadList	*userThreadList;		// Set of all the threads currently existing
+extern FrameProvider	*frameProvider;			// Physical frame manager
+//+b goubetc 13.01.16
+extern Lock *joinCondition;              		// condition variable for use of join
+extern Lock *haltCondition;
+extern Condition *variableCondition;
+//+e goubetc 13.01.16
+
 #endif
 
 #ifdef FILESYS_NEEDED							// FILESYS or FILESYS_STUB

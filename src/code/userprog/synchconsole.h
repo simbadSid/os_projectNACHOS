@@ -4,6 +4,7 @@
 #include "copyright.h"
 #include "utility.h"
 #include "console.h"
+#include "synch.h"
 
 // FoxTox 09.01.2016
 
@@ -23,6 +24,8 @@ class SynchConsole
 		void SynchGetInt(int *n);
 		void SynchPutInt(int n);
 		//+e FoxTox 09.01.2016
+
+		int SynchGetCharInt();   //+ TooFo 11012016
 	private:
 		Console *console;
 };

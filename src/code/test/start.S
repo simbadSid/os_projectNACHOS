@@ -26,7 +26,7 @@
 	.ent	__start
 __start:
 	jal	main
-	move	$4,$2
+	move	$4,$0		
 	jal	Exit	 /* if we return from main, exit(0) */
 	.end __start
 
@@ -151,15 +151,16 @@ PutString:
 
 //+e goubetc 8.01.16
 
-//+b FoxTox 8.01.16
-	.globl GetChar
-	.ent	GetChar
+//+b TooFo 11012016
+	.globl GetCharInt
+	.ent	GetCharInt
 
-GetChar:
-	addiu $2,$0,SC_GetChar
+GetCharInt:
+	addiu $2,$0,SC_GetCharInt
 	syscall
 	j	$31
-	.end GetChar
+	.end GetCharInt
+//+e TooFo 11012016
 
 	.globl GetString
 	.ent	GetString

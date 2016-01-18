@@ -1,4 +1,4 @@
-// console.cc 
+// console.cc
 //	Routines to simulate a serial port to a console device.
 //	A console has input (a keyboard) and output (a display).
 //	These are each simulated by operations on UNIX files.
@@ -17,6 +17,7 @@
 #include "console.h"
 #include "system.h"
 
+#define intEOF -1 //+ TooFo 12.01.16
 
 // simbadSid 09.01.2016		Removed all the changes of the console File
 
@@ -57,9 +58,9 @@ Console::Console(char *readFile, char *writeFile, VoidFunctionPtr readAvail,
     handlerArg		= callArg;
     putBusy			= FALSE;
     incoming		= EOF;
+    incomingInt		= intEOF;
 
     interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime, ConsoleReadInt);// start polling for incoming packets
-
 }
 
 //----------------------------------------------------------------------
@@ -150,4 +151,41 @@ Console::PutChar(char ch)
     WriteFile(writeFileNo, &ch, sizeof(char));
     putBusy = TRUE;
     interrupt->Schedule(ConsoleWriteDone, (int)this, ConsoleTime, ConsoleWriteInt);
+}
+
+//+ TooFo
+bool Console::feof()
+{
+	return PollFile(readFileNo);
+}
+
+
+int
+Console::GetCharInt()
+{
+   int ch = incomingInt;
+
+   incomingInt = intEOF;
+   return ch;
+}
+
+void
+Console::CheckCharIntAvail()
+{
+    char c;
+    int n;
+
+    // schedule the next time to poll for a packet
+    interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime,
+			ConsoleReadInt);
+//    PutChar((char)incomingInt);
+    // do nothing if character is already buffered, or none to be read
+    if (incomingInt != intEOF || !PollFile(readFileNo) )
+	return;
+
+    // otherwise, read character and tell user about it
+    n = ReadPartial(readFileNo, &c, sizeof(char));
+    incomingInt = (n == 1 ? (int)c : intEOF);
+    stats->numConsoleCharsRead++;
+    (*readHandler)(handlerArg);
 }

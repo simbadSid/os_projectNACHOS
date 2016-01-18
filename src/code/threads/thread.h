@@ -48,9 +48,11 @@
 #include "addrspace.h"
 #endif
 
-
+// +b simbadSid 15.01.2015
 #define THREAD_NAME_MAX_SIZE	100
-#define MachineStateSize 18								// CPU register state to be saved on context switch.
+#define USER_THREAD_STACK_PAGES	2
+// +e simbadSid 15.01.2015
+#define MachineStateSize		18						// CPU register state to be saved on context switch.
 														// The SPARC and MIPS only need 10 registers, but the Snake needs 18.
 														// For simplicity, this is just the max over all architectures.
 #define StackSize	(4 * 1024)							// Size of the thread's private execution stack.
@@ -117,8 +119,11 @@ class Thread
     void SaveUserState ();								// save user-level register state
     void RestoreUserState ();							// restore user-level register state
     // +b FoxTox 10.01.2016
-    int UserThreadCreate(int currentThreadStack, int *createdThreadStack);
+    int UserThreadCreate(Thread *existingThread, int **createdThreadStack);
     // +e FoxTox 10.01.2016
+    // +b simbadSid 15.01.2016
+    void UserThreadExit();
+    // +e simbadSid 15.01.2016
    AddrSpace *space;									// User code this thread is running.
 #endif
 };
@@ -140,7 +145,7 @@ class UserThreadList
 		bool	IsEmpty			();
 		bool	IsInList		(int tid, Thread **outputThread);
 		int		GetNbrThread	();
-		void	DebugPrintList	();
+		void	PrintList		();
 		void	FreeAllList		();
 
 	private:

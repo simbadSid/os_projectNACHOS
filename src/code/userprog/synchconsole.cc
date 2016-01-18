@@ -1,7 +1,4 @@
-#include "copyright.h"
-#include "system.h"
 #include "synchconsole.h"
-#include "synch.h"
 
 
 
@@ -72,7 +69,6 @@ void SynchConsole::SynchPutString(const char s[])
     writing->Acquire (); //+ goubetc 12.01.16
     ASSERT(s != NULL);
     if (s[0] == '\0') return;							// Case empty string
-    
     size_t i;
     for (i=0; s[i] != '\0'; i++)
 	{
@@ -91,7 +87,7 @@ void SynchConsole::SynchGetString(char *s, int n)
     reading->Acquire (); //+ goubetc 12.01.16
     char c;
     size_t i;
-
+    
     for (i=0; i<(size_t)n; ++i)
 	{
 	    readAvail->P ();
@@ -124,3 +120,33 @@ void SynchConsole::SynchPutInt(int n)
 	SynchPutString(sint);
 }
 //+e FoxTox 09.01.2016
+
+//+b TooFo 11012016
+// Gets Char and returns an integer value
+int SynchConsole::SynchGetCharInt()
+{
+    //reading->P ();   //+e goubetc 10.01.16
+    console->CheckCharIntAvail();
+    return (int)console->GetCharInt ();
+    //reading->V ();   //+ goubetc 10.01.16
+
+    /*reading->P (); //+ goubetc 10.01.16
+    char c;
+    size_t i;
+
+    for (i=0; i<(size_t)n; ++i)
+	{
+	    readAvail->P ();
+	    if ((c = console->GetChar()) == EOF)
+	    	break;
+	    *(s + i) = c;
+	    if (c == '\n')
+	    	break;
+	}
+    *(s + i + 1) = 0;
+    if (i == 0 || c == EOF)
+    	*s = EOF;
+    reading->V (); //+ goubetc 10.01.16
+    return (int)c; */
+}
+//+e TooFo 11012016

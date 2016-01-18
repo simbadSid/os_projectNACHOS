@@ -22,7 +22,6 @@ void print(char c, int n)
     int numb;
     GetInt(&numb);
     PutInt(numb);
-    
     //Halt();
 }
 

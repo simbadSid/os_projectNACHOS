@@ -12,6 +12,7 @@
 
 // goubetc 8.01.16
 // FoxTox 09.01.2016
+// TooFo 11012016
 
 
 #ifndef SYSCALLS_H
@@ -36,8 +37,8 @@
 //+b FoxTox 09.01.2016
 #define SC_PutChar			11
 #define SC_GetChar			12
-#define SC_GetString	        	13
-#define SC_PutString		        14
+#define SC_GetString		13
+#define SC_PutString		14
 #define SC_GetInt			15
 #define SC_PutInt			16
 //+e FoxTox 09.01.2016
@@ -46,7 +47,7 @@
 #define SC_UserThreadExit	18
 #define SC_UserThreadJoin	19
 //+e simbadSid 10.01.2016
-
+#define SC_GetCharInt		51  //+ TooFo 11012016 "Bonus Task
 
 #ifdef IN_USER_MODE
 
@@ -183,6 +184,7 @@ void GetInt(int *n);
  */
 void PutInt(int n);
 
+int GetCharInt();  //+ TooFo 11012016
 
 //+b simbadSid 10.01.16
 /* UserThreadCreate: Call the system function do_UserThreadCreate to add a thread to current process.

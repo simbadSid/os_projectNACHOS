@@ -21,6 +21,7 @@
 #include "copyright.h"
 #include "scheduler.h"
 #include "system.h"
+#include "synch.h"
 
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
