@@ -136,9 +136,11 @@ ExceptionHandler (ExceptionType which)
 			userThreadList->Remove(currentTID, NULL);
 			DEBUG('e', "\t->Start wating for %d user threads to finish.\n",
 			      userThreadList->GetNbrThread());
-
+			//+b goubetc 18.01.16
+			haltCondition->Acquire();
 			while(!userThreadList->IsEmpty()) variableCondition->Wait(haltCondition);
-
+			haltCondition->Release();
+			//+e goubetc 18.01.16
 			DEBUG('e', "\t->End wating for the user threads.\n");
 			interrupt->Halt();
 			break;
@@ -242,8 +244,10 @@ ExceptionHandler (ExceptionType which)
 	    }
 		case SC_UserThreadExit:
 		{
-			DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
-			      currentThread->getTID(), currentThread->getName());
+		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",			      currentThread->getTID(), currentThread->getName());
+
+		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
+			  currentThread->getTID(), currentThread->getName());
 			do_UserThreadExit();														// Does not returns
 			break;
 		}
@@ -260,11 +264,16 @@ ExceptionHandler (ExceptionType which)
 				machine->WriteRegister(2, 0);											// Write the output of the system call
 				break;
 		    }
-
+			//+b goubetc 18.01.16
+			joinCondition->Acquire();
 			while(userThreadList->IsInList(threadToJoinTID, NULL))
 			{
+			    DEBUG('s', "\t********************-- %d called by thread %d\n", userThreadList->IsInList(threadToJoinTID, NULL), currentThread->getTID()); //KILL-ME
 			    variableCondition->Wait(joinCondition);  //+ goubetc 13.01.16
+			    
 			}
+			joinCondition->Release();
+			//+e goubetc 18.01.16
 			DEBUG('e', "\t-> End of join for the thread tid = %d.\n", threadToJoinTID);
 			machine->WriteRegister(2, 0);												// Write the output of the system call
 			break;

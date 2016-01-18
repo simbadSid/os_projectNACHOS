@@ -20,7 +20,7 @@
 #include "copyright.h"
 #include "thread.h"
 #include "list.h"
-//+ goubetc 12.01.16
+//+ goubetc 12.01.16 18.01.16
 
 
 // The following class defines a "semaphore" whose value is a non-negative
@@ -48,11 +48,15 @@ class Semaphore
 	return name;
     }				// debugging assist
 
+    List *getQueue ()
+    {
+	return queue;
+    } //+ goubetc 17.01.16
     void P ();			// these are the only operations on a semaphore
     void V ();			// they are both *atomic*
-    void P_Count ();            // operation for semaphores
-    void Count ();              // that waits while
-    void V_Count ();            // semaphore valure not null (counts number of items)
+    //    void P_Count ();            // operation for semaphores
+    //    void Count ();              // that waits while
+    //   void V_Count ();            // semaphore valure not null (counts number of items)
   private:
     const char *name;		// useful for debugging
     //+b goubetc 11.01.16
@@ -83,6 +87,10 @@ class Lock
 	return name;
     }				// debugging assist
 
+    /* Semaphore *getSem () */
+    /* { */
+    /* 	return sem; */
+    /* } //+ goubetc 17.01.16 */
     void Acquire ();		// these are the only operations on a lock
     void Release ();		// they are both *atomic*    
     
@@ -91,11 +99,13 @@ class Lock
     // checking in Release, and in
     // Condition variable ops below.
     //+b FoxTox 13.01.16
-    List *queue;		// threads waiting in P() for the value to be > 0
+     List *queue;		// threads waiting in P() for the value to be > 0
     //+e FoxTox 13.01.16
 
   private:
     const char *name;		// for debugging
+    //Semaphore *sem;
+    
     // plus some other stuff you'll need to define
     //+b goubetc 12.01.16
     bool busy;			// semaphore value, always >= 0
@@ -155,6 +165,7 @@ class Condition
 
   private:
     const char *name;
+    List *sleeping; //+ goubetc 18.01.16
     // plus some other stuff you'll need to define
 };
 #endif // SYNCH_H

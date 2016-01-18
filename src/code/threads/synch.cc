@@ -24,8 +24,8 @@
 #include "copyright.h"
 #include "synch.h"
 #include "system.h"
-
-//+ goubetc 12.01.16 13.01.16
+#include "list.h"
+//+ goubetc 12.01.16 13.01.16 18.01.16
 //+ FoxTox 13.01.2015
 
 //----------------------------------------------------------------------
@@ -70,11 +70,12 @@ Semaphore::P ()
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     while (value == 0)
 	{				// semaphore not available
-	    DEBUG('s', "Semaphore: Semaphore value null, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
+	    DEBUG('s', "Semaphore: Semaphore value null, setting thread to sleep: name = \"%s\", tid = %d value:%d.\n", currentThread->getName(), currentThread->getTID(), value); //+ goubetc 13.01.16
 	    queue->Append ((void *) currentThread);	// so go to sleep
 	    currentThread->Sleep ();
 	}
-    value--;			// semaphore available, 
+    value--;			// semaphore available,
+    DEBUG('s', "Semaphore: Semaphore value-- by name = \"%s\", tid = %d.\n", currentThread->getName()); //+ goubetc 13.01.16
     // consume its value
 
     (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
@@ -184,8 +185,8 @@ Lock::Acquire ()
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
     while (busy)
-	{				// semaphore not available
-	    DEBUG('s', "Lock: Lock busy, setting thread to sleep: name = \"%s\", tid = %d.\n", currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
+    	{				// semaphore not available
+	    DEBUG('s', "Lock name(%s): Lock busy, setting thread to sleep: name = \"%s\", tid = %d.\n",name, currentThread->getName(), currentThread->getTID()); //+ goubetc 13.01.16
 	    queue->Append ((void *) currentThread);	// so go to sleep
 	    currentThread->Sleep ();
 	}
@@ -204,16 +205,39 @@ Lock::Release ()
     thread = (Thread *) queue->Remove ();
     if (thread != NULL){		// make thread ready, consuming the V immediately
 	scheduler->ReadyToRun (thread);
-	DEBUG('s', "Lock: Lock free, waking up thread: name = \"%s\", tid = %d.\n :: current thread: %d", thread->getName(), thread->getTID(), currentThread->getTID()); //+ goubetc 13.01.16
+	DEBUG('s', "Lock name(%s): Lock free, waking up thread: name = \"%s\", tid = %d.\n :: current thread: %d", name, thread->getName(), thread->getTID(), currentThread->getTID()); //+ goubetc 13.01.16
     }
     busy = false;
     (void) interrupt->SetLevel (oldLevel);
 }
  
-//+b FoxTox 13.01.2015
+// Lock::Lock (const char *debugName)
+// {
+//     name = debugName;
+//     sem = new Semaphore(debugName,1);
+// }
+
+// Lock::~Lock ()
+// {
+//     //delete queue;
+// }
+// void
+// Lock::Acquire ()
+// {
+//     sem->P();
+// }
+// void
+// Lock::Release ()
+// {
+//     sem->V();
+// }
+
+
+//+b goubetc 18.01.16
 Condition::Condition (const char *debugName)
 {
     name = debugName;
+    sleeping = new List();
 }
 
 Condition::~Condition ()
@@ -223,25 +247,33 @@ Condition::~Condition ()
 void
 Condition::Wait (Lock * conditionLock)
 {
-    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+    conditionLock->Release();
+    Semaphore *thread_Lock = new Semaphore("sleeping", 0);
+    sleeping->Append((void *) thread_Lock);
+    thread_Lock->P();
     conditionLock->Acquire();
-    (void) interrupt->SetLevel (oldLevel);
 }
 
 void
 Condition::Signal (Lock * conditionLock)
 {
-    conditionLock->Release();
+    if (!sleeping->IsEmpty()){
+	Semaphore* temp = (Semaphore *) sleeping->Remove();
+	temp->V();
+    }
 }
 
 void
 Condition::Broadcast (Lock * conditionLock)
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
-    conditionLock->Release(); //+ goubetc 13.01.16
-    while (!conditionLock->queue->IsEmpty()) {
-	scheduler->ReadyToRun((Thread *)conditionLock->queue->Remove ());
+    DEBUG('s', "Condition(%s): Semaphore value++ by name = \"%s\", tid = %d.\n", conditionLock->getName(), currentThread->getName()); //+ goubetc 13.01.16
+    //conditionLock->Release(); //+ goubetc 13.01.16
+    while (!sleeping->IsEmpty()) {
+	Semaphore* temp = (Semaphore *) sleeping->Remove();
+	temp->V();
+	//scheduler->ReadyToRun((Thread *)conditionLock->queue->Remove ());
     }
     (void) interrupt->SetLevel (oldLevel);
 }
-// +e FoxTox 13.01.2015
+// +e goubetc 18.01.16
