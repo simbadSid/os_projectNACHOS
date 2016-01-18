@@ -37,6 +37,7 @@ class AddrSpace
 	private:
 		TranslationEntry	*pageTable;				// Assume linear page table translation for now!
 		unsigned int		numPages;				// Number of pages in the virtual address space
+		//+b simbadSid 15.01.2015
 		BitMap				*pageBitmap;			// Identify the pages reserved (mainly for the stack)
 		unsigned int		codeFirstPage;
 		unsigned int		codeNbrPage;

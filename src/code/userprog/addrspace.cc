@@ -140,7 +140,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		this->codeNbrPage	= noffH.code.size		/ PageSize;
         DEBUG ('a', "Initializing code segment: size %d (bytes)\n", noffH.code.size);
 		DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.code.virtualAddr);
-		DEBUG ('a', "\t-> First page:\t\t%d\n", 			this->codeFirstPage);
+		DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->codeFirstPage);
 		DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->codeNbrPage);
 		for (i=codeFirstPage; i<codeFirstPage+codeNbrPage; i++)
 		{
@@ -155,7 +155,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		this->dataNbrPage	= noffH.initData.size		/ PageSize;
         DEBUG ('a', "Initializing data segment: size %d (bytes)\n", noffH.initData.size);
 		DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.initData.virtualAddr);
-		DEBUG ('a', "\t-> First page:\t\t%d\n", 			this->dataFirstPage);
+		DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->dataFirstPage);
 		DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->dataNbrPage);
 		for (i=dataFirstPage; i<dataFirstPage+dataNbrPage; i++)
 		{
@@ -163,6 +163,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		}
 	}
 /*
+// TODO to change
 	int remainingCode	= nbrCodePages % PageSize;
 	int remainingData	= nbrDataPages % PageSize;
 	if ((remainingCode != 0) && (remainingData != 0) && ((remainingCode + remainingData) > PageSize))

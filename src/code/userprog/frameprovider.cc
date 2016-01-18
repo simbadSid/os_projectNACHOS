@@ -6,11 +6,12 @@
  */
 
 
+
+// +b simbadSid 18.01.2015
+
+
 #include "frameprovider.h"
 #include "system.h"
-
-
-
 
 
 FrameProvider::FrameProvider(unsigned int nbrPhysicalFrame)
@@ -99,6 +100,7 @@ void FrameProvider::ReleaseFrame(unsigned int frameIndex)
 
 	this->frameUsage->Clear(frameIndex);
 }
+
 unsigned int FrameProvider::NumAvailFrame()
 {
 	return this->frameUsage->NumClear();
@@ -134,3 +136,4 @@ int FrameProvider::GetEmptyFrame_RandomFree()
 	this->frameUsage->Mark(res);
 	return res;
 }
+// +e simbadSid 18.01.2016
