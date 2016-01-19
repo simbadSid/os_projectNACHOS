@@ -122,6 +122,7 @@ ExceptionHandler (ExceptionType which)
 {
     //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
+
     switch(which)
     {
     case SyscallException:

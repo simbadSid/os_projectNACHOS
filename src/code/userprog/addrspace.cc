@@ -26,7 +26,6 @@
 // +b simbadSid 15.01.2015
 
 
-
 //----------------------------------------------------------------------
 // SwapHeader
 //      Do little endian to big endian conversion on the bytes in the
@@ -56,7 +55,8 @@ SwapHeader (NoffHeader * noffH)
 // The read bytes are stored at the given virtual address in the
 // memory described by (pageTable, numPages)
 // --------------------------------------------------------------------
-static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position, TranslationEntry *pageTable, unsigned numPages)
+static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position,
+						  TranslationEntry *pageTable, unsigned numPages)
 {
 	IntStatus oldLevel		= interrupt->SetLevel(IntOff);
 	machine->pageTable		= pageTable;
@@ -65,10 +65,9 @@ static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, i
 
 	char buffer[numBytes];
 	int nbrRedBytes	= executable->ReadAt(buffer, numBytes, position);
-	int virtualByteShift;
 
     oldLevel = interrupt->SetLevel(IntOff);
-    for(virtualByteShift=0; virtualByteShift<nbrRedBytes; virtualByteShift++)
+    for(int virtualByteShift = 0; virtualByteShift < nbrRedBytes; ++virtualByteShift)
     {
         machine->WriteMem(virtualaddr+virtualByteShift, 1, buffer[virtualByteShift]);
     }
@@ -127,8 +126,6 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	}
 	this->threadStackList = new KeyList();
 
-	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
-	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
 	if (noffH.code.size > 0)																// Copy code and segments of the executable into addrSpace
 	{																						//		Writes the file code section in memory
 		ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr, pageTable, numPages);
@@ -159,11 +156,15 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		}
 	}
 
+/*
+	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
+	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
 // TODO to change
 	int remainingCode	= nbrCodePages % PageSize;
 	int remainingData	= nbrDataPages % PageSize;
 	if ((remainingCode != 0) && (remainingData != 0) && ((remainingCode + remainingData) > PageSize))
 		 this->pageBitmap->Mark(nbrCodePages + nbrDataPages - 1);
+*/
 }
 // +e simbadSid 15.01.2015
 
@@ -182,6 +183,7 @@ AddrSpace::~AddrSpace ()
 	}
 	delete [] pageTable;
 	delete pageBitmap;
+	this->threadStackList->FreeAllList();
 }
 
 //----------------------------------------------------------------------

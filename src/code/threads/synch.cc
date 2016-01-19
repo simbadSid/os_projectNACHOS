@@ -267,7 +267,8 @@ void
 Condition::Broadcast (Lock * conditionLock)
 {
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
-    DEBUG('s', "Condition(%s): Semaphore value++ by name = \"%s\", tid = %d.\n", conditionLock->getName(), currentThread->getName()); //+ goubetc 13.01.16
+    DEBUG('s', "Condition(%s): Semaphore value++ by name = \"%s\", tid = %d.\n",
+    		conditionLock->getName(), currentThread->getName()); //+ goubetc 13.01.16
     //conditionLock->Release(); //+ goubetc 13.01.16
     while (!sleeping->IsEmpty()) {
 	Semaphore* temp = (Semaphore *) sleeping->Remove();

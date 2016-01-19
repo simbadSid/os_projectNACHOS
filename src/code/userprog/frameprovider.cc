@@ -14,9 +14,6 @@
 #include "system.h"
 
 
-
-
-
 FrameProvider::FrameProvider(unsigned int nbrPhysicalFrame)
 {
 	ASSERT(nbrPhysicalFrame <= NumPhysPages);
