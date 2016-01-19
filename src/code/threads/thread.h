@@ -50,7 +50,6 @@
 
 // +b simbadSid 15.01.2015
 #define THREAD_NAME_MAX_SIZE	100
-#define USER_THREAD_STACK_PAGES	2
 // +e simbadSid 15.01.2015
 #define MachineStateSize		18						// CPU register state to be saved on context switch.
 														// The SPARC and MIPS only need 10 registers, but the Snake needs 18.
@@ -119,7 +118,7 @@ class Thread
     void SaveUserState ();								// save user-level register state
     void RestoreUserState ();							// restore user-level register state
     // +b FoxTox 10.01.2016
-    int UserThreadCreate(Thread *existingThread, int **createdThreadStack);
+    int UserThreadCreate(Thread *existingThread, int *createdThreadStack);
     // +e FoxTox 10.01.2016
     // +b simbadSid 15.01.2016
     void UserThreadExit();
@@ -134,25 +133,6 @@ class Thread
 // Set of all the threads currently existing
 // ------------------------------------------
 #ifdef USER_PROGRAM
-class UserThreadList
-{
-	public:
-		UserThreadList();
-		UserThreadList(UserThreadList *list);
-		~UserThreadList(){};											// Only free 1 cell.  To free all the memory use FreeAllList
-		void	Append			(Thread *thread);
-		bool	Remove			(int tid, Thread **thread);
-		bool	IsEmpty			();
-		bool	IsInList		(int tid, Thread **outputThread);
-		int		GetNbrThread	();
-		void	PrintList		();
-		void	FreeAllList		();
-
-	private:
-		Thread			*thread;
-		UserThreadList	*next;
-
-};
 #endif
 
 

@@ -20,7 +20,7 @@ static int nbrUserThread = 0;
 // ThreadCreationParameter:
 // Class used to communicate data to the delayed thread management handlers
 // ------------------------------------------
-ThreadCreationParameter::ThreadCreationParameter(int FUNC, int ARG,  int EXIT_FUNC, int *STACK_POINTER)
+ThreadCreationParameter::ThreadCreationParameter(int FUNC, int ARG,  int EXIT_FUNC, int STACK_POINTER)
 {
     this->func			= FUNC;
     this->arg			= ARG;
@@ -75,12 +75,12 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 		int	tid	= initThreadName(name);
 
 		Thread	*t				= new Thread(name, tid);
-		int		*newThreadStack	= NULL;
+		int		newThreadStack	= -1;
 		int		test;
 
 		test = t->UserThreadCreate(currentThread, &newThreadStack);			// Allocate space for the new thread stack pointer in the currentThread Address space
 		if (test < 0)	return test;
-		userThreadList->Append(t);
+		userThreadList->Prepend(t->getTID(), t);
 		tcp = new ThreadCreationParameter(func, arg, exitFunc, newThreadStack);
 		t->Fork(StartUserThread, (int)tcp);
 		return tid;
@@ -93,7 +93,7 @@ ThreadCreationParameter::~ThreadCreationParameter() {}
 	{
 		Thread *thread;
 		int		tid	= currentThread->getTID();
-		bool	test= userThreadList->Remove(tid, &thread);
+		bool	test= userThreadList->Remove(tid, (void**)&thread);
 
 		ASSERT(test);
 		ASSERT(currentThread == thread);

@@ -98,12 +98,9 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	executable->ReadAt ((char *) &noffH, sizeof (noffH), 0);								// Reads the header of the executable file
 	if ((noffH.noffMagic != NOFFMAGIC) && (WordToHost (noffH.noffMagic) == NOFFMAGIC))		// Convert the header to the host endian
 		SwapHeader (&noffH);
-
-//TODO ask why
 	ASSERT (noffH.noffMagic == NOFFMAGIC);													// Ensure that the executable has the good file type
-//TODO ask why
 
-// how big is address space?
+																							// how big is address space?
 	size = noffH.code.size + noffH.initData.size + noffH.uninitData.size + UserStackSize;	// Read the expected addrspace size expected by the executable file
 																							// we need to increase the size to leave room for the stack
 	numPages	= divRoundUp (size, PageSize);
@@ -114,7 +111,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	ASSERT (frameProvider->NumAvailFrame() >= numPages);									// check we're not trying to run anything too big --
 
 	DEBUG ('a', "Initializing address space, num pages %d, size %d\n", numPages, size);
-// first, set up the translation
+																							// first, set up the translation
 	pageTable = new TranslationEntry[numPages];												// Initialize the page table of the addrSpace
 	for (i = 0; i < numPages; i++)
 	{
@@ -128,8 +125,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		DEBUG ('a', "\t->Virtual page %d\t<-> physical page %d\n",
 				pageTable[i].virtualPage, pageTable[i].physicalPage);
 	}
-
-//	bzero (machine->mainMemory, size);														// zero out the entire address space
+	this->threadStackList = new KeyList();
 
 	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
 	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
@@ -247,14 +243,18 @@ AddrSpace::RestoreState ()
 // +b simbadSid 15.01.2016
 
 //----------------------------------------------------------------------
-// Allocate memory in the userStack for a new thread.
+// Allocate memory in the userStack for the new thread tid.   The corresponding memory is filled with zeroes.
 // Marks all the memory as allocated in the address space bitmap.
+// The created stack pointer is returned in the parameter newStackPointer.
+// Return 0 if the allocation has succeeded and -1 otherwise.
+// The pointer on the new allocated stack is put in the variable newStackPointer (virtual address).
+// The only managed error is the memory out of space.
 //----------------------------------------------------------------------
-int AddrSpace::AllocateThreadStack(int nbrStackPages)
+int AddrSpace::AllocateThreadStack(int tid, int *newStackPointer)
 {
 // TODO begin critical section
-	int highestPage	= this->pageBitmap->FindLast(nbrStackPages);				// Get the index of the lowest free page
-	int lowestPage	= highestPage - nbrStackPages;
+	int highestPage	= this->pageBitmap->FindLast(USER_THREAD_STACK_PAGES);		// Get the index of the lowest free page
+	int lowestPage	= highestPage - USER_THREAD_STACK_PAGES;
 	int page;
 	void *physicalPageAddress;
 
@@ -271,10 +271,15 @@ int AddrSpace::AllocateThreadStack(int nbrStackPages)
 		bzero(physicalPageAddress, PageSize);									//		Initialize the corresponding physical memory with zeros
 	}
 // TODO replace the alignment address 16 by a macros
-	int stackPointer = (highestPage * PageSize) - 16;							// Compute the virtual address of the new stack pointer
+	int resSP = (highestPage * PageSize) - 16;									// Compute the virtual address of the new stack pointer
+	this->threadStackList->Prepend(tid, (void*)resSP);
+	if (newStackPointer != NULL)
+	{
+		*newStackPointer = resSP;
+	}
 // TODO stop critical section
 // TODO return the physical translation of the virtual address stackPointer
-	return stackPointer;
+	return 1;
 }
 // --------------------------------------------------------------------
 // Return the address space size in bytes
@@ -283,4 +288,17 @@ int AddrSpace::GetSize()
 {
 	return this->numPages*PageSize;
 }
+// --------------------------------------------------------------------
+// Return the base stack pointer of the given thread within the current
+// address space.
+// Return -1 if the given thread did not allocate a stack in the current addrSpace.
+// --------------------------------------------------------------------
+int AddrSpace::GetStackPointer(int tid)
+{
+// TODO
+	int res = 0;
+	bool test = this->threadStackList->IsInList(tid, (void**)&res);
 
+	if (!test)	return -1;
+	else		return res;
+}

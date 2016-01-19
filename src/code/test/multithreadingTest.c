@@ -133,9 +133,8 @@ void testJoin()
 // -------------------------------------
 int main (int argc, char **argv)
 {
-    testJoin();
-
-    //    testCreation();
+	testCreation();
+//    testJoin();
 
     Halt ();
 

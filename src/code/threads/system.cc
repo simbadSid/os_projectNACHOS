@@ -39,7 +39,7 @@ Machine *machine;					// user program memory and registers
 SynchConsole *synchconsole;			// synchronised console
 //+e FoxTox 08.01.2016
 // +b simbadSid 10.01.2016
-UserThreadList	*userThreadList;	// List of allocated user thread list
+KeyList	*userThreadList;			// List of allocated user thread list
 // +e simbadSid 10.01.2016
 // +b simbadSid 15.01.2016			//		different from running thread
 FrameProvider	*frameProvider;		// Physical frame manager
@@ -182,8 +182,8 @@ Initialize (int argc, char **argv)
     haltCondition		= new Lock("haltCondition");
     variableCondition	= new Condition("Condition variable");
     //+e goubetc 13.01.16
-    userThreadList		= new UserThreadList();
-    userThreadList->Append(currentThread);
+    userThreadList		= new KeyList();
+    userThreadList->Prepend(currentThread->getTID(), currentThread);
     frameProvider		= new FrameProvider(NumPhysPages);
 #endif
 
