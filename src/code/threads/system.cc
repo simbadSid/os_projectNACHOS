@@ -218,9 +218,13 @@ Cleanup ()
     delete synchconsole;
 	//+e FoxTox 08.01.2016
 	//+b simbadSid 10.01.2016
-//    if (currentThread != NULL)	delete currentThread;
-    userThreadList->FreeAllList();
-    delete userThreadList;
+	if (currentThread != NULL)
+	{
+		currentThread->UserThreadExit();
+		delete currentThread;
+	}
+	userThreadList->FreeAllList();
+	delete userThreadList;
 	//+e simbadSid 10.01.2016
 #endif
 

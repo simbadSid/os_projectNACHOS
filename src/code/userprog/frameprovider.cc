@@ -65,7 +65,7 @@ int FrameProvider::GetEmptyFrame()
 
 	if (frameIndex == -1) return frameIndex;
 
-	char *physicalAddress = machine->mainMemory + frameIndex*PageSize;
+	char *physicalAddress = &(machine->mainMemory[frameIndex*PageSize]);
 	bzero (physicalAddress, PageSize);												// zero out the physical page
 
 	return frameIndex;
