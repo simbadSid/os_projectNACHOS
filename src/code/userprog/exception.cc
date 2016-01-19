@@ -38,6 +38,7 @@
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
 // goubetc 11.01.16 13.01.16
+// FoxTox 19.01.16
 
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
@@ -53,6 +54,7 @@ UpdatePC ()
     pc += 4;
     machine->WriteRegister (NextPCReg, pc);
 }
+
 //+b simbadSid 9.01.16
 //---------------------------------------------------------------------
 // Reads the characters at the user address until it finds '\0' or reaches the expected size.
@@ -116,7 +118,6 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 //      "which" is the kind of exception.  The list of possible exceptions 
 //      are in machine.h.
 //----------------------------------------------------------------------
-
 void
 ExceptionHandler (ExceptionType which)
 {
@@ -280,13 +281,15 @@ ExceptionHandler (ExceptionType which)
 			break;
 		}
 		//+e simbadSid 10.01.16
-		//+b simbadSid 18.01.16
+		//+b FoxTox 19.01.16
 		case SC_ForkExec:
 	    {
-//			int	userPtrFunc = machine->ReadRegister(4);
+	    	char *fileName = (char *)machine->ReadRegister(4);
+			DEBUG('e', "Exception: user thread ForkExec.\n");
+	    	machine->WriteRegister(2, ForkExec(fileName));
 	    	break;
 	    }
-		//+e simbadSid 18.01.16
+		//+e FoxTox 19.01.16
 		default:
 		{
 			printf("***Unexpected user mode exception %d %d***\n", which, type);
