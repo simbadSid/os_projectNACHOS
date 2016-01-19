@@ -13,7 +13,7 @@
 // goubetc 8.01.16
 // FoxTox 09.01.2016
 // TooFo 11012016
-
+// FoxTox 19.01.16
 
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
@@ -48,7 +48,7 @@
 #define SC_UserThreadJoin	19
 #define SC_ForkExec			20
 //+e simbadSid 10.01.2016
-#define SC_GetCharInt		51  //+ TooFo 11012016 "Bonus Task
+#define SC_GetCharInt		51  //+ TooFo 11012016 Bonus Task
 
 #ifdef IN_USER_MODE
 
@@ -210,12 +210,11 @@ void UserThreadExit();
 int UserThreadJoin(int tid);
 
 
-/* Call the system call function do_ForkExec
- * TODO
+//+b FoxTox 19.01.16
+/* Called in system call handler SC_ForkExec.
  */
-int ForkExec(char *executable);
-
-//+e simbadSid 9.01.16
+int ForkExec(char *fileName);
+//+e FoxTox 19.01.16
 
 //+ b goubetc 10.01.16
 /* UserThreadExit: Call the system function UserThreadExit to exit a thread.

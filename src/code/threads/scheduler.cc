@@ -97,7 +97,6 @@ Scheduler::FindNextToRun ()
 void
 Scheduler::Run (Thread * nextThread)
 {
-	printf("Run \n");
     Thread *oldThread = currentThread;
 
     // LB: For safety...

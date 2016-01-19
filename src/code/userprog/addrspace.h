@@ -18,10 +18,6 @@
 #include "bitmap.h"
 #include "keylist.h"
 
-
-
-
-
 #define UserStackSize			2000				// increase this as necessary!   // +b simbadSid 15.01.2016
 #define USER_THREAD_STACK_PAGES	2
 

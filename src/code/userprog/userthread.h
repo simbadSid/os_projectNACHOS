@@ -5,18 +5,13 @@
  *      Author: littlegirle
  */
 
+// FoxTox 19.01.2015
+
 #ifndef USERTHREAD_H_
 #define USERTHREAD_H_
 
 #include "thread.h"
 #include "system.h"
-
-
-
-
-
-
-
 
 
 // ------------------------------------------
@@ -46,8 +41,13 @@ extern void	do_UserThreadExit	();
 // ----------------------------------------------------
 // Auxiliary functions
 // ----------------------------------------------------
-int initThreadName(char *name);
+extern int initThreadName(char *name);
 
-
+// ----------------------------------------------------
+// Fork functions
+// ----------------------------------------------------
+// +b FoxTox 19.01.2015
+extern int ForkExec(char *fileName) ;
+// +e FoxTox 19.01.2015
 
 #endif
