@@ -286,7 +286,7 @@ ExceptionHandler (ExceptionType which)
 	    {
 	    	char *fileName = (char *)machine->ReadRegister(4);
 			DEBUG('e', "Exception: user thread ForkExec.\n");
-	    	machine->WriteRegister(2, ForkExec(fileName));
+	    	machine->WriteRegister(2, do_ForkExec(fileName));
 	    	break;
 	    }
 		//+e FoxTox 19.01.16
