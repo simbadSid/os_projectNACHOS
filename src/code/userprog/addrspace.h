@@ -18,21 +18,31 @@
 #include "bitmap.h"
 #include "keylist.h"
 
-#define UserStackSize			2000				// increase this as necessary!   // +b simbadSid 15.01.2016
-#define USER_THREAD_STACK_PAGES	2
+
+
+#define UserStackSize			1000				// increase this as necessary!   // +b simbadSid 15.01.2016
+#define USER_THREAD_STACK_PAGES	3
+#define DEFAULT_NBR_THREAD		7
 
 
 class AddrSpace
 {
 	public:
-		AddrSpace (OpenFile * executable);			// Create an address space, initializing it with the program stored in the file "executable"
+		// Builder/destructor
+		AddrSpace (OpenFile * executable, int maxNbrThread=DEFAULT_NBR_THREAD);
+													// Create an address space, initializing it with the
+													//		program stored in the file "executable"
 		~AddrSpace ();								// De-allocate an address space
+
+		// Local methods
 		void InitRegisters ();						// Initialize user-level CPU registers, before jumping to user code
 		void SaveState ();							// Save/restore address space-specific
 		void RestoreState ();						// info on a context switch
 		int AllocateThreadStack(int tid, int *newStackPointer);	// Allocate a free part of the stack for a new thread. Marks the allocated memory in the bitmap
+		int FreeThreadStack(int tid, int *newStackPointer);	// Free the stack allocated by the given thread.
 		int GetSize();								// Return the address space size in bytes
-		int GetStackPointer(int tid);				// Return the stack pointer of the given thread
+		int GetThreadTopStackPointer(int tid);		// Return the stack pointer of the given thread
+		int GetNbrThreadStack();					// Return the number of thread that have allocated a stack in the current addrSpace.
 
 	private:
 		TranslationEntry	*pageTable;				// Assume linear page table translation for now!

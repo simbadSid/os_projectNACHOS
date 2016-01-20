@@ -5,7 +5,9 @@
  *      Author: littlegirle
  */
 
+// simbadSid 10.01.2015
 // FoxTox 19.01.2015
+
 
 #ifndef USERTHREAD_H_
 #define USERTHREAD_H_
@@ -33,8 +35,9 @@ class ThreadCreationParameter
 // ------------------------------------------
 // User Thread system functions
 // ------------------------------------------
-extern int	do_UserThreadCreate	(int f, int arg, int exitFunc);
-extern void	do_UserThreadExit	();
+extern int	do_UserThreadCreate	(int f, int arg, int exitFunc);		// +b simbadSid 13.01.2015
+extern void	do_UserThreadExit	();									// +b simbadSid 13.01.2015
+extern int	do_ForkExec			(char *fileName);					// +b FoxTox 19.01.2015
 
 
 
@@ -43,11 +46,5 @@ extern void	do_UserThreadExit	();
 // ----------------------------------------------------
 extern int initThreadName(char *name);
 
-// ----------------------------------------------------
-// Fork functions
-// ----------------------------------------------------
-// +b FoxTox 19.01.2015
-extern int ForkExec(char *fileName) ;
-// +e FoxTox 19.01.2015
 
 #endif

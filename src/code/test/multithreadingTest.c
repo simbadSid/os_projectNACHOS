@@ -114,10 +114,10 @@ void testCreation()
 	    return;
 	}
 
-    UserThreadJoin(tid1);
-    UserThreadJoin(tid2);
-    UserThreadJoin(tid3);
-    UserThreadJoin(tid4);
+	UserThreadJoin(tid1);
+	UserThreadJoin(tid2);
+	UserThreadJoin(tid3);
+	UserThreadJoin(tid4);
 }
 void testJoin()
 {
@@ -135,8 +135,9 @@ int main (int argc, char **argv)
 {
 	testCreation();
 //    testJoin();
-
+	PutString("Begin\n", 6);
     Halt ();
+    PutString("End\n", 4);
 
     /* not reached */
     return 0;

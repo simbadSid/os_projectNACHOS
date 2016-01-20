@@ -67,10 +67,18 @@ Thread::Thread (const char *threadName, int threadID)
 
 Thread::~Thread ()
 {
-    DEBUG ('t', "Deleting thread \"%s\"\n", name);
+	DEBUG ('t', "Deleting thread \"%s\"\n", name);
 
-    ASSERT (this != currentThread);
-    if (stack != NULL)DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+//    ASSERT (this != currentThread);
+    if (stack != NULL)	DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+#ifdef USER_PROGRAM
+	if ((this->space != NULL) && (this->space->GetNbrThreadStack() == 0))				// Case the current Thread is the last thread in the process
+	{
+		delete this->space;
+		DEBUG ('t', "\t->Removing address space: Thread %d\n", this->getTID());
+	}
+
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -425,29 +433,33 @@ int Thread::UserThreadCreate(Thread *existingThread, int *createdThreadStack)
 	if (test == -1)	return -1;												// Case: no memory left for the stack
 	currentThread->space->SaveState();
 
-	int existingThreadStack = this->space->GetStackPointer(existingThread->getTID());
+	int existingThreadStack = this->space->GetThreadTopStackPointer(existingThread->getTID());
 	DEBUG ('t', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",
-			existingThreadStack, createdThreadStack, this->space->GetSize());
+	existingThreadStack, *createdThreadStack, this->space->GetSize());
 	return 0;
 }
 
 // +e FoxTox 10.01.2015
 
-// +b simbadSid 15.01.2015
+// +b simbadSid 19.01.2015
 
+//----------------------------------------------------------------------
+// Free the stack region initialiwed for the current thread.
+// The address space is not remove even if this thread is the
+// last one in the address space.  The address space release will be done by ~Thread.
+//----------------------------------------------------------------------
 void Thread::UserThreadExit()
 {
-	DEBUG ('t', "\t->Thread stack free: stack to free: %d\n", this->stack);
-// TODO finish
-/*
 	bool test;
-	test = this->space->FreeThreadStack(this->stack, USER_THREAD_STACK_PAGES);
+	int stackPointer;
+
+	test = this->space->FreeThreadStack(this->getTID(), &stackPointer);
 	ASSERT (test);
-// TODO if this thread is the last thread of the process, free the address space
-// TODO to be done in the destructor of the class Thread
-*/
+	DEBUG ('t', "\t->Thread stack to free: %d, nbr remaining stacks: %d\n",
+	stackPointer, this->space->GetNbrThreadStack());
 }
-// +e simbadSid 15.01.2015
+
+// +e simbadSid 19.01.2015
 
 #endif
 

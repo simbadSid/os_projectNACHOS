@@ -135,7 +135,8 @@ ExceptionHandler (ExceptionType which)
 			int currentTID = currentThread->getTID();
 			DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n",
 					currentThread->getName(), currentTID);
-			userThreadList->Remove(currentTID, NULL);
+			bool test = userThreadList->Remove(currentTID, NULL);
+			ASSERT(test);
 			DEBUG('e', "\t->Start wating for %d user threads to finish.\n",
 			      userThreadList->GetNbrElement());
 			//+b goubetc 18.01.16
@@ -238,7 +239,6 @@ ExceptionHandler (ExceptionType which)
 			DEBUG('e', "\t->kernel space addresses\t: function: %d, arg: %d, returnAddr: %d.\n",
 			      userPtrFunc, userPtrArg, userPtrReturnFun);
 
-//			int res = do_UserThreadCreate(func, userPtrArg, kernelPtrReturnFun);		// Create the thread and add its delayed execution
 			int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrReturnFun);	// Create the thread and add its delayed execution
 			if (res < 0)	DEBUG('e', "\t*** User thread creation failed: %d ***\n", res);
 			machine->WriteRegister(2, res);												// Write the output of the system call
@@ -248,9 +248,8 @@ ExceptionHandler (ExceptionType which)
 		{
 		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
 		    		currentThread->getTID(), currentThread->getName());
-
-		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
-			  currentThread->getTID(), currentThread->getName());
+//TODO check
+		    UpdatePC();																	// Done because the next function never returns
 			do_UserThreadExit();														// Does not returns
 			break;
 		}
@@ -287,7 +286,7 @@ ExceptionHandler (ExceptionType which)
 	    {
 	    	char *fileName = (char *)machine->ReadRegister(4);
 			DEBUG('e', "Exception: user thread ForkExec.\n");
-	    	machine->WriteRegister(2, ForkExec(fileName));
+	    	machine->WriteRegister(2, do_ForkExec(fileName));
 	    	break;
 	    }
 		//+e FoxTox 19.01.16

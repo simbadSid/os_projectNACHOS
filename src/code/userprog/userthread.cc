@@ -68,7 +68,7 @@ int do_UserThreadCreate(int func, int arg, int exitFunc)
 	ThreadCreationParameter *tcp;
 	char *name = new char ();
 	// +b FoxTox 19.01.2015
-	int	tid	= initThreadName(name);
+	int		tid				= initThreadName(name);
 	Thread	*t				= new Thread(name, tid);
 	int		newThreadStack	= -1;
 	int		test;
@@ -106,28 +106,16 @@ void do_UserThreadExit ()
 	thread->Finish();
 }
 
-// ----------------------------------------------------
-// Auxiliary functions
-// ----------------------------------------------------
-int initThreadName(char *name)
-{
-	nbrUserThread++;
-	int tid = nbrUserThread;
-	name = new char[THREAD_NAME_MAX_SIZE];
-	sprintf(name, "User Thread %d", tid);
-	return tid;
-}
-
 // +b FoxTox 19.01.2015
 // ----------------------------------------------------
 // Executes Fork, take as an input path to executable.
 // ----------------------------------------------------
-int ForkExec(char *fileName) {
-    OpenFile *executable = fileSystem->Open(fileName);
-    char *threadName = new char();
-    int tid = initThreadName(threadName);
-    Thread *programThread = new Thread(threadName, tid);
-    programThread->space = new AddrSpace(executable);
+int do_ForkExec(char *fileName) {
+	OpenFile *executable = fileSystem->Open(fileName);
+	char *threadName = new char();
+	int tid = initThreadName(threadName);
+	Thread *programThread = new Thread(threadName, tid);
+	programThread->space = new AddrSpace(executable);
 
 	int	newThreadStack	= -1;
 	int test = programThread->UserThreadCreate(programThread, &newThreadStack);
@@ -141,3 +129,15 @@ int ForkExec(char *fileName) {
 	return tid;
 }
 // +e FoxTox 19.01.2015
+// ----------------------------------------------------
+// Auxiliary functions
+// ----------------------------------------------------
+int initThreadName(char *name)
+{
+	nbrUserThread++;
+	int tid = nbrUserThread;
+	name = new char[THREAD_NAME_MAX_SIZE];
+	sprintf(name, "User Thread %d", tid);
+	return tid;
+}
+
