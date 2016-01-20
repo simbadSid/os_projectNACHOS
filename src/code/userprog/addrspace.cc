@@ -215,23 +215,25 @@ AddrSpace::~AddrSpace ()
 void
 AddrSpace::InitRegisters ()
 {
-    int i, stackPointer;
+	int i, stackPointer;
 
-    for (i = 0; i < NumTotalRegs; i++)
-    	machine->WriteRegister (i, 0);
+	for (i = 0; i < NumTotalRegs; i++)
+		machine->WriteRegister (i, 0);
 
-    machine->WriteRegister (PCReg, 0);			// Initial program counter -- must be location of "Start"
-    machine->WriteRegister (NextPCReg, 4);		// Need to also tell MIPS where next instruction is, because
-    											// of branch delay possibility
+	machine->WriteRegister (PCReg, 0);			// Initial program counter -- must be location of "Start"
+	machine->WriteRegister (NextPCReg, 4);		// Need to also tell MIPS where next instruction is, because
+												// of branch delay possibility
 												// Set the stack register to the end of the address space, where we
 												// allocated the stack; but subtract off a bit, to make sure we don't
 												// accidentally reference off the end!
-    // +b simbadSid 19.01.2016
-    stackPointer = GetThreadTopStackPointer(currentThread->getTID());
-    ASSERT(stackPointer >= 0);
-    // +e simbadSid 19.01.2016
-    machine->WriteRegister (StackReg, stackPointer);
-    DEBUG ('a', "Initializing stack register to %d\n", stackPointer);
+	// +b simbadSid 19.01.2016
+	stackPointer = GetThreadTopStackPointer(currentThread->getTID());
+//TODO to remove
+//DEBUG('e', "TID = %d. stackPointer = %d\n", currentThread->getTID(), stackPointer);
+	ASSERT(stackPointer >= 0);
+	// +e simbadSid 19.01.2016
+	machine->WriteRegister (StackReg, stackPointer);
+	DEBUG ('a', "Initializing stack register to %d\n", stackPointer);
 }
 
 //----------------------------------------------------------------------

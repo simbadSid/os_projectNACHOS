@@ -284,9 +284,15 @@ ExceptionHandler (ExceptionType which)
 		//+b FoxTox 19.01.16
 		case SC_ForkExec:
 	    {
-	    	char *fileName = (char *)machine->ReadRegister(4);
+			int fileNameUserPtr = machine->ReadRegister(4);
+			char kernelFileName[100];
+			copyStringFromMachine(fileNameUserPtr, (char*)kernelFileName, 100);
 			DEBUG('e', "Exception: user thread ForkExec.\n");
-	    	machine->WriteRegister(2, do_ForkExec(fileName));
+			DEBUG('e', "\t-> User program name address: %d.\n");
+			DEBUG('e', "\t-> Program file name: %s.\n", kernelFileName);
+			int res = do_ForkExec(kernelFileName);
+			DEBUG('e', "\t->user thread ForkExec res = %d.\n", res);
+	    	machine->WriteRegister(2, res);
 	    	break;
 	    }
 		//+e FoxTox 19.01.16
