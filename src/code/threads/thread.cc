@@ -104,17 +104,23 @@ Thread::~Thread ()
 void
 Thread::Fork (VoidFunctionPtr func, int arg)
 {
-    DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n", name, (int) func, arg);
-    StackAllocate (func, arg);
+	DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n", name, (int) func, arg);
+	StackAllocate (func, arg);
 
 #ifdef USER_PROGRAM
-    // LB: The addrspace should be tramsitted here, instead of later in
-    // StartProcess, so that the pageTable can be restored at
-    // launching time. This is crucial if the thread is launched with
-    // an already running program, as in the "fork" Unix system call. 
+	// LB: The addrspace should be tramsitted here, instead of later in
+	// StartProcess, so that the pageTable can be restored at
+	// launching time. This is crucial if the thread is launched with
+	// an already running program, as in the "fork" Unix system call.
 
-    // LB: Observe that currentThread->space may be NULL at that time.
-    this->space = currentThread->space;
+	// LB: Observe that currentThread->space may be NULL at that time.
+// +b simbadSid 20.01.2016
+//    this->space = currentThread->space;
+
+// From now one, as we manage several different address spaces, we need to
+// initialize them using not only the currentThread->space
+
+// +b simbadSid 20.01.2016
 #endif // USER_PROGRAM
 
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
@@ -417,7 +423,7 @@ Thread::RestoreUserState ()
 
 // +b FoxTox 10.01.2016
 //----------------------------------------------------------------------
-// - Initialize the memory space of the caller thread using the memory space of the current thread.
+// - Initialize the memory space of the caller thread using the memory space of the existingThread.
 // - Allocates space for the caller thread stack (empirical size for the created thread stack).
 // Parameters:
 //		- existingThread	: input	: One thread sharing the same process as the created thread (my not be the first thread)
@@ -431,7 +437,7 @@ int Thread::UserThreadCreate(Thread *existingThread, int *createdThreadStack)
 	this->space		= (AddrSpace*)existingThread->space;
 	int test		= space->AllocateThreadStack(tid, createdThreadStack);	// Distinguish the new thread stack from the current thread stack
 	if (test == -1)	return -1;												// Case: no memory left for the stack
-	currentThread->space->SaveState();
+	existingThread->space->SaveState();
 
 	int existingThreadStack = this->space->GetThreadTopStackPointer(existingThread->getTID());
 	DEBUG ('t', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",

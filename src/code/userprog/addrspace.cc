@@ -140,6 +140,8 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 		DEBUG ('a', "\t->Virtual page %d\t<-> physical page %d\n",
 				pageTable[i].virtualPage, pageTable[i].physicalPage);
 	}
+//TODO
+DEBUG ('a', "Remaining pages: %d\n", frameProvider->NumAvailFrame());
 	this->threadStackList = new KeyList();
 
 	if (noffH.code.size > 0)																// Copy code and segments of the executable into addrSpace
@@ -228,8 +230,6 @@ AddrSpace::InitRegisters ()
 												// accidentally reference off the end!
 	// +b simbadSid 19.01.2016
 	stackPointer = GetThreadTopStackPointer(currentThread->getTID());
-//TODO to remove
-//DEBUG('e', "TID = %d. stackPointer = %d\n", currentThread->getTID(), stackPointer);
 	ASSERT(stackPointer >= 0);
 	// +e simbadSid 19.01.2016
 	machine->WriteRegister (StackReg, stackPointer);
@@ -300,6 +300,7 @@ int AddrSpace::AllocateThreadStack(int tid, int *newStackPointer)
 	{
 		*newStackPointer = stackTopPageToStackTopVirtualAddress(stackTopPage);	// Compute the virtual address of the new stack pointer;
 	}
+
 // TODO stop critical section
 	return 1;
 }

@@ -64,6 +64,7 @@ int FrameProvider::GetEmptyFrame()
 	}
 
 	if (frameIndex == -1) return frameIndex;
+	this->frameUsage->Mark(frameIndex);
 
 	char *physicalAddress = &(machine->mainMemory[frameIndex*PageSize]);
 	bzero (physicalAddress, PageSize);												// zero out the physical page
@@ -111,18 +112,12 @@ unsigned int FrameProvider::NumAvailFrame()
 //--------------------------------------------------------------
 int FrameProvider::GetEmptyFrame_FirstFree()
 {
-	int res = this->frameUsage->FindFirst(1);
-
-	if (res != -1)	this->frameUsage->Mark(res);
-	return res;
+	return this->frameUsage->FindFirst(1);
 }
 
 int FrameProvider::GetEmptyFrame_LastFree()
 {
-	int res = this->frameUsage->FindLast(1);
-
-	if (res != -1)	this->frameUsage->Mark(res);
-	return res;
+	return this->frameUsage->FindLast(1);
 }
 
 int FrameProvider::GetEmptyFrame_RandomFree()
@@ -132,8 +127,6 @@ int FrameProvider::GetEmptyFrame_RandomFree()
 	nbrFreeIndexes = this->frameUsage->GetFreeBits(freeIndexes);
 	if (nbrFreeIndexes == 0) return -1;
 
-	int res = freeIndexes[Random()%nbrFreeIndexes];
-	this->frameUsage->Mark(res);
-	return res;
+	return freeIndexes[Random()%nbrFreeIndexes];
 }
 // +e simbadSid 18.01.2016
