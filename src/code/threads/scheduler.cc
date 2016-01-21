@@ -54,10 +54,16 @@ Scheduler::~Scheduler ()
 void
 Scheduler::ReadyToRun (Thread * thread)
 {
+	IntStatus oldLevel = interrupt->SetLevel (IntOff);
+	ListElement *currElem = readyList->first;
+	while (currElem != NULL) {
+		currElem = currElem->next;
+	}
     DEBUG ('t', "Putting thread %s on ready list.\n", thread->getName ());
 
     thread->setStatus (READY);
     readyList->Append ((void *) thread);
+    (void) interrupt->SetLevel (oldLevel);
 }
 
 //----------------------------------------------------------------------

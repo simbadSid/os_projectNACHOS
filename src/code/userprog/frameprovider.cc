@@ -6,11 +6,12 @@
  */
 
 
+
+// +b simbadSid 18.01.2015
+
+
 #include "frameprovider.h"
 #include "system.h"
-
-
-
 
 
 FrameProvider::FrameProvider(unsigned int nbrPhysicalFrame)
@@ -63,8 +64,9 @@ int FrameProvider::GetEmptyFrame()
 	}
 
 	if (frameIndex == -1) return frameIndex;
+	this->frameUsage->Mark(frameIndex);
 
-	char *physicalAddress = machine->mainMemory + frameIndex*PageSize;
+	char *physicalAddress = &(machine->mainMemory[frameIndex*PageSize]);
 	bzero (physicalAddress, PageSize);												// zero out the physical page
 
 	return frameIndex;
@@ -99,6 +101,7 @@ void FrameProvider::ReleaseFrame(unsigned int frameIndex)
 
 	this->frameUsage->Clear(frameIndex);
 }
+
 unsigned int FrameProvider::NumAvailFrame()
 {
 	return this->frameUsage->NumClear();
@@ -107,28 +110,23 @@ unsigned int FrameProvider::NumAvailFrame()
 //--------------------------------------------------------------
 // Frame allocation methodes
 //--------------------------------------------------------------
-	int FrameProvider::GetEmptyFrame_FirstFree()
-	{
-		int res = this->frameUsage->FindFirst(1);
+int FrameProvider::GetEmptyFrame_FirstFree()
+{
+	return this->frameUsage->FindFirst(1);
+}
 
-		if (res != -1)	this->frameUsage->Mark(res);
-		return res;
-	}
-	int FrameProvider::GetEmptyFrame_LastFree()
-	{
-		int res = this->frameUsage->FindLast(1);
+int FrameProvider::GetEmptyFrame_LastFree()
+{
+	return this->frameUsage->FindLast(1);
+}
 
-		if (res != -1)	this->frameUsage->Mark(res);
-		return res;
-	}
-	int FrameProvider::GetEmptyFrame_RandomFree()
-	{
-		int freeIndexes[NumPhysPages], nbrFreeIndexes;
+int FrameProvider::GetEmptyFrame_RandomFree()
+{
+	int freeIndexes[NumPhysPages], nbrFreeIndexes;
 
-		nbrFreeIndexes = this->frameUsage->GetFreeBits(freeIndexes);
-		if (nbrFreeIndexes == 0) return -1;
+	nbrFreeIndexes = this->frameUsage->GetFreeBits(freeIndexes);
+	if (nbrFreeIndexes == 0) return -1;
 
-		int res = freeIndexes[Random()%nbrFreeIndexes];
-		this->frameUsage->Mark(res);
-		return res;
-	}
+	return freeIndexes[Random()%nbrFreeIndexes];
+}
+// +e simbadSid 18.01.2016

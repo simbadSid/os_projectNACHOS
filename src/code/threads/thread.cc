@@ -67,10 +67,18 @@ Thread::Thread (const char *threadName, int threadID)
 
 Thread::~Thread ()
 {
-    DEBUG ('t', "Deleting thread \"%s\"\n", name);
+	DEBUG ('t', "Deleting thread \"%s\"\n", name);
 
-    ASSERT (this != currentThread);
-    if (stack != NULL)DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+//    ASSERT (this != currentThread);
+    if (stack != NULL)	DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+#ifdef USER_PROGRAM
+	if ((this->space != NULL) && (this->space->GetNbrThreadStack() == 0))				// Case the current Thread is the last thread in the process
+	{
+		delete this->space;
+		DEBUG ('t', "\t->Removing address space: Thread %d\n", this->getTID());
+	}
+
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -96,17 +104,23 @@ Thread::~Thread ()
 void
 Thread::Fork (VoidFunctionPtr func, int arg)
 {
-    DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n", name, (int) func, arg);
-    StackAllocate (func, arg);
+	DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n", name, (int) func, arg);
+	StackAllocate (func, arg);
 
 #ifdef USER_PROGRAM
-    // LB: The addrspace should be tramsitted here, instead of later in
-    // StartProcess, so that the pageTable can be restored at
-    // launching time. This is crucial if the thread is launched with
-    // an already running program, as in the "fork" Unix system call. 
+	// LB: The addrspace should be tramsitted here, instead of later in
+	// StartProcess, so that the pageTable can be restored at
+	// launching time. This is crucial if the thread is launched with
+	// an already running program, as in the "fork" Unix system call.
 
-    // LB: Observe that currentThread->space may be NULL at that time.
-    this->space = currentThread->space;
+	// LB: Observe that currentThread->space may be NULL at that time.
+// +b simbadSid 20.01.2016
+//    this->space = currentThread->space;
+
+// From now one, as we manage several different address spaces, we need to
+// initialize them using not only the currentThread->space
+
+// +b simbadSid 20.01.2016
 #endif // USER_PROGRAM
 
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
@@ -409,159 +423,50 @@ Thread::RestoreUserState ()
 
 // +b FoxTox 10.01.2016
 //----------------------------------------------------------------------
-// - Initialize the memory space of the caller thread using the memory space of the current thread.
+// - Initialize the memory space of the caller thread using the memory space of the existingThread.
 // - Allocates space for the caller thread stack (empirical size for the created thread stack).
 // Parameters:
 //		- existingThread	: input	: One thread sharing the same process as the created thread (my not be the first thread)
-//		- createdThreadStack: output: return the kernel pointer on the stack pointer of the created thread
+//		- createdThreadStack: output: return the kernel pointer on the stack pointer of the created thread (in the addressSpace).
 // Return
 //		* 0 in case of success
 //		* -1 if the new thread stack can not be allocated(only error detected is the lack of memory for the stack allocation)
 //----------------------------------------------------------------------
-int Thread::UserThreadCreate(Thread *existingThread, int **createdThreadStack)
+int Thread::UserThreadCreate(Thread *existingThread, int *createdThreadStack)
 {
 	this->space		= (AddrSpace*)existingThread->space;
-	int newStack	= this->space->AllocateThreadStack(USER_THREAD_STACK_PAGES);// Distinguish the new thread stack from the current thread stack
-	if (newStack == -1)	return -1;												// Case: no memory left for the stack
-	else
-	{
-		this->stack = (int*)newStack;
-		if (createdThreadStack != NULL)
-			*createdThreadStack	= this->stack;
-	}
-	currentThread->space->SaveState();
+	int test		= space->AllocateThreadStack(tid, createdThreadStack);	// Distinguish the new thread stack from the current thread stack
+	if (test == -1)	return -1;												// Case: no memory left for the stack
+	existingThread->space->SaveState();
 
+	int existingThreadStack = this->space->GetThreadTopStackPointer(existingThread->getTID());
 	DEBUG ('t', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",
-			existingThread->stack, this->stack, this->space->GetSize());
+	existingThreadStack, *createdThreadStack, this->space->GetSize());
 	return 0;
 }
 
 // +e FoxTox 10.01.2015
 
-// +b simbadSid 15.01.2015
+// +b simbadSid 19.01.2015
 
+//----------------------------------------------------------------------
+// Free the stack region initialiwed for the current thread.
+// The address space is not remove even if this thread is the
+// last one in the address space.  The address space release will be done by ~Thread.
+//----------------------------------------------------------------------
 void Thread::UserThreadExit()
 {
-	DEBUG ('t', "\t->Thread stack free: stack to free: %d\n", this->stack);
-// TODO finish
-/*
 	bool test;
-	test = this->space->FreeThreadStack(this->stack, USER_THREAD_STACK_PAGES);
+	int stackPointer;
+
+	test = this->space->FreeThreadStack(this->getTID(), &stackPointer);
 	ASSERT (test);
-// TODO if this thread is the last thread of the process, free the address space
-// TODO to be done in the destructor of the class Thread
-*/
+	DEBUG ('t', "\t->Thread stack to free: %d, nbr remaining stacks: %d\n",
+	stackPointer, this->space->GetNbrThreadStack());
 }
-// +e simbadSid 15.01.2015
+
+// +e simbadSid 19.01.2015
 
 #endif
 
-
-// +b simbadSid 10.01.2016
-
-// ------------------------------------------
-// UserThreadList:
-// Class to store the set of all the threads currently existing
-// ------------------------------------------
-#ifdef USER_PROGRAM
-	UserThreadList::UserThreadList()
-	{
-		this->thread= NULL;
-		this->next	= NULL;
-	}
-
-	UserThreadList::UserThreadList(UserThreadList *list)
-	{
-		this->thread= list->thread;
-		this->next	= list->next;
-	}
-
-	void UserThreadList::Append(Thread *THREAD)
-	{
-		if (this->thread == NULL)										// Case: empty list
-		{
-			this->thread	= THREAD;
-			this->next		= NULL;
-			return;
-		}
-		UserThreadList *NEXT;											// Case else: add the new at the beginning of the list
-		NEXT			= new UserThreadList(this);
-		this->thread	= THREAD;
-		this->next		= NEXT;
-	}
-
-	// ------------------------------------------------
-	// Looks for the thread tid in the list.
-	// If the thread is found, true is returned and the thread is put in the thread parameter (can be NULL).
-	// Else, false is returned.
-	// ------------------------------------------------
-	bool UserThreadList::Remove(int TID, Thread **THREAD)
-	{
-		if (this->thread			== NULL) return false;						// Case: empty list
-		if (this->thread->getTID()	== TID)										// Case: thread found
-		{
-			if (THREAD != NULL) *THREAD = this->thread;							//		Write the found thread in the output parameter
-			if (this->next != NULL)												//		Case: the list contains more than 1 element
-			{
-				UserThreadList *tmpNext;
-				tmpNext			= this->next;
-				this->thread	= this->next->thread;
-				this->next		= this->next->next;
-				delete tmpNext;
-			}
-			else this->thread 	= NULL;
-			return true;
-		}
-		if (this->next == NULL)	return false;									// Case: end of list reached
-		else					return this->next->Remove(TID, THREAD);
-	}
-
-	bool UserThreadList::IsEmpty()
-	{
-		return (this->thread == NULL);
-	}
-
-	// ------------------------------------------------
-	// Checks for the thread with the given tid in the list.
-	// If the outputThread is not null and the thread is found in the list, it is put in the outputThread variable.
-	// ------------------------------------------------
-	bool UserThreadList::IsInList (int TID, Thread **outputThread)
-	{
-		if (this->thread			== NULL) return false;
-		if (this->thread->getTID()	== TID)
-		{
-			if (outputThread != NULL) *outputThread = this->thread;
-			return true;
-		}
-		if (this->next == NULL)	return false;
-		else					return this->next->IsInList(TID, outputThread);
-	}
-
-	int UserThreadList::GetNbrThread()
-	{
-		if (this->thread== NULL)	return 0;										// Case empty list
-		if (this->next	== NULL)	return 1;
-		else						return 1 + this->next->GetNbrThread();
-	}
-
-	void UserThreadList::PrintList()
-	{
-		if (this->thread == NULL)
-		{
-			printf("\t(Empty list)\n");
-			return;
-		}
-		printf("\tThread \"%s\", tid = %d\n", this->thread->getName (), this->thread->getTID());
-	    if (this->next != NULL) this->next->PrintList();
-	}
-
-	void UserThreadList::FreeAllList()
-	{
-		if (this->next == NULL) return;
-		this->next->FreeAllList();
-		delete this->next;
-	}
-
-#endif
-// +e simbadSid 10.01.2016
 

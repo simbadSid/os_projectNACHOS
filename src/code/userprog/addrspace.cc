@@ -26,6 +26,15 @@
 // +b simbadSid 15.01.2015
 
 
+// +b simbadSid 19.01.2016
+// --------------------------------------------------------------------
+// Convert the page number of the top stack pointer to its virtual address.
+// Consider the address alignment of the stack top pointer.
+// Do not use out of this class (do not put it in the .h)
+// --------------------------------------------------------------------
+#define stackTopPageToStackTopVirtualAddress(stackTopPage)	((stackTopPage * PageSize) - 16)
+// +e simbadSid 19.01.2016
+
 
 //----------------------------------------------------------------------
 // SwapHeader
@@ -56,22 +65,27 @@ SwapHeader (NoffHeader * noffH)
 // The read bytes are stored at the given virtual address in the
 // memory described by (pageTable, numPages)
 // --------------------------------------------------------------------
-static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position, TranslationEntry *pageTable, unsigned numPages)
+static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position,
+						  TranslationEntry *pageTable, unsigned numPages)
 {
-	IntStatus oldLevel		= interrupt->SetLevel(IntOff);
+	IntStatus			oldLevel		= interrupt->SetLevel(IntOff);
+	TranslationEntry	*oldPageTable	= machine->pageTable;
+	unsigned			oldNnumPages	= machine->pageTableSize;
+
 	machine->pageTable		= pageTable;
 	machine->pageTableSize	= numPages;
 	interrupt->SetLevel(oldLevel);
 
 	char buffer[numBytes];
 	int nbrRedBytes	= executable->ReadAt(buffer, numBytes, position);
-	int virtualByteShift;
 
     oldLevel = interrupt->SetLevel(IntOff);
-    for(virtualByteShift=0; virtualByteShift<nbrRedBytes; virtualByteShift++)
+    for(int virtualByteShift = 0; virtualByteShift < nbrRedBytes; ++virtualByteShift)
     {
         machine->WriteMem(virtualaddr+virtualByteShift, 1, buffer[virtualByteShift]);
     }
+	machine->pageTable		= oldPageTable;
+	machine->pageTableSize	= oldNnumPages;
     interrupt->SetLevel(oldLevel);
 }
 
@@ -89,8 +103,7 @@ static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, i
 //
 //      "executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
-
-AddrSpace::AddrSpace (OpenFile * executable)
+AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 {
 	NoffHeader noffH;
 	unsigned int i, size;
@@ -98,14 +111,13 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	executable->ReadAt ((char *) &noffH, sizeof (noffH), 0);								// Reads the header of the executable file
 	if ((noffH.noffMagic != NOFFMAGIC) && (WordToHost (noffH.noffMagic) == NOFFMAGIC))		// Convert the header to the host endian
 		SwapHeader (&noffH);
-
-//TODO ask why
 	ASSERT (noffH.noffMagic == NOFFMAGIC);													// Ensure that the executable has the good file type
-//TODO ask why
 
-// how big is address space?
-	size = noffH.code.size + noffH.initData.size + noffH.uninitData.size + UserStackSize;	// Read the expected addrspace size expected by the executable file
-																							// we need to increase the size to leave room for the stack
+																							// how big is address space?
+	size = noffH.code.size + noffH.initData.size + noffH.uninitData.size					// Read the expected addrspace size expected by the
+				+ maxNbrThread*UserStackSize;												//		executable file.
+																							//		We need to increase the size to leave room for the stack
+
 	numPages	= divRoundUp (size, PageSize);
 	pageBitmap	= new BitMap(numPages);
 	size		= numPages * PageSize;
@@ -114,7 +126,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	ASSERT (frameProvider->NumAvailFrame() >= numPages);									// check we're not trying to run anything too big --
 
 	DEBUG ('a', "Initializing address space, num pages %d, size %d\n", numPages, size);
-// first, set up the translation
+																							// first, set up the translation
 	pageTable = new TranslationEntry[numPages];												// Initialize the page table of the addrSpace
 	for (i = 0; i < numPages; i++)
 	{
@@ -128,11 +140,10 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		DEBUG ('a', "\t->Virtual page %d\t<-> physical page %d\n",
 				pageTable[i].virtualPage, pageTable[i].physicalPage);
 	}
+//TODO
+DEBUG ('a', "Remaining pages: %d\n", frameProvider->NumAvailFrame());
+	this->threadStackList = new KeyList();
 
-//	bzero (machine->mainMemory, size);														// zero out the entire address space
-
-	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
-	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
 	if (noffH.code.size > 0)																// Copy code and segments of the executable into addrSpace
 	{																						//		Writes the file code section in memory
 		ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr, pageTable, numPages);
@@ -140,7 +151,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		this->codeNbrPage	= noffH.code.size		/ PageSize;
         DEBUG ('a', "Initializing code segment: size %d (bytes)\n", noffH.code.size);
 		DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.code.virtualAddr);
-		DEBUG ('a', "\t-> First page:\t\t%d\n", 			this->codeFirstPage);
+		DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->codeFirstPage);
 		DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->codeNbrPage);
 		for (i=codeFirstPage; i<codeFirstPage+codeNbrPage; i++)
 		{
@@ -155,17 +166,23 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		this->dataNbrPage	= noffH.initData.size		/ PageSize;
         DEBUG ('a', "Initializing data segment: size %d (bytes)\n", noffH.initData.size);
 		DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.initData.virtualAddr);
-		DEBUG ('a', "\t-> First page:\t\t%d\n", 			this->dataFirstPage);
+		DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->dataFirstPage);
 		DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->dataNbrPage);
 		for (i=dataFirstPage; i<dataFirstPage+dataNbrPage; i++)
 		{
 			this->pageBitmap->Mark(i);														//		Notify the data pages as used
 		}
 	}
+
+/*
+	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
+	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);
+// TODO to change
 	int remainingCode	= nbrCodePages % PageSize;
 	int remainingData	= nbrDataPages % PageSize;
 	if ((remainingCode != 0) && (remainingData != 0) && ((remainingCode + remainingData) > PageSize))
 		 this->pageBitmap->Mark(nbrCodePages + nbrDataPages - 1);
+*/
 }
 // +e simbadSid 15.01.2015
 
@@ -184,6 +201,7 @@ AddrSpace::~AddrSpace ()
 	}
 	delete [] pageTable;
 	delete pageBitmap;
+	this->threadStackList->FreeAllList();
 }
 
 //----------------------------------------------------------------------
@@ -199,19 +217,23 @@ AddrSpace::~AddrSpace ()
 void
 AddrSpace::InitRegisters ()
 {
-    int i;
+	int i, stackPointer;
 
-    for (i = 0; i < NumTotalRegs; i++)
-    	machine->WriteRegister (i, 0);
+	for (i = 0; i < NumTotalRegs; i++)
+		machine->WriteRegister (i, 0);
 
-    machine->WriteRegister (PCReg, 0);			// Initial program counter -- must be location of "Start"
-    machine->WriteRegister (NextPCReg, 4);		// Need to also tell MIPS where next instruction is, because
-    											// of branch delay possibility
-    // Set the stack register to the end of the address space, where we
-    // allocated the stack; but subtract off a bit, to make sure we don't
-    // accidentally reference off the end!
-    machine->WriteRegister (StackReg, numPages * PageSize - 16);
-    DEBUG ('a', "Initializing stack register to %d\n", numPages * PageSize - 16);
+	machine->WriteRegister (PCReg, 0);			// Initial program counter -- must be location of "Start"
+	machine->WriteRegister (NextPCReg, 4);		// Need to also tell MIPS where next instruction is, because
+												// of branch delay possibility
+												// Set the stack register to the end of the address space, where we
+												// allocated the stack; but subtract off a bit, to make sure we don't
+												// accidentally reference off the end!
+	// +b simbadSid 19.01.2016
+	stackPointer = GetThreadTopStackPointer(currentThread->getTID());
+	ASSERT(stackPointer >= 0);
+	// +e simbadSid 19.01.2016
+	machine->WriteRegister (StackReg, stackPointer);
+	DEBUG ('a', "Initializing stack register to %d\n", stackPointer);
 }
 
 //----------------------------------------------------------------------
@@ -245,34 +267,67 @@ AddrSpace::RestoreState ()
 // +b simbadSid 15.01.2016
 
 //----------------------------------------------------------------------
-// Allocate memory in the userStack for a new thread.
+// Allocate memory in the userStack for the new thread tid.   The corresponding memory is filled with zeroes.
 // Marks all the memory as allocated in the address space bitmap.
+// The created stack pointer is returned in the parameter newStackPointer.
+// Return 0 if the allocation has succeeded and -1 otherwise.
+// The pointer on the new allocated stack is put in the variable newStackPointer (virtual address).
+// The only managed error is the memory out of space.
 //----------------------------------------------------------------------
-int AddrSpace::AllocateThreadStack(int nbrStackPages)
+int AddrSpace::AllocateThreadStack(int tid, int *newStackPointer)
 {
 // TODO begin critical section
-	int highestPage	= this->pageBitmap->FindLast(nbrStackPages);				// Get the index of the lowest free page
-	int lowestPage	= highestPage - nbrStackPages;
+	int stackTopPage	= this->pageBitmap->FindLast(USER_THREAD_STACK_PAGES+1);// Get the index of the lowest free page
+	int lowestPage		= stackTopPage - USER_THREAD_STACK_PAGES-1;
 	int page;
 	void *physicalPageAddress;
 
-	if(highestPage == -1)														// Case full memory:
+	if(stackTopPage == -1)														// Case full memory:
 	{
 // TODO replace this by a page creation
 		DEBUG('t', "\t*** AllocateThreadStack: full memory***\n");
 		return -1;
 	}
-	for(page=highestPage; page>lowestPage; page--)								// For each page of the allocated stack
+	stackTopPage--;
+	for(page=stackTopPage; page>lowestPage; page--)								// For each page of the allocated stack
 	{
 		this->pageBitmap->Mark(page);											//		Mark the page as allocated
-		physicalPageAddress = &machine->mainMemory[pageTable[page].physicalPage];
+		physicalPageAddress = &(machine->mainMemory[pageTable[page].physicalPage]);
 		bzero(physicalPageAddress, PageSize);									//		Initialize the corresponding physical memory with zeros
 	}
-// TODO replace the alignment address 16 by a macros
-	int stackPointer = (highestPage * PageSize) - 16;							// Compute the virtual address of the new stack pointer
+	this->threadStackList->Prepend(tid, (void*)stackTopPage);
+	if (newStackPointer != NULL)
+	{
+		*newStackPointer = stackTopPageToStackTopVirtualAddress(stackTopPage);	// Compute the virtual address of the new stack pointer;
+	}
+
 // TODO stop critical section
-// TODO return the physical translation of the virtual address stackPointer
-	return stackPointer;
+	return 1;
+}
+// --------------------------------------------------------
+// Mark the stack allocated by the given thread as free.
+// Return 1 in case of success and put the virtual address of the
+// stack in the output parameter newStackPointer.
+// If the given thread did not allocate any stack in the current addrSpace, -1 is returned.
+// --------------------------------------------------------
+int AddrSpace::FreeThreadStack(int tid, int *newStackPointer)
+{
+	int stackTopPage = -1;
+	bool test = this->threadStackList->Remove(tid, (void**)&stackTopPage);
+
+	if (!test)
+	{
+		return -1;
+	}
+	if (newStackPointer != NULL)
+	{
+		*newStackPointer = stackTopPageToStackTopVirtualAddress(stackTopPage);	// Compute the virtual address of the stack pointer;
+	}
+	for (int p=0; p<USER_THREAD_STACK_PAGES; p++)								// Mark the virtual pages as free
+	{
+		this->pageBitmap->Clear(stackTopPage-p);
+	}
+	return 1;
 }
 // --------------------------------------------------------------------
 // Return the address space size in bytes
@@ -280,5 +335,26 @@ int AddrSpace::AllocateThreadStack(int nbrStackPages)
 int AddrSpace::GetSize()
 {
 	return this->numPages*PageSize;
+}
+// --------------------------------------------------------------------
+// Return the top stack pointer of the given thread within the current
+// address space.
+// Return -1 if the given thread did not allocate a stack in the current addrSpace.
+// --------------------------------------------------------------------
+int AddrSpace::GetThreadTopStackPointer(int tid)
+{
+	int stackTopPage = 0;
+	bool test = this->threadStackList->IsInList(tid, (void**)&stackTopPage);
+
+	if (!test)	return -1;
+	else		return stackTopPageToStackTopVirtualAddress(stackTopPage);
+}
+
+// --------------------------------------------------------------------
+// Return the number of thread that have allocated a stack in the current addrSpace.
+// --------------------------------------------------------------------
+int AddrSpace::GetNbrThreadStack()
+{
+	return this->threadStackList->GetNbrElement();
 }
 

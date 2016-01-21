@@ -38,6 +38,7 @@
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
 // goubetc 11.01.16 13.01.16
+// FoxTox 19.01.16
 
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
@@ -53,6 +54,7 @@ UpdatePC ()
     pc += 4;
     machine->WriteRegister (NextPCReg, pc);
 }
+
 //+b simbadSid 9.01.16
 //---------------------------------------------------------------------
 // Reads the characters at the user address until it finds '\0' or reaches the expected size.
@@ -116,16 +118,16 @@ size_t copyStringFromMachine( int from, char *to, size_t size)
 //      "which" is the kind of exception.  The list of possible exceptions 
 //      are in machine.h.
 //----------------------------------------------------------------------
-
 void
 ExceptionHandler (ExceptionType which)
 {
     //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
-    switch(which)
-    {
-    case SyscallException:
-    {
+
+	switch(which)
+	{
+	case SyscallException:
+	{
 	    switch (type)
 		{
 		case SC_Halt:
@@ -133,9 +135,10 @@ ExceptionHandler (ExceptionType which)
 			int currentTID = currentThread->getTID();
 			DEBUG('e', "Exception: halt initiated by user program: name = \"%s\", tid = %d.\n",
 					currentThread->getName(), currentTID);
-			userThreadList->Remove(currentTID, NULL);
+			bool test = userThreadList->Remove(currentTID, NULL);
+			ASSERT(test);
 			DEBUG('e', "\t->Start wating for %d user threads to finish.\n",
-			      userThreadList->GetNbrThread());
+			      userThreadList->GetNbrElement());
 			//+b goubetc 18.01.16
 			haltCondition->Acquire();
 			while(!userThreadList->IsEmpty()) variableCondition->Wait(haltCondition);
@@ -145,6 +148,18 @@ ExceptionHandler (ExceptionType which)
 			interrupt->Halt();
 			break;
 	    }
+	    // +b simbadSid 21.01.2016
+		case SC_Exit:
+		{
+			int status = (int)machine->ReadRegister(4);
+			DEBUG('e', "Exception: exit initiated by user program: name = \"%s\", tid = %d, status = %d.\n",
+					currentThread->getName(), currentThread->getTID(), status);
+			machine->WriteRegister(4, SC_UserThreadExit);
+			UpdatePC();
+//			ExceptionHandler(SyscallException);
+			return;
+		}
+	    // +e simbadSid 21.01.2016
 		case SC_PutChar:
 		{
 		    char c = (char)machine->ReadRegister(4);
@@ -236,7 +251,6 @@ ExceptionHandler (ExceptionType which)
 			DEBUG('e', "\t->kernel space addresses\t: function: %d, arg: %d, returnAddr: %d.\n",
 			      userPtrFunc, userPtrArg, userPtrReturnFun);
 
-//			int res = do_UserThreadCreate(func, userPtrArg, kernelPtrReturnFun);		// Create the thread and add its delayed execution
 			int res = do_UserThreadCreate(userPtrFunc, userPtrArg, userPtrReturnFun);	// Create the thread and add its delayed execution
 			if (res < 0)	DEBUG('e', "\t*** User thread creation failed: %d ***\n", res);
 			machine->WriteRegister(2, res);												// Write the output of the system call
@@ -244,10 +258,10 @@ ExceptionHandler (ExceptionType which)
 	    }
 		case SC_UserThreadExit:
 		{
-		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",			      currentThread->getTID(), currentThread->getName());
-
 		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
-			  currentThread->getTID(), currentThread->getName());
+		    		currentThread->getTID(), currentThread->getName());
+//TODO check
+		    UpdatePC();																	// Done because the next function never returns
 			do_UserThreadExit();														// Does not returns
 			break;
 		}
@@ -279,6 +293,20 @@ ExceptionHandler (ExceptionType which)
 			break;
 		}
 		//+e simbadSid 10.01.16
+		//+b FoxTox 19.01.16
+		case SC_ForkExec:
+	    {
+			int fileNameUserPtr = machine->ReadRegister(4);
+			DEBUG('e', "Exception: user thread ForkExec.\n");
+			char kernelFileName[100];
+			copyStringFromMachine(fileNameUserPtr, (char*)kernelFileName, 100);
+			DEBUG('e', "\t-> Program file name: %s.\n", kernelFileName);
+			int res = do_ForkExec(kernelFileName);
+			DEBUG('e', "\t->user thread ForkExec res = %d.\n", res);
+	    	machine->WriteRegister(2, res);
+	    	break;
+	    }
+		//+e FoxTox 19.01.16
 		default:
 		{
 			printf("***Unexpected user mode exception %d %d***\n", which, type);

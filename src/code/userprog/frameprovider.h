@@ -5,22 +5,17 @@
  *      Author: littlegirle
  */
 
+
+// simbadSid 18.01.2015
+
+// +b simbadSid 18.01.2015
 #ifndef FRAMEPROVIDER_H_
 #define FRAMEPROVIDER_H_
 
 #include "bitmap.h"
 
 
-
-
-
 #define	DEFAULT_FRAME_ALLOCATION_POLICY	FirstFree
-
-
-
-
-
-
 
 enum FrameAllocationPolicy
 {
@@ -55,3 +50,5 @@ class FrameProvider
 };
 
 #endif
+
+// +e simbadSid 18.01.2015

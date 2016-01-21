@@ -35,11 +35,12 @@ extern Timer *timer;							// the hardware alarm clock
 #include "machine.h"
 #include "synchconsole.h"
 #include "userthread.h"
+#include "keylist.h"
 #include "synch.h"
 #include "frameprovider.h"
 extern Machine			*machine;				// user program memory and registers
 extern SynchConsole		*synchconsole;
-extern UserThreadList	*userThreadList;		// Set of all the threads currently existing
+extern KeyList			*userThreadList;		// Set of all the threads currently existing
 extern FrameProvider	*frameProvider;			// Physical frame manager
 //+b goubetc 13.01.16
 extern Lock *joinCondition;              		// condition variable for use of join

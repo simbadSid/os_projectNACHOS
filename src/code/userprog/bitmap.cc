@@ -22,8 +22,10 @@ BitMap::BitMap (int nitems)
     numBits = nitems;
     numWords = divRoundUp (numBits, BitsInWord);
     map = new unsigned int[numWords];
-    for (int i = 0; i < numBits; i++)
-	Clear (i);
+    for (int i = 0; i < numBits; ++i) {
+    	Clear(i);
+    }
+    numClear = nitems;
 }
 
 //----------------------------------------------------------------------
@@ -49,6 +51,9 @@ BitMap::~BitMap ()
 void
 BitMap::Mark (int which)
 {
+// +b simbadSid 20.01.2016
+	--numClear;
+// +e simbadSid 20.01.2016
     ASSERT (which >= 0 && which < numBits);
     map[which / BitsInWord] |= 1 << (which % BitsInWord);
 }
@@ -63,6 +68,9 @@ BitMap::Mark (int which)
 void
 BitMap::Clear (int which)
 {
+// +b simbadSid 20.01.2016
+	++numClear;
+// +e simbadSid 20.01.2016
     ASSERT (which >= 0 && which < numBits);
     map[which / BitsInWord] &= ~(1 << (which % BitsInWord));
 }
@@ -80,9 +88,9 @@ BitMap::Test (int which)
     ASSERT (which >= 0 && which < numBits);
 
     if (map[which / BitsInWord] & (1 << (which % BitsInWord)))
-	return TRUE;
+    	return TRUE;
     else
-	return FALSE;
+    	return FALSE;
 }
 
 //----------------------------------------------------------------------
@@ -97,12 +105,12 @@ BitMap::Test (int which)
 int
 BitMap::FindAndMark ()
 {
-    for (int i = 0; i < numBits; i++)
-	if (!Test (i))
-	  {
-	      Mark (i);
-	      return i;
-	  }
+    for (int i = 0; i < numBits; i++) {
+		if (!Test (i)) {
+			  Mark (i);
+			  return i;
+		  }
+    }
     return -1;
 }
 
@@ -126,9 +134,13 @@ BitMap::FindFirst (int nbrBits)
 		{
 			for (j=1; j<nbrBits; j++)
 			{
-				if (Test(i+j)) break;
+				if (Test(i+j)){
+					break;
+				}
 			}
-			if (j == nbrBits) return i;
+			if (j == nbrBits){
+				return i;
+			}
 			i += j-1;
 		}
     }
@@ -149,13 +161,16 @@ BitMap::FindLast (int nbrBits)
 
 	for (i = numBits-1; i > nbrBits-1; i--)
 	{
-		if (!Test (i))
-		{
+		if (!Test (i)) {
 			for (j=1; j<nbrBits; j++)
 			{
-				if (Test(i-j)) break;
+				if (Test(i-j)) {
+					break;
+				}
 			}
-			if (j == nbrBits) return i;
+			if (j == nbrBits) {
+				return i;
+			}
 			i -= j+1;
 		}
     }
@@ -172,12 +187,7 @@ BitMap::FindLast (int nbrBits)
 int
 BitMap::NumClear ()
 {
-    int count = 0;
-
-    for (int i = 0; i < numBits; i++)
-	if (!Test (i))
-	    count++;
-    return count;
+    return numClear;
 }
 
 // +b simbadSid 15.01.2015
@@ -190,7 +200,9 @@ int BitMap::GetFreeBits(int freeBitIndex[])
 
 	for (int i = 0; i < numBits; i++)
 	{
-		if (Test (i)) continue;
+		if (Test (i)) {
+			continue;
+		}
 		freeBitIndex[count] = i;
 		count++;
 	}
@@ -211,8 +223,9 @@ BitMap::Print ()
 {
     printf ("Bitmap set:\n");
     for (int i = 0; i < numBits; i++)
-	if (Test (i))
+	if (Test (i)) {
 	    printf ("%d, ", i);
+	}
     printf ("\n");
 }
 
