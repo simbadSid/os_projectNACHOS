@@ -246,7 +246,7 @@ FileSystem::Create_sub_dir(const char *name)
         sector = freeMap->FindAndMark();	// find a sector to hold the file header
     	if (sector == -1) 		
             success = FALSE;		// no free block for file header 
-        else if (!directory->Add(name, sector, false))
+        else if (!directory->Add(name, sector, true))
             success = FALSE;	// no space in directory
 	else {
     	    subDir = new Directory(10);
