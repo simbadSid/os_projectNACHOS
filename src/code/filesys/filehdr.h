@@ -19,6 +19,7 @@
 
 #define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
+#define MaxFileNumb     10 //+ goubetc 20.01.16
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
 // the "i-node"), describing where on disk to find all of the data in the file.
@@ -40,6 +41,10 @@ class FileHeader {
     bool Allocate(BitMap *bitMap, int fileSize);// Initialize a file header, 
 						//  including allocating space 
 						//  on disk for the file data
+
+    //    bool FileHeader::Allocate_Dir(BitMap *freeMap, int current, int father);
+
+
     void Deallocate(BitMap *bitMap);  		// De-allocate this file's 
 						//  data blocks
 

@@ -51,6 +51,8 @@
 #include "filehdr.h"
 #include "filesys.h"
 
+//+ goubetc 19.01.16 20.01.16 21.01.16
+
 // Sectors containing the file headers for the bitmap of free sectors,
 // and the directory of files.  These file headers are placed in well-known 
 // sectors, so that they can be located on boot-up.
@@ -139,6 +141,7 @@ FileSystem::FileSystem(bool format)
     // the bitmap and directory; these are left open while Nachos is running
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
+	CurrentDirSector = DirectorySector; //+ goubetc 20.01.16
     }
 }
 
@@ -182,9 +185,14 @@ FileSystem::Create(const char *name, int initialSize)
 
     DEBUG('f', "Creating file %s, size %d\n", name, initialSize);
 
-    directory = new Directory(NumDirEntries);
-    directory->FetchFrom(directoryFile);
+    OpenFile *directoryTmpFile;
+    directoryTmpFile = new OpenFile(CurrentDirSector);
 
+    directory = new Directory(NumDirEntries);
+    directory->FetchFrom(directoryTmpFile);  //+ goubetc 20.01.16  replaced directoryFile by CurrentDirSector	
+
+
+    
     if (directory->Find(name) != -1)
       success = FALSE;			// file is already in directory
     else {	
@@ -193,7 +201,7 @@ FileSystem::Create(const char *name, int initialSize)
         sector = freeMap->FindAndMark();	// find a sector to hold the file header
     	if (sector == -1) 		
             success = FALSE;		// no free block for file header 
-        else if (!directory->Add(name, sector))
+        else if (!directory->Add(name, sector, false)) //+ goubetc 20.01.16
             success = FALSE;	// no space in directory
 	else {
     	    hdr = new FileHeader;
@@ -213,6 +221,55 @@ FileSystem::Create(const char *name, int initialSize)
     delete directory;
     return success;
 }
+
+//+b goubetc 19.01.16
+bool
+FileSystem::Create_sub_dir(const char *name)
+{
+    Directory *directory;
+    Directory *subDir;
+    BitMap *freeMap;
+    int sector;
+    bool success;
+    OpenFile *openDir;
+
+    DEBUG('f', "Creating sub directory %s, size %d\n", name);
+
+    directory = new Directory(NumDirEntries);
+    directory->FetchFrom(directoryFile);
+
+    if (directory->Find(name) != -1)
+      success = FALSE;			// file is already in directory
+    else {	
+        freeMap = new BitMap(NumSectors);
+        freeMap->FetchFrom(freeMapFile);
+        sector = freeMap->FindAndMark();	// find a sector to hold the file header
+    	if (sector == -1) 		
+            success = FALSE;		// no free block for file header 
+        else if (!directory->Add(name, sector, false))
+            success = FALSE;	// no space in directory
+	else {
+    	    subDir = new Directory(10);
+	    if (!subDir->Add(".", sector, true) && !subDir->Add("..", CurrentDirSector, true))
+            	success = FALSE;	// no space on disk for data
+	    else {	
+	    	success = TRUE;
+		// everthing worked, flush all changes back to disk
+		openDir = new OpenFile(sector);
+		subDir->WriteBack(openDir); 		
+    	    	directory->WriteBack(directoryFile);
+    	    	freeMap->WriteBack(freeMapFile);
+		delete openDir;
+	    }
+            delete subDir;
+	}
+        delete freeMap;
+    }
+    delete directory;
+    return success;
+}
+//+e goubetc 19.01.16
+
 
 //----------------------------------------------------------------------
 // FileSystem::Open
@@ -235,7 +292,9 @@ FileSystem::Open(const char *name)
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name); 
     if (sector >= 0) 		
-	openFile = new OpenFile(sector);	// name was found in directory 
+	openFile = new OpenFile(sector);	// name was found in directory
+    else
+	DEBUG('f', "file %s not found\n", name);
     delete directory;
     return openFile;				// return NULL if not found
 }
@@ -258,6 +317,8 @@ bool
 FileSystem::Remove(const char *name)
 { 
     Directory *directory;
+    Directory *subDir;
+    OpenFile *subDirFile;
     BitMap *freeMap;
     FileHeader *fileHdr;
     int sector;
@@ -268,20 +329,39 @@ FileSystem::Remove(const char *name)
     if (sector == -1) {
        delete directory;
        return FALSE;			 // file not found 
+    }//+b goubetc 21.01.16
+    if (directory->IsSubDir(name)){
+	subDirFile = new OpenFile(sector);
+	subDir = new Directory(MAX_ENTRIES);
+	subDir->FetchFrom(subDirFile);
+	if (subDir->IsEmptySubDirectory()){
+	    freeMap = new BitMap(NumSectors);
+	    freeMap->FetchFrom(freeMapFile);
+	}
+	else {
+	    delete directory;
+	    delete subDirFile;
+	    delete subDir;
+	    return FALSE;
+	}   
     }
-    fileHdr = new FileHeader;
-    fileHdr->FetchFrom(sector);
+    else {
+	fileHdr = new FileHeader;
+	fileHdr->FetchFrom(sector);
 
-    freeMap = new BitMap(NumSectors);
-    freeMap->FetchFrom(freeMapFile);
+	freeMap = new BitMap(NumSectors);
+	freeMap->FetchFrom(freeMapFile);
 
-    fileHdr->Deallocate(freeMap);  		// remove data blocks
+	fileHdr->Deallocate(freeMap);  		// remove data blocks
+    }
+    //+e goubetc 21.01.16
     freeMap->Clear(sector);			// remove header block
     directory->Remove(name);
-
+    
     freeMap->WriteBack(freeMapFile);		// flush to disk
     directory->WriteBack(directoryFile);        // flush to disk
     delete fileHdr;
+    
     delete directory;
     delete freeMap;
     return TRUE;

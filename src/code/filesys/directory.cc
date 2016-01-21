@@ -25,6 +25,8 @@
 #include "filehdr.h"
 #include "directory.h"
 
+//+ goubetc 19.01.16
+
 //----------------------------------------------------------------------
 // Directory::Directory
 // 	Initialize a directory; initially, the directory is completely
@@ -126,8 +128,8 @@ Directory::Find(const char *name)
 //	"newSector" -- the disk sector containing the added file's header
 //----------------------------------------------------------------------
 
-bool
-Directory::Add(const char *name, int newSector)
+bool   //TODO name can contain path from current dir or root
+Directory::Add(const char *name, int newSector, bool directory)
 { 
     if (FindIndex(name) != -1)
 	return FALSE;
@@ -137,15 +139,47 @@ Directory::Add(const char *name, int newSector)
             table[i].inUse = TRUE;
             strncpy(table[i].name, name, FileNameMaxLen); 
             table[i].sector = newSector;
-        return TRUE;
+	    table[i].isSubDir = directory; //+ goubetc 20.01.16
+	    return TRUE;
 	}
     return FALSE;	// no space.  Fix when we have extensible files.
 }
 
+//+b goubetc 19.01.16
+//----------------------------------------------------------------------
+// Directory::Add
+// 	Add a file into the directory.  Return TRUE if successful;
+//	return FALSE if the file name is already in the directory, or if
+//	the directory is completely full, and has no more space for
+//	additional file names.
+//
+//	"name" -- the name of the file being added
+//	"newSector" -- the disk sector containing the added file's header
+//----------------------------------------------------------------------
+
+// bool
+// Add_subDirectory(const char *name, int newSector){
+//     if (FindIndex(name) != -1)
+// 	return FALSE;
+
+//     for (int i = 0; i < tableSize; i++)
+//         if (!table[i].inUse) {
+//             table[i].inUse = TRUE;
+//             strncpy(table[i].name, name, FileNameMaxLen); 
+//             table[i].sector = newSector;
+// 	    table[i].isSubDirectory = true;
+// 	    return TRUE;
+// 	}
+//     return FALSE;	// no space.  Fix when we have extensible files.
+
+// }
+
+
+//+e goubetc 19.01.16
 //----------------------------------------------------------------------
 // Directory::Remove
-// 	Remove a file name from the directory.  Return TRUE if successful;
-//	return FALSE if the file isn't in the directory. 
+// 	Remove a file/sub-directory name from the directory.  Return TRUE if successful;
+//	return FALSE if the file isn't in the directory or directory not empty. 
 //
 //	"name" -- the file name to be removed
 //----------------------------------------------------------------------
@@ -157,6 +191,18 @@ Directory::Remove(const char *name)
 
     if (i == -1)
 	return FALSE; 		// name not in directory
+    //+b goubetc 20.01.16
+    else if (table[i].isSubDir){
+	OpenFile *directoryTmpFile;
+	Directory *directory = new Directory(10);
+	directoryTmpFile = new OpenFile(table[i].sector);
+	directory->FetchFrom(directoryTmpFile);
+	if (!directory->IsEmptySubDirectory()){
+	    delete directory;
+	    return false;
+	}
+    }
+    //+e goubetc 20.01.16
     table[i].inUse = FALSE;
     return TRUE;	
 }
@@ -169,9 +215,17 @@ Directory::Remove(const char *name)
 void
 Directory::List()
 {
-   for (int i = 0; i < tableSize; i++)
-	if (table[i].inUse)
-	    printf("%s\n", table[i].name);
+    for (int i = 0; i < tableSize; i++){
+       if (table[i].inUse){ //+b goubetc 20.01.16
+	   if (table[i].isSubDir){
+	       printf("d %s\n", table[i].name);
+	   }
+	   else {
+	       printf("- %s\n", table[i].name);
+	   }
+       }
+    }
+	       //+e goubetc 20.01.16
 }
 
 //----------------------------------------------------------------------
@@ -184,7 +238,7 @@ void
 Directory::Print()
 { 
     FileHeader *hdr = new FileHeader;
-
+    //Directory 
     printf("Directory contents:\n");
     for (int i = 0; i < tableSize; i++)
 	if (table[i].inUse) {
@@ -195,3 +249,22 @@ Directory::Print()
     printf("\n");
     delete hdr;
 }
+//+b goubetc 21.01.16
+bool
+Directory::IsEmptySubDirectory()
+{
+    for (int i = 2; i < tableSize; ++i)
+	if (table[i].inUse)
+	    return false;
+    return true;
+}
+
+bool
+Directory::IsSubDir(const char *name)
+{
+    for (int i = 0; i < tableSize; i++)
+        if (table[i].inUse && !strncmp(table[i].name, name, FileNameMaxLen))
+	    return table[i].isSubDir;
+    return false;		// name not in directory   
+}
+//+e goubetc 21.01.16

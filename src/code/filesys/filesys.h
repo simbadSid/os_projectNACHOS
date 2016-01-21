@@ -37,6 +37,10 @@
 
 #include "copyright.h"
 #include "openfile.h"
+//+ goubetc 20.01.16
+
+#define MAX_ENTRIES 10 //+ goubetc 20.01.16
+
 
 #ifdef FILESYS_STUB 		// Temporarily implement file system calls as 
 				// calls to UNIX, until the real file system
@@ -77,6 +81,8 @@ class FileSystem {
     bool Create(const char *name, int initialSize);  	
 					// Create a file (UNIX creat)
 
+    bool Create_sub_dir(const char *name); //+goubetc 21.01.06
+    
     OpenFile* Open(const char *name); 	// Open a file (UNIX open)
 
     bool Remove(const char *name); 	// Delete a file (UNIX unlink)
@@ -85,11 +91,15 @@ class FileSystem {
 
     void Print();			// List all the files and their contents
 
+    
   private:
    OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file
    OpenFile* directoryFile;		// "Root" directory -- list of 
 					// file names, represented as a file
+
+   int CurrentDirSector;  //+ goubetc 20.01.16
+   // pointer to the sector index of the currently opened directory enrty specification
 };
 
 #endif // FILESYS

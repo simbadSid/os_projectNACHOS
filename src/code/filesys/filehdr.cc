@@ -51,6 +51,22 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
     return TRUE;
 }
 
+//+b goubetc 20.01.16
+// bool
+// FileHeader::Allocate_Dir(BitMap *freeMap, int current, int father)
+// { 
+//     numBytes = -1;
+//     numSectors  = MaxFileNumb;
+
+//     dataSectors[0] = current;
+//     dataSectors[1] = father;
+//     for (int i = 2; i < numSectors; i++)
+// 	dataSectors[i] = -1;
+//     return TRUE;
+// }
+
+//+e goubetc 20.01.16
+
 //----------------------------------------------------------------------
 // FileHeader::Deallocate
 // 	De-allocate all the space allocated for data blocks for this file.
