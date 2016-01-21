@@ -10,9 +10,6 @@
 // +b simbadSid 10.01.2016
 
 
-
-
-
 KeyList::KeyList()
 {
 	this->key	= -1;

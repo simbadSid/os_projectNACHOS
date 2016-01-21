@@ -115,7 +115,7 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 
 																							// how big is address space?
 	size = noffH.code.size + noffH.initData.size + noffH.uninitData.size					// Read the expected addrspace size expected by the
-				+ maxNbrThread*UserStackSize;												//		executable file.
+				+ maxNbrThread * UserStackSize;												//		executable file.
 																							//		We need to increase the size to leave room for the stack
 
 	numPages	= divRoundUp (size, PageSize);
@@ -227,9 +227,9 @@ AddrSpace::InitRegisters ()
 												// allocated the stack; but subtract off a bit, to make sure we don't
 												// accidentally reference off the end!
 	// +b simbadSid 19.01.2016
-	stackPointer = GetThreadTopStackPointer(currentThread->getTID());
-//TODO to remove
-//DEBUG('e', "TID = %d. stackPointer = %d\n", currentThread->getTID(), stackPointer);
+	printf("!!!!!!!!!!!!!!!!!!!!!!! TID %d \n", currentThread->getTID());
+	currentThread->space->threadStackList->PrintList();
+	stackPointer = currentThread->space->GetThreadTopStackPointer(currentThread->getTID());
 	ASSERT(stackPointer >= 0);
 	// +e simbadSid 19.01.2016
 	machine->WriteRegister (StackReg, stackPointer);
@@ -277,7 +277,10 @@ AddrSpace::RestoreState ()
 int AddrSpace::AllocateThreadStack(int tid, int *newStackPointer)
 {
 // TODO begin critical section
-	int stackTopPage	= this->pageBitmap->FindLast(USER_THREAD_STACK_PAGES+1);// Get the index of the lowest free page
+	// Get the index of the lowest free page
+	int stackTopPage = this->pageBitmap->FindLast(USER_THREAD_STACK_PAGES + 1);
+	printf("+++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+	printf("%d\n", stackTopPage);
 	int lowestPage		= stackTopPage - USER_THREAD_STACK_PAGES-1;
 	int page;
 	void *physicalPageAddress;
@@ -301,6 +304,7 @@ int AddrSpace::AllocateThreadStack(int tid, int *newStackPointer)
 		*newStackPointer = stackTopPageToStackTopVirtualAddress(stackTopPage);	// Compute the virtual address of the new stack pointer;
 	}
 // TODO stop critical section
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	return 1;
 }
 // --------------------------------------------------------
@@ -343,9 +347,12 @@ int AddrSpace::GetSize()
 int AddrSpace::GetThreadTopStackPointer(int tid)
 {
 	int stackTopPage = 0;
+	printf("=========================\n");
 	bool test = this->threadStackList->IsInList(tid, (void**)&stackTopPage);
-
-	if (!test)	return -1;
+	printf("Test %d \n", (int)test);
+	if (!test) {
+		return -1;
+	}
 	else		return stackTopPageToStackTopVirtualAddress(stackTopPage);
 }
 

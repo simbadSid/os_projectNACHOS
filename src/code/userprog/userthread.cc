@@ -111,8 +111,14 @@ void do_UserThreadExit ()
 // Executes Fork, take as an input path to executable.
 // ----------------------------------------------------
 int do_ForkExec(char *fileName) {
+	printf("1111111111111111111111111111111111111111111111");
 	OpenFile *executable = fileSystem->Open(fileName);
 	char *threadName = new char();
+
+printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+printf("%s \n", fileName);
+printf("%p \n", executable);
+
 	int tid = initThreadName(threadName);
 	Thread *programThread = new Thread(threadName, tid);
 	programThread->space = new AddrSpace(executable);

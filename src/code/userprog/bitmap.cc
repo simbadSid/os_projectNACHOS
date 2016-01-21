@@ -78,8 +78,7 @@ BitMap::Clear (int which)
 //      "which" is the number of the bit to be tested.
 //----------------------------------------------------------------------
 
-bool
-BitMap::Test (int which)
+bool BitMap::Test (int which)
 {
     ASSERT (which >= 0 && which < numBits);
 
@@ -98,8 +97,7 @@ BitMap::Test (int which)
 //      If no bits are clear, return -1.
 //----------------------------------------------------------------------
 
-int
-BitMap::FindAndMark ()
+int BitMap::FindAndMark ()
 {
     for (int i = 0; i < numBits; i++) {
 		if (!Test (i)) {
