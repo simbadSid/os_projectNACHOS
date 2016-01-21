@@ -18,6 +18,7 @@
 #define DIRECTORY_H
 
 #include "openfile.h"
+//+ goubetc 19.01.16
 
 #define FileNameMaxLen 		9	// for simplicity, we assume 
 					// file names are <= 9 characters long
@@ -32,10 +33,13 @@
 class DirectoryEntry {
   public:
     bool inUse;				// Is this directory entry in use?
+    bool isSubDir;                         //+ goubetc 20.01.16
+    // true if entry is a sub directory
     int sector;				// Location on disk to find the 
 					//   FileHeader for this file 
     char name[FileNameMaxLen + 1];	// Text name for file, with +1 for 
 					// the trailing '\0'
+    //bool isSubDirectory;                //+ goubetc 19.01.16
 };
 
 // The following class defines a UNIX-like "directory".  Each entry in
@@ -61,8 +65,11 @@ class Directory {
     int Find(const char *name);		// Find the sector number of the 
 					// FileHeader for file: "name"
 
-    bool Add(const char *name, int newSector);  // Add a file name into the directory
+    //+ goubetc 20.01.16
+    bool Add(const char *name, int newSector, bool directory);  // Add a file name into the directory
 
+    bool Add_subDirectory(const char *name, int newSector);   //+ goubetc 19.01.16
+    
     bool Remove(const char *name);	// Remove a file from the directory
 
     void List();			// Print the names of all the files
@@ -70,8 +77,11 @@ class Directory {
     void Print();			// Verbose print of the contents
 					//  of the directory -- all the file
 					//  names and their contents.
+    bool IsEmptySubDirectory();         // returns true if all the entries from 2 to
+                                        // 10 are not inUse 
+    bool IsSubDir(const char *name); //+ goubetc 21.01.16
 
-  private:
+ private:
     int tableSize;			// Number of directory entries
     DirectoryEntry *table;		// Table of pairs: 
 					// <file name, file header location> 

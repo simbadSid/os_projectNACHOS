@@ -157,6 +157,12 @@ main (int argc, char **argv)
 	    {
 			PerformanceTest ();
 	    }
+		else if (!strcmp (*argv, "-mkdir"))					// remove Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->Create_sub_dir (*(argv + 1));
+			argCount = 2;
+	    }
 #endif // FILESYS
 #ifdef NETWORK
 		if (!strcmp (*argv, "-o"))
