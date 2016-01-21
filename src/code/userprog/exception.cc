@@ -29,11 +29,6 @@
 #include "userthread.h"
 
 
-
-
-
-
-
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
@@ -124,10 +119,10 @@ ExceptionHandler (ExceptionType which)
     //+b FoxTox 08.01.2016
     int type = machine->ReadRegister(2);
 
-    switch(which)
-    {
-    case SyscallException:
-    {
+	switch(which)
+	{
+	case SyscallException:
+	{
 	    switch (type)
 		{
 		case SC_Halt:
@@ -148,6 +143,18 @@ ExceptionHandler (ExceptionType which)
 			interrupt->Halt();
 			break;
 	    }
+	    // +b simbadSid 21.01.2016
+		case SC_Exit:
+		{
+			int status = (int)machine->ReadRegister(4);
+			DEBUG('e', "Exception: exit initiated by user program: name = \"%s\", tid = %d, status = %d.\n",
+					currentThread->getName(), currentThread->getTID(), status);
+			machine->WriteRegister(4, SC_UserThreadExit);
+			UpdatePC();
+//			ExceptionHandler(SyscallException);
+			return;
+		}
+	    // +e simbadSid 21.01.2016
 		case SC_PutChar:
 		{
 		    char c = (char)machine->ReadRegister(4);
@@ -285,10 +292,9 @@ ExceptionHandler (ExceptionType which)
 		case SC_ForkExec:
 	    {
 			int fileNameUserPtr = machine->ReadRegister(4);
+			DEBUG('e', "Exception: user thread ForkExec.\n");
 			char kernelFileName[100];
 			copyStringFromMachine(fileNameUserPtr, (char*)kernelFileName, 100);
-			DEBUG('e', "Exception: user thread ForkExec.\n");
-			DEBUG('e', "\t-> User program name address: %d.\n");
 			DEBUG('e', "\t-> Program file name: %s.\n", kernelFileName);
 			int res = do_ForkExec(kernelFileName);
 			DEBUG('e', "\t->user thread ForkExec res = %d.\n", res);

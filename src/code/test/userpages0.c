@@ -8,7 +8,6 @@ void print_chars( void *arg )
     PutChar('1');
     PutInt(c);
     for (i = 0; i < 10; i++) {
-
     	c++;
     	PutInt(c);
     	PutChar('\n');
@@ -21,7 +20,6 @@ void print_chars( void *arg )
 int main()
 {
     int arg[] = {3};
-    //print_chars ((void *) arg);
     int tid0 = UserThreadCreate(print_chars, (void *) arg);
     int tid1 = UserThreadCreate(print_chars, (void *) arg);
     int tid2 = UserThreadCreate(print_chars, (void *) arg);
@@ -31,9 +29,7 @@ int main()
     UserThreadJoin(tid1);
     UserThreadJoin(tid2);
 
-    //PutInt((int)arg);
-    Halt();
-    // return 0;
+    return 0;
 
 }
 //+e FoxTox 13.01.2016

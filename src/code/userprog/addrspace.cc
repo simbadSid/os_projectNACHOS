@@ -140,6 +140,8 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 		DEBUG ('a', "\t->Virtual page %d\t<-> physical page %d\n",
 				pageTable[i].virtualPage, pageTable[i].physicalPage);
 	}
+//TODO
+DEBUG ('a', "Remaining pages: %d\n", frameProvider->NumAvailFrame());
 	this->threadStackList = new KeyList();
 
 	if (noffH.code.size > 0)																// Copy code and segments of the executable into addrSpace
@@ -227,9 +229,8 @@ AddrSpace::InitRegisters ()
 												// allocated the stack; but subtract off a bit, to make sure we don't
 												// accidentally reference off the end!
 	// +b simbadSid 19.01.2016
-	printf("!!!!!!!!!!!!!!!!!!!!!!! TID %d \n", currentThread->getTID());
-	currentThread->space->threadStackList->PrintList();
-	stackPointer = currentThread->space->GetThreadTopStackPointer(currentThread->getTID());
+
+	stackPointer = GetThreadTopStackPointer(currentThread->getTID());
 	ASSERT(stackPointer >= 0);
 	// +e simbadSid 19.01.2016
 	machine->WriteRegister (StackReg, stackPointer);
@@ -279,8 +280,6 @@ int AddrSpace::AllocateThreadStack(int tid, int *newStackPointer)
 // TODO begin critical section
 	// Get the index of the lowest free page
 	int stackTopPage = this->pageBitmap->FindLast(USER_THREAD_STACK_PAGES + 1);
-	printf("+++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-	printf("%d\n", stackTopPage);
 	int lowestPage		= stackTopPage - USER_THREAD_STACK_PAGES-1;
 	int page;
 	void *physicalPageAddress;
@@ -303,8 +302,8 @@ int AddrSpace::AllocateThreadStack(int tid, int *newStackPointer)
 	{
 		*newStackPointer = stackTopPageToStackTopVirtualAddress(stackTopPage);	// Compute the virtual address of the new stack pointer;
 	}
+
 // TODO stop critical section
-	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	return 1;
 }
 // --------------------------------------------------------
@@ -347,7 +346,6 @@ int AddrSpace::GetSize()
 int AddrSpace::GetThreadTopStackPointer(int tid)
 {
 	int stackTopPage = 0;
-	printf("=========================\n");
 	bool test = this->threadStackList->IsInList(tid, (void**)&stackTopPage);
 	printf("Test %d \n", (int)test);
 	if (!test) {

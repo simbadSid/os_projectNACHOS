@@ -1,12 +1,11 @@
 // +b FoxTox 19.01.2015
 #include "syscall.h"
+#define PROC_NUMB 10000
+
 
 int main() {
-	PutString("Fuck you Riyane, alisa is the best, really, !\n\0", 200);
-	ForkExec("ioTest");
-//	ForkExec("ioTest");
-
-	Halt();
+	ForkExec("userpages0");
+	ForkExec("userpages1");
 	return 0;
 }
 // +e FoxTox 19.01.2015

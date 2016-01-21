@@ -69,33 +69,33 @@ int do_UserThreadCreate(int func, int arg, int exitFunc)
 	char *name = new char ();
 	// +b FoxTox 19.01.2015
 	int		tid				= initThreadName(name);
-	Thread	*t				= new Thread(name, tid);
+	Thread	*createdThread	= new Thread(name, tid);
 	int		newThreadStack	= -1;
 	int		test;
 
-	test = t->UserThreadCreate(currentThread, &newThreadStack);			// Allocate space for the new thread stack pointer in the currentThread Address space
-	if (test < 0) {
+	test = createdThread->UserThreadCreate(currentThread, &newThreadStack);	// Allocate space for the new thread stack pointer in the currentThread Address space
+	if (test < 0) {															// Case no space left
 		return test;
 	}
 	// +e FoxTox 19.01.2015
-	userThreadList->Prepend(t->getTID(), t);
+	userThreadList->Prepend(tid, createdThread);
 	tcp = new ThreadCreationParameter(func, arg, exitFunc, newThreadStack);
-	t->Fork(StartUserThread, (int)tcp);
+	createdThread->Fork(StartUserThread, (int)tcp);
 	return tid;
 }
 
 //----------------------------------------------------------------------
-// Finishes the thread current thread and removes it from the thread list
+// Finishes the thread current thread and removes it from the thread list.
 //----------------------------------------------------------------------
 void do_UserThreadExit ()
 {
-	Thread *thread;
+	Thread *removedThread;
 	int		tid	= currentThread->getTID();
-	bool	test= userThreadList->Remove(tid, (void**)&thread);
+	bool	test= userThreadList->Remove(tid, (void**)&removedThread);
 
 	ASSERT(test);
-	ASSERT(currentThread == thread);
-	thread->UserThreadExit();											// Unallocates the space allocated for the stack
+	ASSERT(currentThread == removedThread);
+	removedThread->UserThreadExit();										// Unallocates the space allocated for the stack
 
 	//+b goubetc 13.01.16
 	variableCondition->Broadcast(joinCondition);
@@ -103,7 +103,16 @@ void do_UserThreadExit ()
 	//+e goubetc
 
 	DEBUG('e', "\tEnd of user thread exit\n");
-	thread->Finish();
+	// +b FoxTox 19.01.2015
+	if (userThreadList->IsEmpty())
+	{
+		interrupt->Halt();
+	}
+	else
+	{
+		removedThread->Finish();
+	}
+	// +e FoxTox 19.01.2015
 }
 
 // +b FoxTox 19.01.2015
@@ -111,13 +120,8 @@ void do_UserThreadExit ()
 // Executes Fork, take as an input path to executable.
 // ----------------------------------------------------
 int do_ForkExec(char *fileName) {
-	printf("1111111111111111111111111111111111111111111111");
 	OpenFile *executable = fileSystem->Open(fileName);
 	char *threadName = new char();
-
-printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-printf("%s \n", fileName);
-printf("%p \n", executable);
 
 	int tid = initThreadName(threadName);
 	Thread *programThread = new Thread(threadName, tid);

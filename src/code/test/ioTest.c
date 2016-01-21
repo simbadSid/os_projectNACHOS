@@ -72,7 +72,8 @@ int main ()
 	initString(longStr2, 3*LONG_STRING_SIZE+10);
 	PutString(longStr2, strlen(longStr2));
 
-	Halt ();
+//TODO uncomment
+//	Halt ();
 
     /* not reached */
     return 0;

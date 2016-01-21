@@ -51,7 +51,9 @@ BitMap::~BitMap ()
 void
 BitMap::Mark (int which)
 {
-	++numClear;
+// +b simbadSid 20.01.2016
+	--numClear;
+// +e simbadSid 20.01.2016
     ASSERT (which >= 0 && which < numBits);
     map[which / BitsInWord] |= 1 << (which % BitsInWord);
 }
@@ -66,7 +68,9 @@ BitMap::Mark (int which)
 void
 BitMap::Clear (int which)
 {
-	--numClear;
+// +b simbadSid 20.01.2016
+	++numClear;
+// +e simbadSid 20.01.2016
     ASSERT (which >= 0 && which < numBits);
     map[which / BitsInWord] &= ~(1 << (which % BitsInWord));
 }

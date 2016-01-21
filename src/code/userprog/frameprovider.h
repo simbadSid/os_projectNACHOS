@@ -11,6 +11,7 @@
 // +b simbadSid 18.01.2015
 #ifndef FRAMEPROVIDER_H_
 #define FRAMEPROVIDER_H_
+
 #include "bitmap.h"
 
 
