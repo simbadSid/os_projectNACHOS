@@ -117,10 +117,19 @@ void do_UserThreadExit ()
 
 // +b FoxTox 19.01.2015
 // ----------------------------------------------------
-// Executes Fork, take as an input path to executable.
+//+b simbadSid 22.01.2016
+// Creates a new address space totally different from the current one.
+// Creates a new thread within the new address space  to execute the program represented by
+// the given program name.
+// Return the TID of the created thread in case of success.
+// Return -1 if the given executable file does not exist. (only handled error).
+//+b simbadSid 22.01.2016
 // ----------------------------------------------------
 int do_ForkExec(char *fileName) {
 	OpenFile *executable = fileSystem->Open(fileName);
+//+b simbadSid 22.01.2016
+	if (executable == NULL) return -1;
+//+e simbadSid 22.01.2016
 	char *threadName = new char();
 
 	int tid = initThreadName(threadName);
@@ -129,9 +138,9 @@ int do_ForkExec(char *fileName) {
 
 	int	newThreadStack	= -1;
 	int test = programThread->UserThreadCreate(programThread, &newThreadStack);
-	if (test < 0) {
-		return test;
-	}
+//+b simbadSid 22.01.2016
+	ASSERT(test >= 0);
+//+e simbadSid 22.01.2016
 	userThreadList->Prepend(programThread->getTID(), programThread);
 	ThreadCreationParameter *tcp = new ThreadCreationParameter(0, 0, 0, newThreadStack);
 	programThread->Fork(StartUserThread, (int)tcp);

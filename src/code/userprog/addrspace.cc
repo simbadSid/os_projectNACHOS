@@ -347,7 +347,6 @@ int AddrSpace::GetThreadTopStackPointer(int tid)
 {
 	int stackTopPage = 0;
 	bool test = this->threadStackList->IsInList(tid, (void**)&stackTopPage);
-	printf("Test %d \n", (int)test);
 	if (!test) {
 		return -1;
 	}

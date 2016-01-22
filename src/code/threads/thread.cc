@@ -434,11 +434,13 @@ Thread::RestoreUserState ()
 //----------------------------------------------------------------------
 int Thread::UserThreadCreate(Thread *existingThread, int *createdThreadStack)
 {
-	printf("UserThreadCreate TID %d new TID %d \n", existingThread->tid, this->tid);
+	DEBUG ('t', "\t->UserThreadCreate TID %d new TID %d \n", existingThread->tid, this->tid);
 	this->space		= (AddrSpace*)existingThread->space;
-
 	int test		= space->AllocateThreadStack(tid, createdThreadStack);	// Distinguish the new thread stack from the current thread stack
-	if (test == -1)	return -1;												// Case: no memory left for the stack
+	if (test == -1)															// Case: no memory left for the stack
+	{
+		return -1;
+	}
 	existingThread->space->SaveState();
 
 	int existingThreadStack = existingThread->space->GetThreadTopStackPointer(
