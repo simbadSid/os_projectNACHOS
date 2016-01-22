@@ -43,6 +43,7 @@ Directory::Directory(int size)
     tableSize = size;
     for (int i = 0; i < tableSize; i++)
 	table[i].inUse = FALSE;
+    this->Add(".", 1, true);
 }
 
 //----------------------------------------------------------------------
@@ -262,9 +263,9 @@ Directory::IsEmptySubDirectory()
 bool
 Directory::IsSubDir(const char *name)
 {
-    for (int i = 0; i < tableSize; i++)
-        if (table[i].inUse && !strncmp(table[i].name, name, FileNameMaxLen))
-	    return table[i].isSubDir;
-    return false;		// name not in directory   
+    int i = FindIndex(name);
+    if (i != -1)
+	return table[i].isSubDir;
+    return false;
 }
 //+e goubetc 21.01.16

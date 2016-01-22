@@ -163,6 +163,13 @@ main (int argc, char **argv)
 			fileSystem->Create_sub_dir (*(argv + 1));
 			argCount = 2;
 	    }
+		
+		else if (!strcmp (*argv, "-ls"))					// remove Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->List_dir (*(argv + 1));
+			argCount = 2;
+	    }
 #endif // FILESYS
 #ifdef NETWORK
 		if (!strcmp (*argv, "-o"))
