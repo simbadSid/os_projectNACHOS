@@ -153,6 +153,7 @@ printf("iciiiiii\n");
 			machine->WriteRegister(2, SC_UserThreadExit);
 //			UpdatePC();
 			ExceptionHandler(SyscallException);
+			ASSERT(false);
 printf("Mistake");
 			return;
 		}
