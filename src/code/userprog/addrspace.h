@@ -56,6 +56,8 @@ class AddrSpace
 		unsigned int		initDataNbrPage;
 		unsigned int		uninitDataFirstPage;
 		unsigned int		uninitDataNbrPage;
+		void ReadRegion(OpenFile *executable, int virtualaddr, int numBytes, int position,
+				   unsigned int *firstPage, unsigned int *nbrPage, bool readOnly);
 		//+e simbadSid 15.01.2015
 };
 
