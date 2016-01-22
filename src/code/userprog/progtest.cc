@@ -16,8 +16,6 @@
 #include "synch.h"
 
 
-
-
 //----------------------------------------------------------------------
 // Local global variables
 // Data structures needed for the console test.  Threads making
@@ -27,8 +25,6 @@ static Console		*console;
 static SynchConsole	*synchConsole;
 static Semaphore	*readAvail;
 static Semaphore	*writeDone;
-
-
 
 
 //----------------------------------------------------------------------

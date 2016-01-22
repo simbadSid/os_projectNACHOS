@@ -211,7 +211,10 @@ int UserThreadJoin(int tid);
 
 
 //+b FoxTox 19.01.16
-/* Called in system call handler SC_ForkExec.
+/* Called in system call handler SC_ForkExec.  The system call creates a process totally independant from the caller
+ * process and executes the given program in the given program.
+ * Return the thread ID if the new thread if the call success.
+ * Return -1 if the given executable file does not exist. (only handled error).
  */
 int ForkExec(char *fileName);
 //+e FoxTox 19.01.16

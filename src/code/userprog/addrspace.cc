@@ -115,7 +115,7 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 
 																							// how big is address space?
 	size = noffH.code.size + noffH.initData.size + noffH.uninitData.size					// Read the expected addrspace size expected by the
-				+ maxNbrThread*UserStackSize;												//		executable file.
+				+ maxNbrThread * UserStackSize;												//		executable file.
 																							//		We need to increase the size to leave room for the stack
 
 	numPages	= divRoundUp (size, PageSize);
@@ -229,6 +229,7 @@ AddrSpace::InitRegisters ()
 												// allocated the stack; but subtract off a bit, to make sure we don't
 												// accidentally reference off the end!
 	// +b simbadSid 19.01.2016
+
 	stackPointer = GetThreadTopStackPointer(currentThread->getTID());
 	ASSERT(stackPointer >= 0);
 	// +e simbadSid 19.01.2016
@@ -277,7 +278,8 @@ AddrSpace::RestoreState ()
 int AddrSpace::AllocateThreadStack(int tid, int *newStackPointer)
 {
 // TODO begin critical section
-	int stackTopPage	= this->pageBitmap->FindLast(USER_THREAD_STACK_PAGES+1);// Get the index of the lowest free page
+	// Get the index of the lowest free page
+	int stackTopPage = this->pageBitmap->FindLast(USER_THREAD_STACK_PAGES + 1);
 	int lowestPage		= stackTopPage - USER_THREAD_STACK_PAGES-1;
 	int page;
 	void *physicalPageAddress;
@@ -345,8 +347,9 @@ int AddrSpace::GetThreadTopStackPointer(int tid)
 {
 	int stackTopPage = 0;
 	bool test = this->threadStackList->IsInList(tid, (void**)&stackTopPage);
-
-	if (!test)	return -1;
+	if (!test) {
+		return -1;
+	}
 	else		return stackTopPageToStackTopVirtualAddress(stackTopPage);
 }
 

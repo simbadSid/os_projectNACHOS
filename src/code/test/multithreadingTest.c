@@ -135,9 +135,8 @@ int main (int argc, char **argv)
 {
 	testCreation();
 //    testJoin();
-	PutString("Begin\n", 6);
-    Halt ();
-    PutString("End\n", 4);
+
+//    Halt ();
 
     /* not reached */
     return 0;
