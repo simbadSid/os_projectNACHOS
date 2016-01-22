@@ -89,6 +89,8 @@ class FileSystem {
 
     void List();			// List all the files in the file system
 
+    void List_dir(const char *name);
+    
     void Print();			// List all the files and their contents
 
     

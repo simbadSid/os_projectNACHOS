@@ -232,7 +232,8 @@ FileSystem::Create_sub_dir(const char *name)
     int sector;
     bool success;
     OpenFile *openDir;
-
+    FileHeader *dirHdr = new FileHeader;
+    
     DEBUG('f', "Creating sub directory %s, size %d\n", name);
 
     directory = new Directory(NumDirEntries);
@@ -250,11 +251,18 @@ FileSystem::Create_sub_dir(const char *name)
             success = FALSE;	// no space in directory
 	else {
     	    subDir = new Directory(10);
-	    if (!subDir->Add(".", sector, true) && !subDir->Add("..", CurrentDirSector, true))
+	    subDir->Remove(".");
+	    if ((!subDir->Add(".", sector, true)) || (!subDir->Add("..", CurrentDirSector, true))){
             	success = FALSE;	// no space on disk for data
-	    else {	
+		DEBUG('z', "not enough space or already in directory\n");
+	    }
+	    else {
+		DEBUG('z', "sector : %d\n", sector);
+		subDir->List(); // KILL-ME
 	    	success = TRUE;
 		// everthing worked, flush all changes back to disk
+		ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
+		dirHdr->WriteBack(sector);
 		openDir = new OpenFile(sector);
 		subDir->WriteBack(openDir); 		
     	    	directory->WriteBack(directoryFile);
@@ -265,6 +273,7 @@ FileSystem::Create_sub_dir(const char *name)
 	}
         delete freeMap;
     }
+    delete dirHdr;
     delete directory;
     return success;
 }
@@ -381,6 +390,26 @@ FileSystem::List()
     directory->List();
     delete directory;
 }
+//+b goubetc 21.01.16
+void
+FileSystem::List_dir(const char *name)
+{
+    Directory *directory = new Directory(NumDirEntries);
+
+    directory->FetchFrom(directoryFile);
+    int sector = directory->Find(name);
+    if (sector != -1){
+	delete directory;
+	Directory *directoryTmp = new Directory(NumDirEntries);
+	OpenFile *dirFile = new OpenFile(sector);
+	DEBUG('z', "sector : %d\n", sector);
+	directoryTmp->FetchFrom(dirFile);
+	directoryTmp->List();
+	delete dirFile;
+	delete directoryTmp;
+    }
+}
+//+e goubetc 21.01.16
 
 //----------------------------------------------------------------------
 // FileSystem::Print
