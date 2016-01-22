@@ -52,8 +52,10 @@ class AddrSpace
 		KeyList				*threadStackList;		// List of the stackPointer of each thread
 		unsigned int		codeFirstPage;
 		unsigned int		codeNbrPage;
-		unsigned int		dataFirstPage;
-		unsigned int		dataNbrPage;
+		unsigned int		initDataFirstPage;
+		unsigned int		initDataNbrPage;
+		unsigned int		uninitDataFirstPage;
+		unsigned int		uninitDataNbrPage;
 		//+e simbadSid 15.01.2015
 };
 

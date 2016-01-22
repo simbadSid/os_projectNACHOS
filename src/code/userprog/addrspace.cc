@@ -117,7 +117,6 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 	size = noffH.code.size + noffH.initData.size + noffH.uninitData.size					// Read the expected addrspace size expected by the
 				+ maxNbrThread * UserStackSize;												//		executable file.
 																							//		We need to increase the size to leave room for the stack
-
 	numPages	= divRoundUp (size, PageSize);
 	pageBitmap	= new BitMap(numPages);
 	size		= numPages * PageSize;
@@ -140,38 +139,41 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 		DEBUG ('a', "\t->Virtual page %d\t<-> physical page %d\n",
 				pageTable[i].virtualPage, pageTable[i].physicalPage);
 	}
-//TODO
-DEBUG ('a', "Remaining pages: %d\n", frameProvider->NumAvailFrame());
 	this->threadStackList = new KeyList();
-
-	if (noffH.code.size > 0)																// Copy code and segments of the executable into addrSpace
-	{																						//		Writes the file code section in memory
-		ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr, pageTable, numPages);
-		this->codeFirstPage	= noffH.code.virtualAddr/ PageSize;
-		this->codeNbrPage	= noffH.code.size		/ PageSize;
-        DEBUG ('a', "Initializing code segment: size %d (bytes)\n", noffH.code.size);
-		DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.code.virtualAddr);
-		DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->codeFirstPage);
-		DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->codeNbrPage);
-		for (i=codeFirstPage; i<codeFirstPage+codeNbrPage; i++)
-		{
-			this->pageBitmap->Mark(i);														//		Notify the code pages as used
-			pageTable[i].readOnly	= true;													//		Ensure that the code will not be corrupted
-		}
+																							// Copy code and segments of the executable into addrSpace
+																							//		Writes the file code section in memory
+	ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr, pageTable, numPages);
+	this->codeFirstPage	= noffH.code.virtualAddr/ PageSize;
+	this->codeNbrPage	= noffH.code.size		/ PageSize;
+	DEBUG ('a', "Initializing code segment: size %d (bytes)\n", noffH.code.size);
+	DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.code.virtualAddr);
+	DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->codeFirstPage);
+	DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->codeNbrPage);
+	for (i=codeFirstPage; i<codeFirstPage+codeNbrPage; i++)
+	{
+		this->pageBitmap->Mark(i);															//		Notify the code pages as used
+		pageTable[i].readOnly	= true;														//		Ensure that the code will not be corrupted
 	}
-	if (noffH.initData.size > 0)															// Copy data segments of the executable into addrSpace
-	{																						//		Writes the file data section in memory
-		ReadAtVirtual(executable, noffH.initData.virtualAddr, noffH.initData.size, noffH.initData.inFileAddr, pageTable, numPages);
-		this->dataFirstPage	= noffH.initData.virtualAddr/ PageSize;
-		this->dataNbrPage	= noffH.initData.size		/ PageSize;
-        DEBUG ('a', "Initializing data segment: size %d (bytes)\n", noffH.initData.size);
-		DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.initData.virtualAddr);
-		DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->dataFirstPage);
-		DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->dataNbrPage);
-		for (i=dataFirstPage; i<dataFirstPage+dataNbrPage; i++)
-		{
-			this->pageBitmap->Mark(i);														//		Notify the data pages as used
-		}
+																							// Copy data segments of the executable into addrSpace
+																							//		Writes the file data section in memory
+	ReadAtVirtual(executable, noffH.initData.virtualAddr, noffH.initData.size, noffH.initData.inFileAddr, pageTable, numPages);
+	this->initDataFirstPage		= noffH.initData.virtualAddr	/ PageSize;
+	this->uninitDataFirstPage	= noffH.uninitData.virtualAddr	/ PageSize;
+	this->initDataNbrPage		= noffH.initData.size			/ PageSize;
+	this->uninitDataNbrPage		= noffH.uninitData.size			/ PageSize;
+	DEBUG ('a', "Initializing data segment: size %d (bytes)\n", noffH.initData.size);
+	DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.initData.virtualAddr);
+	DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->initDataFirstPage);
+	DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->initDataNbrPage);
+	DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->initDataFirstPage);
+	DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->initDataNbrPage);
+	for (i=initDataFirstPage; i<initDataFirstPage+initDataNbrPage; i++)
+	{
+		this->pageBitmap->Mark(i);														//		Notify the data pages as used
+	}
+	for (i=uninitDataFirstPage; i<uninitDataFirstPage+uninitDataNbrPage; i++)
+	{
+		this->pageBitmap->Mark(i);														//		Notify the data pages as used
 	}
 
 /*
