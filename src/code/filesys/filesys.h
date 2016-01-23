@@ -100,6 +100,8 @@ class FileSystem {
    OpenFile* directoryFile;		// "Root" directory -- list of 
 					// file names, represented as a file
 
+   OpenedFileStructure* openedFileStructure;
+
    int CurrentDirSector;  //+ goubetc 20.01.16
    // pointer to the sector index of the currently opened directory enrty specification
 };

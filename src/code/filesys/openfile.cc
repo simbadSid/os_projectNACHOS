@@ -16,7 +16,6 @@
 #include "openfile.h"
 #include "system.h"
 
-#include <strings.h> /* for bzero */
 
 //----------------------------------------------------------------------
 // OpenFile::OpenFile
@@ -31,6 +30,7 @@ OpenFile::OpenFile(int sector)
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
+    openedFileEntry = NULL;
 }
 
 //----------------------------------------------------------------------
@@ -41,6 +41,9 @@ OpenFile::OpenFile(int sector)
 OpenFile::~OpenFile()
 {
     delete hdr;
+    if (openedFileEntry != NULL) {
+    	openedFileEntry->isFreeSlot = true;
+    }
 }
 
 //----------------------------------------------------------------------
@@ -193,4 +196,69 @@ int
 OpenFile::Length() 
 { 
     return hdr->FileLength(); 
+}
+
+void OpenFile::SetOpenedFileEntry(OpenedFileEntry *entry) {
+	openedFileEntry = entry;
+}
+
+
+// One entry of opened files.
+OpenedFileEntry::OpenedFileEntry() {
+	// We never delete from our array entry. What we do is just set is as not free.
+	isFreeSlot = true;
+}
+
+
+OpenedFileEntry::~OpenedFileEntry() {
+	delete name;
+	delete file;
+}
+
+// This structure contains information about currently opened files.
+OpenedFileStructure::OpenedFileStructure() {
+	entries = new OpenedFileEntry[OPEN_FILES_NUMB];
+	lastErased = 0;
+}
+
+// This structure contains information about currently opened files.
+OpenedFileStructure::~OpenedFileStructure() {
+	delete entries;
+
+}
+
+bool OpenedFileStructure::CanOpen(int tid, char *name, OpenFile *result) {
+	for (int i = 0; i < OPEN_FILES_NUMB; ++i) {
+		if (!entries[i].isFreeSlot and strcmp(entries[i].name, name) == 0) {
+			if (tid == entries[i].tid) {
+				result = entries[i].file;
+				return true;
+			}
+			result = NULL;
+			return !entries[i].isForWrite;
+		}
+	}
+	return true;
+}
+
+
+OpenedFileEntry * OpenedFileStructure::AddFile(OpenFile *file, char *name, int tid,
+											   bool isForWrite) {
+	int freeEntryInd;
+	for (freeEntryInd = 0; freeEntryInd < OPEN_FILES_NUMB; ++freeEntryInd) {
+		if (entries[freeEntryInd].isFreeSlot) {
+			break;
+		}
+	}
+	if (freeEntryInd == OPEN_FILES_NUMB) {
+		freeEntryInd = lastErased++;
+		lastErased %= OPEN_FILES_NUMB;
+	}
+	entries[freeEntryInd].file = file;
+	entries[freeEntryInd].name = new char[strlen(name)];
+	sprintf(entries[freeEntryInd].name, "%s", name);
+	entries[freeEntryInd].tid = tid;
+	entries[freeEntryInd].isForWrite = tid;
+	entries[freeEntryInd].isFreeSlot = false;
+	return &entries[freeEntryInd];
 }

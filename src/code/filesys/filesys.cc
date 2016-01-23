@@ -80,13 +80,14 @@
 //----------------------------------------------------------------------
 
 FileSystem::FileSystem(bool format)
-{ 
+{
+	openedFileStructure = new OpenedFileStructure();
     DEBUG('f', "Initializing the file system.\n");
     if (format) {
         BitMap *freeMap = new BitMap(NumSectors);
         Directory *directory = new Directory(NumDirEntries);
-	FileHeader *mapHdr = new FileHeader;
-	FileHeader *dirHdr = new FileHeader;
+		FileHeader *mapHdr = new FileHeader;
+		FileHeader *dirHdr = new FileHeader;
 
         DEBUG('f', "Formatting the file system.\n");
 
@@ -114,8 +115,8 @@ FileSystem::FileSystem(bool format)
     // The file system operations assume these two files are left open
     // while Nachos is running.
 
-        freeMapFile = new OpenFile(FreeMapSector);
-        directoryFile = new OpenFile(DirectorySector);
+    freeMapFile = new OpenFile(FreeMapSector);
+    directoryFile = new OpenFile(DirectorySector);
      
     // Once we have the files "open", we can write the initial version
     // of each file back to disk.  The directory at this point is completely
@@ -296,14 +297,24 @@ FileSystem::Open(const char *name)
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector;
+    if (!openedFileStructure->CanOpen(currentThread.getTID(), name, openFile)) {
+    	DEBUG('f', "Not allowed to open file \n");
+    	return NULL;
+    }
+    if (openFile != NULL) {
+    	return openFile;
+    }
 
     DEBUG('f', "Opening file %s\n", name);
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name); 
-    if (sector >= 0) 		
-	openFile = new OpenFile(sector);	// name was found in directory
-    else
-	DEBUG('f', "file %s not found\n", name);
+    if (sector >= 0) {
+    	openFile = new OpenFile(sector);	// name was found in directory
+    }
+    else {
+    	DEBUG('f', "file %s not found\n", name);
+    }
+    openedFileStructure->AddFile(openFile, name, currentThread.getTID(), true);
     delete directory;
     return openFile;				// return NULL if not found
 }
@@ -390,6 +401,7 @@ FileSystem::List()
     directory->List();
     delete directory;
 }
+
 //+b goubetc 21.01.16
 void
 FileSystem::List_dir(const char *name)

@@ -19,7 +19,6 @@
 #include "keylist.h"
 
 
-
 #define UserStackSize			1000				// increase this as necessary!   // +b simbadSid 15.01.2016
 #define USER_THREAD_STACK_PAGES	3
 #define DEFAULT_NBR_THREAD		7

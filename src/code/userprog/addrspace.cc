@@ -343,7 +343,9 @@ int AddrSpace::GetThreadTopStackPointer(int tid)
 	if (!test) {
 		return -1;
 	}
-	else		return stackTopPageToStackTopVirtualAddress(stackTopPage);
+	else {
+		return stackTopPageToStackTopVirtualAddress(stackTopPage);
+	}
 }
 
 // --------------------------------------------------------------------

@@ -41,8 +41,9 @@ Directory::Directory(int size)
 {
     table = new DirectoryEntry[size];
     tableSize = size;
-    for (int i = 0; i < tableSize; i++)
-	table[i].inUse = FALSE;
+    for (int i = 0; i < tableSize; i++) {
+    	table[i].inUse = FALSE;
+    }
     this->Add(".", 1, true);
 }
 

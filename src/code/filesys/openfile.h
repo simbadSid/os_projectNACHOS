@@ -22,6 +22,12 @@
 
 #include "copyright.h"
 #include "utility.h"
+#include <stdio.h>
+#include <string.h>
+
+#define OPEN_FILES_NUMB 10
+
+class OpenedFileEntry;
 
 #ifdef FILESYS_STUB			// Temporarily implement calls to 
 					// Nachos file system as calls to UNIX!
@@ -85,10 +91,42 @@ class OpenFile {
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
 					// end of file, tell, lseek back 
-    
+
+    // Used to connect file with it's entry in OpenedFileStructure.
+    void SetOpenedFileEntry(OpenedFileEntry *entry);
+
   private:
     FileHeader *hdr;			// Header for this file 
     int seekPosition;			// Current position within the file
+    OpenedFileEntry *openedFileEntry;
+};
+
+
+// One entry of opened files.
+class OpenedFileEntry{
+	public:
+		OpenedFileEntry();
+		~OpenedFileEntry();
+		// The name field be path from root directrory.
+		char *name;
+		OpenFile *file;
+		int tid;
+		bool isForWrite;
+		// We never delete from our array entry. What we do is just set is as not free.
+		bool isFreeSlot;
+};
+
+
+// This structure contains information about currently opened files.
+class OpenedFileStructure{
+	public:
+		OpenedFileStructure();
+		~OpenedFileStructure();
+		bool CanOpen(int tid, char *name, OpenFile *result);
+		OpenedFileEntry * AddFile(OpenFile *file, char *name, int tid, bool isForWrite);
+	private:
+		OpenedFileEntry *entries;
+		int lastErased;
 };
 
 #endif // FILESYS
