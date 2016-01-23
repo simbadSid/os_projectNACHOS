@@ -81,13 +81,14 @@ class Directory {
                                         // 10 are not inUse 
     bool IsSubDir(const char *name); //+ goubetc 21.01.16
 
+
  private:
     int tableSize;			// Number of directory entries
     DirectoryEntry *table;		// Table of pairs: 
 					// <file name, file header location> 
-
     int FindIndex(const char *name);	// Find the index into the directory 
 					//  table corresponding to "name"
+
 };
 
 #endif // DIRECTORY_H

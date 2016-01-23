@@ -170,6 +170,12 @@ main (int argc, char **argv)
 		    fileSystem->List_dir (*(argv + 1));
 		    argCount = 2;
 		}
+	    else if (!strcmp (*argv, "-cd"))					// remove Nachos file
+		{
+		    ASSERT (argc > 1);
+		    fileSystem->ChangeCurrentDir (*(argv + 1));
+		    argCount = 2;
+		}
 #endif // FILESYS
 #ifdef NETWORK
 	    if (!strcmp (*argv, "-o"))

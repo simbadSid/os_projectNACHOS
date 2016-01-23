@@ -50,6 +50,7 @@
 #include "directory.h"
 #include "filehdr.h"
 #include "filesys.h"
+#include "system.h"
 
 //+ goubetc 19.01.16 20.01.16 21.01.16
 
@@ -80,14 +81,15 @@
 //----------------------------------------------------------------------
 
 FileSystem::FileSystem(bool format)
-{ 
+{
+    currentThread->CurrentDirectorySector = DirectorySector;
     DEBUG('f', "Initializing the file system.\n");
     if (format) {
         BitMap *freeMap = new BitMap(NumSectors);
-        Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
+        Directory *rootDirectory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
 	FileHeader *mapHdr = new FileHeader;
 	FileHeader *dirHdr = new FileHeader;
-
+	rootDirectorySector = DirectorySector; //+ goubetc 23.01.16
         DEBUG('f', "Formatting the file system.\n");
 
     // First, allocate space for FileHeaders for the directory and bitmap
@@ -115,7 +117,7 @@ FileSystem::FileSystem(bool format)
     // while Nachos is running.
 
         freeMapFile = new OpenFile(FreeMapSector);
-        directoryFile = new OpenFile(DirectorySector);
+        OpenFile *directoryFile = new OpenFile(DirectorySector);
      
     // Once we have the files "open", we can write the initial version
     // of each file back to disk.  The directory at this point is completely
@@ -125,14 +127,14 @@ FileSystem::FileSystem(bool format)
 
         DEBUG('f', "Writing bitmap and directory back to disk.\n");
 	freeMap->WriteBack(freeMapFile);	 // flush changes to disk
-	directory->WriteBack(directoryFile);
+	rootDirectory->WriteBack(directoryFile);
 
 	if (DebugIsEnabled('f')) {
 	    freeMap->Print();
-	    directory->Print();
+	    rootDirectory->Print();
 
         delete freeMap; 
-	delete directory; 
+	delete rootDirectory; 
 	delete mapHdr; 
 	delete dirHdr;
 	}
@@ -140,8 +142,8 @@ FileSystem::FileSystem(bool format)
     // if we are not formatting the disk, just open the files representing
     // the bitmap and directory; these are left open while Nachos is running
         freeMapFile = new OpenFile(FreeMapSector);
-        directoryFile = new OpenFile(DirectorySector);
-	CurrentDirSector = DirectorySector; //+ goubetc 20.01.16
+        //directoryFile = new OpenFile(DirectorySector);
+	//CurrentDirSector = DirectorySector; //+ goubetc 20.01.16
     }
 }
 
@@ -186,9 +188,9 @@ FileSystem::Create(const char *name, int initialSize)
     DEBUG('f', "Creating file %s, size %d\n", name, initialSize);
 
     OpenFile *directoryTmpFile;
-    directoryTmpFile = new OpenFile(CurrentDirSector);
+    directoryTmpFile = new OpenFile(currentThread->CurrentDirectorySector);
 
-    directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector); //+ goubetc 23.01.16
+    directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector); //+ goubetc 23.01.16
     directory->FetchFrom(directoryTmpFile);  //+ goubetc 20.01.16  replaced directoryFile by CurrentDirSector	
 
 
@@ -211,13 +213,14 @@ FileSystem::Create(const char *name, int initialSize)
 	    	success = TRUE;
 		// everthing worked, flush all changes back to disk
     	    	hdr->WriteBack(sector); 		
-    	    	directory->WriteBack(directoryFile);
+    	    	directory->WriteBack(directoryTmpFile);
     	    	freeMap->WriteBack(freeMapFile);
 	    }
             delete hdr;
 	}
         delete freeMap;
     }
+    delete directoryTmpFile;
     delete directory;
     return success;
 }
@@ -235,12 +238,14 @@ FileSystem::Create_sub_dir(const char *name)
     FileHeader *dirHdr = new FileHeader;
     
     DEBUG('f', "Creating sub directory %s, size %d\n", name);
-
-    directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector); //+ goubetc 23.01.16
+    //+b goubetc 23.01.16
+    directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+    //+e goubetc 23.01.16
+    OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector);
     directory->FetchFrom(directoryFile);
 
     if (directory->Find(name) != -1)
-      success = FALSE;			// file is already in directory
+	success = FALSE;			// file is already in directory
     else {	
         freeMap = new BitMap(NumSectors);
         freeMap->FetchFrom(freeMapFile);
@@ -250,7 +255,7 @@ FileSystem::Create_sub_dir(const char *name)
         else if (!directory->Add(name, sector, true))
             success = FALSE;	// no space in directory
 	else {
-    	    subDir = new Directory(10, sector, CurrentDirSector);
+    	    subDir = new Directory(10, sector, currentThread->CurrentDirectorySector);
 	    //	    subDir->Remove(".");
 	    DEBUG('z', "here\n");
 	    //if (subDir->Add(".", sector, true)){
@@ -277,6 +282,7 @@ FileSystem::Create_sub_dir(const char *name)
 	}
 	delete freeMap;
     }
+    delete directoryFile;
     delete dirHdr;
     delete directory;
     return success;
@@ -297,10 +303,10 @@ FileSystem::Create_sub_dir(const char *name)
 OpenFile *
 FileSystem::Open(const char *name)
 { 
-    Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
+    Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
     OpenFile *openFile = NULL;
     int sector;
-
+    OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector);
     DEBUG('f', "Opening file %s\n", name);
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name); 
@@ -309,6 +315,7 @@ FileSystem::Open(const char *name)
     else
 	DEBUG('f', "file %s not found\n", name);
     delete directory;
+    delete directoryFile;
     return openFile;				// return NULL if not found
 }
 
@@ -331,13 +338,15 @@ FileSystem::Remove(const char *name)
 { 
     Directory *directory;
     Directory *subDir;
+    OpenFile *CurrentDirFile; //+ goubetc 26.01.16
     OpenFile *subDirFile;
     BitMap *freeMap;
     FileHeader *fileHdr;
     int sector;
-    
-    directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
-    directory->FetchFrom(directoryFile);
+
+    CurrentDirFile = new OpenFile(currentThread->CurrentDirectorySector); //+ goubetc 23.01.16
+    directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+    directory->FetchFrom(CurrentDirFile); //+ goubetc 23.01.16
     sector = directory->Find(name);
     if (sector == -1) {
        delete directory;
@@ -345,7 +354,7 @@ FileSystem::Remove(const char *name)
     }//+b goubetc 21.01.16
     if (directory->IsSubDir(name)){
 	subDirFile = new OpenFile(sector);
-	subDir = new Directory(MAX_ENTRIES, CurrentDirSector, CurrentDirSector);
+	subDir = new Directory(MAX_ENTRIES, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
 	subDir->FetchFrom(subDirFile);
 	if (subDir->IsEmptySubDirectory()){
 	    freeMap = new BitMap(NumSectors);
@@ -372,11 +381,12 @@ FileSystem::Remove(const char *name)
     directory->Remove(name);
     
     freeMap->WriteBack(freeMapFile);		// flush to disk
-    directory->WriteBack(directoryFile);        // flush to disk
+    directory->WriteBack(CurrentDirFile);        // flush to disk
     delete fileHdr;
     
     delete directory;
     delete freeMap;
+    delete CurrentDirFile;
     return TRUE;
 } 
 
@@ -388,23 +398,24 @@ FileSystem::Remove(const char *name)
 void
 FileSystem::List()
 {
-    Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
-
-    directory->FetchFrom(directoryFile);
+    Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+    OpenFile *currentDirFile = new OpenFile(currentThread->CurrentDirectorySector); //+ goubetc 23.01.16
+    directory->FetchFrom(currentDirFile);
     directory->List();
     delete directory;
+    delete currentDirFile;
 }
 //+b goubetc 21.01.16
 void
 FileSystem::List_dir(const char *name)
 {
-    Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
-
-    directory->FetchFrom(directoryFile);
+    Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+    OpenFile *currentDirFile = new OpenFile(currentThread->CurrentDirectorySector); //+ goubetc 23.01.16
+    directory->FetchFrom(currentDirFile);
     int sector = directory->Find(name);
     if (sector != -1){
 	delete directory;
-	Directory *directoryTmp = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
+	Directory *directoryTmp = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
 	OpenFile *dirFile = new OpenFile(sector);
 	DEBUG('z', "sector : %d\n", sector);
 	directoryTmp->FetchFrom(dirFile);
@@ -412,6 +423,7 @@ FileSystem::List_dir(const char *name)
 	delete dirFile;
 	delete directoryTmp;
     }
+    delete currentDirFile;
 }
 //+e goubetc 21.01.16
 
@@ -431,24 +443,37 @@ FileSystem::Print()
     FileHeader *bitHdr = new FileHeader;
     FileHeader *dirHdr = new FileHeader;
     BitMap *freeMap = new BitMap(NumSectors);
-    Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
-
+    Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+    OpenFile *currentDirFile = new OpenFile(currentThread->CurrentDirectorySector); //+ goubetc 23.01.16
     printf("Bit map file header:\n");
     bitHdr->FetchFrom(FreeMapSector);
     bitHdr->Print();
 
     printf("Directory file header:\n");
-    dirHdr->FetchFrom(DirectorySector);
+    dirHdr->FetchFrom(currentThread->CurrentDirectorySector);
     dirHdr->Print();
 
     freeMap->FetchFrom(freeMapFile);
     freeMap->Print();
 
-    directory->FetchFrom(directoryFile);
+    directory->FetchFrom(currentDirFile);
     directory->Print();
 
     delete bitHdr;
     delete dirHdr;
     delete freeMap;
     delete directory;
+    delete currentDirFile;
 } 
+
+void
+FileSystem::ChangeCurrentDir(const char* name)
+{
+    OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector);
+    Directory *directory = new Directory(MAX_ENTRIES, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+    directory->FetchFrom(directoryFile);
+    int idx = directory->Find(name);
+    if(idx != -1){
+	currentThread->CurrentDirectorySector = idx;
+    }
+}
