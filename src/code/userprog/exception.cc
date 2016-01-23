@@ -29,6 +29,11 @@
 #include "userthread.h"
 
 
+
+
+
+
+
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
@@ -146,15 +151,12 @@ ExceptionHandler (ExceptionType which)
 	    // +b simbadSid 21.01.2016
 		case SC_Exit:
 		{
-printf("iciiiiii\n");
 			int status = (int)machine->ReadRegister(4);
 			DEBUG('e', "Exception: exit initiated by user program: name = \"%s\", tid = %d, status = %d.\n",
 					currentThread->getName(), currentThread->getTID(), status);
-			machine->WriteRegister(2, SC_UserThreadExit);
-//			UpdatePC();
-			ExceptionHandler(SyscallException);
-			ASSERT(false);
-printf("Mistake");
+			machine->WriteRegister(4, SC_UserThreadExit);
+			UpdatePC();
+//			ExceptionHandler(SyscallException);
 			return;
 		}
 	    // +e simbadSid 21.01.2016
@@ -258,9 +260,9 @@ printf("Mistake");
 		{
 		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
 		    		currentThread->getTID(), currentThread->getName());
+//TODO check
 		    UpdatePC();																	// Done because the next function never returns
 			do_UserThreadExit();														// Does not returns
-			ASSERT(false);
 			break;
 		}
 		case SC_UserThreadJoin:
