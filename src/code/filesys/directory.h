@@ -54,7 +54,7 @@ class DirectoryEntry {
 
 class Directory {
   public:
-    Directory(int size); 		// Initialize an empty directory
+    Directory(int size, int current, int father); 		// Initialize an empty directory
 					// with space for "size" files
     ~Directory();			// De-allocate the directory
 

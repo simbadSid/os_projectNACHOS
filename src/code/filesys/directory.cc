@@ -37,13 +37,14 @@
 //	"size" is the number of entries in the directory
 //----------------------------------------------------------------------
 
-Directory::Directory(int size)
+Directory::Directory(int size,  int current, int father)
 {
     table = new DirectoryEntry[size];
     tableSize = size;
     for (int i = 0; i < tableSize; i++)
 	table[i].inUse = FALSE;
-    this->Add(".", 1, true);
+    this->Add(".", current, true);
+    this->Add("..", father, true);
 }
 
 //----------------------------------------------------------------------
@@ -96,6 +97,7 @@ Directory::FindIndex(const char *name)
     for (int i = 0; i < tableSize; i++)
         if (table[i].inUse && !strncmp(table[i].name, name, FileNameMaxLen))
 	    return i;
+    DEBUG('z', " %s not found\n", name);
     return -1;		// name not in directory
 }
 
@@ -141,8 +143,10 @@ Directory::Add(const char *name, int newSector, bool directory)
             strncpy(table[i].name, name, FileNameMaxLen); 
             table[i].sector = newSector;
 	    table[i].isSubDir = directory; //+ goubetc 20.01.16
-	    return TRUE;
+	    DEBUG('z', "added %s\n", name);
+	    return true;
 	}
+    DEBUG('z', "full directory\n");
     return FALSE;	// no space.  Fix when we have extensible files.
 }
 
@@ -195,7 +199,7 @@ Directory::Remove(const char *name)
     //+b goubetc 20.01.16
     else if (table[i].isSubDir){
 	OpenFile *directoryTmpFile;
-	Directory *directory = new Directory(10);
+	Directory *directory = new Directory(10, 1, 1);
 	directoryTmpFile = new OpenFile(table[i].sector);
 	directory->FetchFrom(directoryTmpFile);
 	if (!directory->IsEmptySubDirectory()){

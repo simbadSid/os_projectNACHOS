@@ -84,7 +84,7 @@ FileSystem::FileSystem(bool format)
     DEBUG('f', "Initializing the file system.\n");
     if (format) {
         BitMap *freeMap = new BitMap(NumSectors);
-        Directory *directory = new Directory(NumDirEntries);
+        Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
 	FileHeader *mapHdr = new FileHeader;
 	FileHeader *dirHdr = new FileHeader;
 
@@ -188,7 +188,7 @@ FileSystem::Create(const char *name, int initialSize)
     OpenFile *directoryTmpFile;
     directoryTmpFile = new OpenFile(CurrentDirSector);
 
-    directory = new Directory(NumDirEntries);
+    directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector); //+ goubetc 23.01.16
     directory->FetchFrom(directoryTmpFile);  //+ goubetc 20.01.16  replaced directoryFile by CurrentDirSector	
 
 
@@ -236,7 +236,7 @@ FileSystem::Create_sub_dir(const char *name)
     
     DEBUG('f', "Creating sub directory %s, size %d\n", name);
 
-    directory = new Directory(NumDirEntries);
+    directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector); //+ goubetc 23.01.16
     directory->FetchFrom(directoryFile);
 
     if (directory->Find(name) != -1)
@@ -250,28 +250,32 @@ FileSystem::Create_sub_dir(const char *name)
         else if (!directory->Add(name, sector, true))
             success = FALSE;	// no space in directory
 	else {
-    	    subDir = new Directory(10);
-	    subDir->Remove(".");
-	    if ((!subDir->Add(".", sector, true)) || (!subDir->Add("..", CurrentDirSector, true))){
-            	success = FALSE;	// no space on disk for data
-		DEBUG('z', "not enough space or already in directory\n");
-	    }
-	    else {
-		DEBUG('z', "sector : %d\n", sector);
-		subDir->List(); // KILL-ME
-	    	success = TRUE;
-		// everthing worked, flush all changes back to disk
-		ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
-		dirHdr->WriteBack(sector);
-		openDir = new OpenFile(sector);
-		subDir->WriteBack(openDir); 		
-    	    	directory->WriteBack(directoryFile);
-    	    	freeMap->WriteBack(freeMapFile);
-		delete openDir;
-	    }
-            delete subDir;
+    	    subDir = new Directory(10, sector, CurrentDirSector);
+	    //	    subDir->Remove(".");
+	    DEBUG('z', "here\n");
+	    //if (subDir->Add(".", sector, true)){
+	    //	DEBUG('z', "hello\n");
+	    //	if (!subDir->Add("..", CurrentDirSector, true)){
+	    //	    success = FALSE;	// no space on disk for data
+	    //	    DEBUG('z', "not enough space or already in directory\n");
+	    //	}
+	    //	else {
+	    DEBUG('z', "sector : %d\n", sector);
+	    subDir->List(); // KILL-ME
+	    success = TRUE;
+	    // everthing worked, flush all changes back to disk
+	    ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
+	    dirHdr->WriteBack(sector);
+	    openDir = new OpenFile(sector);
+	    subDir->WriteBack(openDir); 		
+	    directory->WriteBack(directoryFile);
+	    freeMap->WriteBack(freeMapFile);
+	    delete openDir;
+	    //}
+	    //bacula/	}	    
+	    delete subDir;
 	}
-        delete freeMap;
+	delete freeMap;
     }
     delete dirHdr;
     delete directory;
@@ -293,7 +297,7 @@ FileSystem::Create_sub_dir(const char *name)
 OpenFile *
 FileSystem::Open(const char *name)
 { 
-    Directory *directory = new Directory(NumDirEntries);
+    Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
     OpenFile *openFile = NULL;
     int sector;
 
@@ -332,7 +336,7 @@ FileSystem::Remove(const char *name)
     FileHeader *fileHdr;
     int sector;
     
-    directory = new Directory(NumDirEntries);
+    directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name);
     if (sector == -1) {
@@ -341,7 +345,7 @@ FileSystem::Remove(const char *name)
     }//+b goubetc 21.01.16
     if (directory->IsSubDir(name)){
 	subDirFile = new OpenFile(sector);
-	subDir = new Directory(MAX_ENTRIES);
+	subDir = new Directory(MAX_ENTRIES, CurrentDirSector, CurrentDirSector);
 	subDir->FetchFrom(subDirFile);
 	if (subDir->IsEmptySubDirectory()){
 	    freeMap = new BitMap(NumSectors);
@@ -384,7 +388,7 @@ FileSystem::Remove(const char *name)
 void
 FileSystem::List()
 {
-    Directory *directory = new Directory(NumDirEntries);
+    Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
 
     directory->FetchFrom(directoryFile);
     directory->List();
@@ -394,13 +398,13 @@ FileSystem::List()
 void
 FileSystem::List_dir(const char *name)
 {
-    Directory *directory = new Directory(NumDirEntries);
+    Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
 
     directory->FetchFrom(directoryFile);
     int sector = directory->Find(name);
     if (sector != -1){
 	delete directory;
-	Directory *directoryTmp = new Directory(NumDirEntries);
+	Directory *directoryTmp = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
 	OpenFile *dirFile = new OpenFile(sector);
 	DEBUG('z', "sector : %d\n", sector);
 	directoryTmp->FetchFrom(dirFile);
@@ -427,7 +431,7 @@ FileSystem::Print()
     FileHeader *bitHdr = new FileHeader;
     FileHeader *dirHdr = new FileHeader;
     BitMap *freeMap = new BitMap(NumSectors);
-    Directory *directory = new Directory(NumDirEntries);
+    Directory *directory = new Directory(NumDirEntries, CurrentDirSector, CurrentDirSector);
 
     printf("Bit map file header:\n");
     bitHdr->FetchFrom(FreeMapSector);
