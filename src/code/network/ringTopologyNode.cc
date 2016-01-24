@@ -30,14 +30,14 @@ void sendMsg(int destinationMachineId, const char *msg, int srcMailBox, int dstM
 	outMailHdr.to		= dstMailBox;							//		From: our machine, reply to: mailbox 1
 	outMailHdr.from		= srcMailBox;
 	outMailHdr.length	= strlen(msg) + 1;
-printf("send\n");
+
 	postOffice->Send(outPktHdr, outMailHdr, msg);				// Send the first message
 }
 
 // ----------------------------------------------
 // Read a received msg in the given mail box
 // ----------------------------------------------
-void receiveMsg(int receiverMachineId, char *msg, int mailBox)
+void receiveMsg(char *msg, int mailBox)
 {
 	PacketHeader inPktHdr;
 	MailHeader inMailHdr;
@@ -48,6 +48,10 @@ void receiveMsg(int receiverMachineId, char *msg, int mailBox)
 	fflush(stdout);
 }
 
+// ----------------------------------------------
+// Executes the task of one ring node:  Receive a msg from a
+// previous node and returns it to the next one.
+// ----------------------------------------------
 void RingTopologyNode(unsigned int machineId, unsigned int nbrRingNode)
 {
 	ASSERT(nbrRingNode	< MAX_NBR_RING_NODE);
@@ -56,15 +60,14 @@ void RingTopologyNode(unsigned int machineId, unsigned int nbrRingNode)
 	char buffer[MaxMailSize];
 	if (machineId == 0)
 	{
-printf("000\n");
 		sendMsg(machineId+1, DATA, 0, 1);
-		receiveMsg(machineId, buffer, 1);
+		receiveMsg(buffer, 1);
 	}
 	else
 	{
-printf("111\n");
-		receiveMsg(machineId, buffer, 1);
-		sendMsg(machineId+1, buffer, 0, 1);
+		receiveMsg(buffer, 1);
+		int nextMachineId = (machineId +1) % nbrRingNode;
+		sendMsg(nextMachineId, buffer, 0, 1);
 	}
 
 	interrupt->Halt();
