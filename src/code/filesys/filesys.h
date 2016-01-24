@@ -39,6 +39,9 @@
 #include "openfile.h"
 //+ goubetc 20.01.16
 
+#define READ false
+#define WRITE true
+
 #define MAX_ENTRIES 10 //+ goubetc 20.01.16
 
 
@@ -93,15 +96,22 @@ class FileSystem {
     
     void Print();			// List all the files and their contents
 
+    int GetRootSector() {
+	return rootDirectorySector;
+    }
+    void ChangeCurrentDir(const char* name);
+
     OpenedFileStructure* openedFileStructure;
+
     
   private:
-   OpenFile* freeMapFile;		// Bit map of free disk blocks,
-					// represented as a file
-   OpenFile* directoryFile;		// "Root" directory -- list of 
+    int rootDirectorySector;  //+ goubetc 23.01.16
+    OpenFile* freeMapFile;	// Bit map of free disk blocks,					// represented as a file
+    //enFile* RootDirectoryFile;		// "Root" directory -- list of 
 					// file names, represented as a file
 
-   int CurrentDirSector;  //+ goubetc 20.01.16
+    //enFile* CurrentDirectoryFile;
+    // CurrentDirSector;  //+ goubetc 20.01.16
    // pointer to the sector index of the currently opened directory enrty specification
 };
 
