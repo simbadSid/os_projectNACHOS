@@ -19,9 +19,10 @@
 #include "keylist.h"
 
 
+
 #define UserStackSize			1000				// increase this as necessary!   // +b simbadSid 15.01.2016
-#define USER_THREAD_STACK_PAGES	3
-#define DEFAULT_NBR_THREAD		7
+#define USER_THREAD_STACK_PAGES	4
+#define DEFAULT_NBR_THREAD		5
 
 
 class AddrSpace
@@ -55,8 +56,6 @@ class AddrSpace
 		unsigned int		initDataNbrPage;
 		unsigned int		uninitDataFirstPage;
 		unsigned int		uninitDataNbrPage;
-		void ReadRegion(OpenFile *executable, int virtualaddr, int numBytes, int position,
-				   unsigned int *firstPage, unsigned int *nbrPage, bool readOnly);
 		//+e simbadSid 15.01.2015
 };
 
