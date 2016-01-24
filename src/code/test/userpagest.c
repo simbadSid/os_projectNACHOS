@@ -9,7 +9,7 @@ int main() {
 	int tid0 = ForkExec("ioTest");
 	int tid1 = ForkExec("multithreadingTest");
 
-// +b simbadSid 20.01.2016
+// +b simbadSid x20.01.2016
 
 //	if (tid0 < 0)
 //	{

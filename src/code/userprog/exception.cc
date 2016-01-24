@@ -146,7 +146,6 @@ ExceptionHandler (ExceptionType which)
 	    // +b simbadSid 21.01.2016
 		case SC_Exit:
 		{
-printf("iciiiiii\n");
 			int status = (int)machine->ReadRegister(4);
 			DEBUG('e', "Exception: exit initiated by user program: name = \"%s\", tid = %d, status = %d.\n",
 					currentThread->getName(), currentThread->getTID(), status);
@@ -154,7 +153,6 @@ printf("iciiiiii\n");
 //			UpdatePC();
 			ExceptionHandler(SyscallException);
 			ASSERT(false);
-printf("Mistake");
 			return;
 		}
 	    // +e simbadSid 21.01.2016

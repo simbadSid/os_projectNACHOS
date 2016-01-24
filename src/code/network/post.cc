@@ -260,37 +260,30 @@ PostOffice::PostalDelivery()
 //	"mailHdr" -- source, destination mailbox ID's
 //	"data" -- payload message data
 //----------------------------------------------------------------------
-
-void
-PostOffice::Send(PacketHeader pktHdr, MailHeader mailHdr, const char* data)
+void PostOffice::Send(PacketHeader pktHdr, MailHeader mailHdr, const char* data)
 {
-    char* buffer = new char[MaxPacketSize];	// space to hold concatenated
-						// mailHdr + data
+	char* buffer = new char[MaxPacketSize];						// space to hold concatenated mailHdr + data
 
-    if (DebugIsEnabled('n')) {
-	printf("Post send: ");
-	PrintHeader(pktHdr, mailHdr);
-    }
-    ASSERT(mailHdr.length <= MaxMailSize);
-    ASSERT(0 <= mailHdr.to && mailHdr.to < numBoxes);
-    
-    // fill in pktHdr, for the Network layer
-    pktHdr.from = netAddr;
-    pktHdr.length = mailHdr.length + sizeof(MailHeader);
+	if (DebugIsEnabled('n'))
+	{
+		printf("Post send: ");
+		PrintHeader(pktHdr, mailHdr);
+	}
+	ASSERT(mailHdr.length <= MaxMailSize);
+	ASSERT(0 <= mailHdr.to && mailHdr.to < numBoxes);
 
-    // concatenate MailHeader and data
-    bcopy(&mailHdr, buffer, sizeof(MailHeader));
-    bcopy(data, buffer + sizeof(MailHeader), mailHdr.length);
+	pktHdr.from = netAddr;										// fill in pktHdr, for the Network layer
+	pktHdr.length = mailHdr.length + sizeof(MailHeader);
 
-    sendLock->Acquire();   		// only one message can be sent
-					// to the network at any one time
-    network->Send(pktHdr, buffer);
-    messageSent->P();			// wait for interrupt to tell us
-					// ok to send the next message
-    sendLock->Release();
+	bcopy(&mailHdr, buffer, sizeof(MailHeader));				// concatenate MailHeader and data
+	bcopy(data, buffer + sizeof(MailHeader), mailHdr.length);
 
-    delete [] buffer;			// we've sent the message, so
-					// we can delete our buffer
+	sendLock->Acquire();										// only one message can be sent to the network at any one time
+	network->Send(pktHdr, buffer);
+	messageSent->P();											// wait for interrupt to tell us ok to send the next message
+	sendLock->Release();
+
+	delete [] buffer;											// we've sent the message, so we can delete our buffer
 }
 
 //----------------------------------------------------------------------
