@@ -126,7 +126,7 @@ void do_UserThreadExit ()
 //+b simbadSid 22.01.2016
 // ----------------------------------------------------
 int do_ForkExec(char *fileName) {
-	OpenFile *executable = fileSystem->Open(fileName, false);
+	OpenFile *executable = fileSystem->Open(fileName);
 //+b simbadSid 22.01.2016
 	if (executable == NULL) return -1;
 //+e simbadSid 22.01.2016

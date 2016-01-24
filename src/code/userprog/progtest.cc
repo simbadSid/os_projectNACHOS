@@ -50,7 +50,7 @@ void freeSychConsoleTest()
 void
 StartProcess (char *filename)
 {
-	OpenFile *executable = fileSystem->Open(filename, false);
+	OpenFile *executable = fileSystem->Open (filename);
 	AddrSpace *space;
 
 	if (executable == NULL)

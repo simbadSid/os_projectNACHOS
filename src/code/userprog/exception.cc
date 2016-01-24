@@ -29,11 +29,6 @@
 #include "userthread.h"
 
 
-
-
-
-
-
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
 // simbadSid 9.01.16
@@ -261,9 +256,9 @@ ExceptionHandler (ExceptionType which)
 		{
 		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
 		    		currentThread->getTID(), currentThread->getName());
-//TODO check
 		    UpdatePC();																	// Done because the next function never returns
 			do_UserThreadExit();														// Does not returns
+			ASSERT(false);
 			break;
 		}
 		case SC_UserThreadJoin:

@@ -39,9 +39,6 @@
 #include "openfile.h"
 //+ goubetc 20.01.16
 
-#define READ false
-#define WRITE true
-
 #define MAX_ENTRIES 10 //+ goubetc 20.01.16
 
 
@@ -60,12 +57,12 @@ class FileSystem {
 	return TRUE; 
 	}
 
-    OpenFile* Open(const char *name, bool isForWrite) {
+    OpenFile* Open(char *name) {
 	  int fileDescriptor = OpenForReadWrite(name, FALSE);
 
 	  if (fileDescriptor == -1) return NULL;
 	  return new OpenFile(fileDescriptor);
-    }
+      }
 
     bool Remove(char *name) { return Unlink(name) == 0; }
 
@@ -86,7 +83,7 @@ class FileSystem {
 
     bool Create_sub_dir(const char *name); //+goubetc 21.01.06
     
-    OpenFile* Open(const char *name, bool isForWrite); 	// Open a file (UNIX open)
+    OpenFile* Open(const char *name); 	// Open a file (UNIX open)
 
     bool Remove(const char *name); 	// Delete a file (UNIX unlink)
 
@@ -96,22 +93,14 @@ class FileSystem {
     
     void Print();			// List all the files and their contents
 
-    int GetRootSector() {
-	return rootDirectorySector;
-    }
-    void ChangeCurrentDir(const char* name);
-
-    OpenedFileStructure* openedFileStructure;
-
     
   private:
-    int rootDirectorySector;  //+ goubetc 23.01.16
-    OpenFile* freeMapFile;	// Bit map of free disk blocks,					// represented as a file
-    //enFile* RootDirectoryFile;		// "Root" directory -- list of 
+   OpenFile* freeMapFile;		// Bit map of free disk blocks,
+					// represented as a file
+   OpenFile* directoryFile;		// "Root" directory -- list of 
 					// file names, represented as a file
 
-    //enFile* CurrentDirectoryFile;
-    // CurrentDirSector;  //+ goubetc 20.01.16
+   int CurrentDirSector;  //+ goubetc 20.01.16
    // pointer to the sector index of the currently opened directory enrty specification
 };
 

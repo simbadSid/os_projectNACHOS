@@ -13,14 +13,11 @@
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
-#include "utility.h"
-#include "filehdr.h"
-#include "openfile.h"
-#include "system.h"
 
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
+#include "openfile.h"
 //+ goubetc 19.01.16
 
 #define FileNameMaxLen 		9	// for simplicity, we assume 
@@ -57,7 +54,7 @@ class DirectoryEntry {
 
 class Directory {
   public:
-    Directory(int size, int current, int father); 		// Initialize an empty directory
+    Directory(int size); 		// Initialize an empty directory
 					// with space for "size" files
     ~Directory();			// De-allocate the directory
 
@@ -84,14 +81,13 @@ class Directory {
                                         // 10 are not inUse 
     bool IsSubDir(const char *name); //+ goubetc 21.01.16
 
-
  private:
     int tableSize;			// Number of directory entries
     DirectoryEntry *table;		// Table of pairs: 
 					// <file name, file header location> 
+
     int FindIndex(const char *name);	// Find the index into the directory 
 					//  table corresponding to "name"
-
 };
 
 #endif // DIRECTORY_H

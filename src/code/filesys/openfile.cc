@@ -16,6 +16,7 @@
 #include "openfile.h"
 #include "system.h"
 
+#include <strings.h> /* for bzero */
 
 //----------------------------------------------------------------------
 // OpenFile::OpenFile
@@ -25,14 +26,11 @@
 //	"sector" -- the location on disk of the file header for this file
 //----------------------------------------------------------------------
 
-OpenFile::OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWrite)
-{
-	isForWrite = _isForWrite;
-	openedFileEntry = _openedFileEntry;
+OpenFile::OpenFile(int sector)
+{ 
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
-    openedFileEntry = NULL;
 }
 
 //----------------------------------------------------------------------
@@ -43,9 +41,6 @@ OpenFile::OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWri
 OpenFile::~OpenFile()
 {
     delete hdr;
-    if (openedFileEntry != NULL) {
-    	openedFileEntry->isFreeSlot = true;
-    }
 }
 
 //----------------------------------------------------------------------
@@ -83,14 +78,12 @@ OpenFile::Read(char *into, int numBytes)
    return result;
 }
 
-int OpenFile::Write(const char *into, int numBytes)
+int
+OpenFile::Write(const char *into, int numBytes)
 {
-	if (!isForWrite) {
-		DEBUG('f', "File is opened for reading, not for writing\n");
-	}
-	int result = WriteAt(into, numBytes, seekPosition);
-	seekPosition += result;
-	return result;
+   int result = WriteAt(into, numBytes, seekPosition);
+   seekPosition += result;
+   return result;
 }
 
 //----------------------------------------------------------------------
@@ -152,9 +145,6 @@ OpenFile::ReadAt(char *into, int numBytes, int position)
 int
 OpenFile::WriteAt(const char *from, int numBytes, int position)
 {
-	if (!isForWrite) {
-		DEBUG('f', "File is opened for reading, not for writing\n");
-	}
     int fileLength = hdr->FileLength();
     int i, firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
@@ -199,59 +189,8 @@ OpenFile::WriteAt(const char *from, int numBytes, int position)
 // 	Return the number of bytes in the file.
 //----------------------------------------------------------------------
 
-int OpenFile::Length()
+int
+OpenFile::Length() 
 { 
     return hdr->FileLength(); 
-}
-
-// One entry of opened files.
-OpenedFileEntry::OpenedFileEntry() {
-	// We never delete from our array entry. What we do is just set is as not free.
-	isFreeSlot = true;
-}
-
-OpenedFileEntry::~OpenedFileEntry() {}
-
-// This structure contains information about currently opened files.
-OpenedFileStructure::OpenedFileStructure() {
-	entries = new OpenedFileEntry[OPEN_FILES_NUMB];
-}
-
-// This structure contains information about currently opened files.
-OpenedFileStructure::~OpenedFileStructure() {
-	delete entries;
-}
-
-bool OpenedFileStructure::CanOpen(int sector, bool isForWrite) {
-	for (int i = 0; i < OPEN_FILES_NUMB; ++i) {
-		if (!entries[i].isFreeSlot and entries[i].sector == sector) {
-			if (isForWrite or entries[i].isForWrite) {
-				return false;
-			}
-		}
-	}
-	return true;
-}
-
-
-bool OpenedFileStructure::AddFile(int sector, bool isForWrite, OpenedFileEntry* result) {
-	IntStatus oldLevel = interrupt->SetLevel (IntOff);
-	if (!CanOpen(sector, isForWrite)) {
-		DEBUG('f', "Not allowed to open file \n");
-		return false;
-	}
-	int freeEntryInd;
-	for (freeEntryInd = 0; freeEntryInd < OPEN_FILES_NUMB; ++freeEntryInd) {
-		if (entries[freeEntryInd].isFreeSlot) {
-			break;
-		}
-	}
-	if (freeEntryInd == OPEN_FILES_NUMB) {
-		DEBUG('f', "Maximum number of opened files is 10, can not open\n");
-	}
-	entries[freeEntryInd].sector = sector;
-	entries[freeEntryInd].isForWrite = isForWrite;
-	result = &entries[freeEntryInd];
-    (void) interrupt->SetLevel (oldLevel);
-    return true;
 }
