@@ -467,10 +467,11 @@ void Thread::UserThreadExit()
     bool test;
     int stackPointer;
 
-    test = this->space->FreeThreadStack(this->getTID(), &stackPointer);
-    ASSERT (test);
-    DEBUG ('t', "\t->Thread stack to free: %d, nbr remaining stacks: %d\n",
-	   stackPointer, this->space->GetNbrThreadStack());
+	if (this->space == NULL) return;
+	test = this->space->FreeThreadStack(this->getTID(), &stackPointer);
+	ASSERT (test);
+	DEBUG ('t', "\t->Thread stack to free: %d, nbr remaining stacks: %d\n",
+	stackPointer, this->space->GetNbrThreadStack());
 }
 
 // +e simbadSid 19.01.2015

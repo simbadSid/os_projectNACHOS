@@ -154,9 +154,10 @@ ExceptionHandler (ExceptionType which)
 			int status = (int)machine->ReadRegister(4);
 			DEBUG('e', "Exception: exit initiated by user program: name = \"%s\", tid = %d, status = %d.\n",
 					currentThread->getName(), currentThread->getTID(), status);
-			machine->WriteRegister(4, SC_UserThreadExit);
-			UpdatePC();
-//			ExceptionHandler(SyscallException);
+			machine->WriteRegister(2, SC_UserThreadExit);
+//			UpdatePC();
+			ExceptionHandler(SyscallException);
+			ASSERT(false);
 			return;
 		}
 	    // +e simbadSid 21.01.2016
