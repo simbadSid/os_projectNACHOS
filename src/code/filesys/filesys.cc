@@ -80,13 +80,14 @@
 //----------------------------------------------------------------------
 
 FileSystem::FileSystem(bool format)
-{ 
+{
+	openedFileStructure = new OpenedFileStructure();
     DEBUG('f', "Initializing the file system.\n");
     if (format) {
         BitMap *freeMap = new BitMap(NumSectors);
         Directory *directory = new Directory(NumDirEntries);
-	FileHeader *mapHdr = new FileHeader;
-	FileHeader *dirHdr = new FileHeader;
+		FileHeader *mapHdr = new FileHeader;
+		FileHeader *dirHdr = new FileHeader;
 
         DEBUG('f', "Formatting the file system.\n");
 
@@ -114,8 +115,8 @@ FileSystem::FileSystem(bool format)
     // The file system operations assume these two files are left open
     // while Nachos is running.
 
-        freeMapFile = new OpenFile(FreeMapSector);
-        directoryFile = new OpenFile(DirectorySector);
+    freeMapFile = new OpenFile(FreeMapSector, NULL, true);
+    directoryFile = new OpenFile(DirectorySector, NULL, true);
      
     // Once we have the files "open", we can write the initial version
     // of each file back to disk.  The directory at this point is completely
@@ -132,16 +133,16 @@ FileSystem::FileSystem(bool format)
 	    directory->Print();
 
         delete freeMap; 
-	delete directory; 
-	delete mapHdr; 
-	delete dirHdr;
+        delete directory;
+        delete mapHdr;
+        delete dirHdr;
 	}
     } else {
-    // if we are not formatting the disk, just open the files representing
-    // the bitmap and directory; these are left open while Nachos is running
-        freeMapFile = new OpenFile(FreeMapSector);
-        directoryFile = new OpenFile(DirectorySector);
-	CurrentDirSector = DirectorySector; //+ goubetc 20.01.16
+    	// if we are not formatting the disk, just open the files representing
+    	// the bitmap and directory; these are left open while Nachos is running
+        freeMapFile = new OpenFile(FreeMapSector, NULL, true);
+        directoryFile = new OpenFile(DirectorySector, NULL, true);
+        CurrentDirSector = DirectorySector; //+ goubetc 20.01.16
     }
 }
 
@@ -185,8 +186,13 @@ FileSystem::Create(const char *name, int initialSize)
 
     DEBUG('f', "Creating file %s, size %d\n", name, initialSize);
 
-    OpenFile *directoryTmpFile;
-    directoryTmpFile = new OpenFile(CurrentDirSector);
+    //+b FoxTox 24.01.16
+    OpenedFileEntry *entry = NULL;
+    if (!openedFileStructure->AddFile(CurrentDirSector, true, entry)) {
+    	return NULL;
+    }
+
+    OpenFile *directoryTmpFile = new OpenFile(CurrentDirSector, entry, true);
 
     directory = new Directory(NumDirEntries);
     directory->FetchFrom(directoryTmpFile);  //+ goubetc 20.01.16  replaced directoryFile by CurrentDirSector	
@@ -219,7 +225,9 @@ FileSystem::Create(const char *name, int initialSize)
         delete freeMap;
     }
     delete directory;
+    delete directoryTmpFile;
     return success;
+    //+e FoxTox 24.01.16
 }
 
 //+b goubetc 19.01.16
@@ -231,7 +239,6 @@ FileSystem::Create_sub_dir(const char *name)
     BitMap *freeMap;
     int sector;
     bool success;
-    OpenFile *openDir;
     FileHeader *dirHdr = new FileHeader;
     
     DEBUG('f', "Creating sub directory %s, size %d\n", name);
@@ -247,30 +254,39 @@ FileSystem::Create_sub_dir(const char *name)
         sector = freeMap->FindAndMark();	// find a sector to hold the file header
     	if (sector == -1) 		
             success = FALSE;		// no free block for file header 
-        else if (!directory->Add(name, sector, true))
-            success = FALSE;	// no space in directory
-	else {
-    	    subDir = new Directory(10);
-	    subDir->Remove(".");
-	    if ((!subDir->Add(".", sector, true)) || (!subDir->Add("..", CurrentDirSector, true))){
-            	success = FALSE;	// no space on disk for data
-		DEBUG('z', "not enough space or already in directory\n");
-	    }
-	    else {
-		DEBUG('z', "sector : %d\n", sector);
-		subDir->List(); // KILL-ME
-	    	success = TRUE;
-		// everthing worked, flush all changes back to disk
-		ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
-		dirHdr->WriteBack(sector);
-		openDir = new OpenFile(sector);
-		subDir->WriteBack(openDir); 		
-    	    	directory->WriteBack(directoryFile);
-    	    	freeMap->WriteBack(freeMapFile);
-		delete openDir;
-	    }
-            delete subDir;
-	}
+        else
+        	if (!directory->Add(name, sector, true))
+        		success = FALSE;	// no space in directory
+        	else {
+        		subDir = new Directory(10);
+				subDir->Remove(".");
+				if ((!subDir->Add(".", sector, true)) || (!subDir->Add("..", CurrentDirSector, true))){
+						success = FALSE;	// no space on disk for data
+				DEBUG('z', "not enough space or already in directory\n");
+				}
+				else {
+					DEBUG('z', "sector : %d\n", sector);
+					subDir->List(); // KILL-ME
+					success = TRUE;
+					// everthing worked, flush all changes back to disk
+					ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
+					dirHdr->WriteBack(sector);
+
+					//+b FoxTox 24.01.16
+					OpenedFileEntry *entry = NULL;
+					if (!openedFileStructure->AddFile(sector, true, entry)) {
+						return NULL;
+					}
+
+				    OpenFile *openDir = new OpenFile(sector, entry, true);
+					//+e FoxTox 24.01.16
+					subDir->WriteBack(openDir);
+					directory->WriteBack(directoryFile);
+					freeMap->WriteBack(freeMapFile);
+					delete openDir;
+				}
+				delete subDir;
+        	}
         delete freeMap;
     }
     delete dirHdr;
@@ -288,22 +304,31 @@ FileSystem::Create_sub_dir(const char *name)
 //	  Bring the header into memory
 //
 //	"name" -- the text name of the file to be opened
+//	"isForWrite" -- in which mode file is opened - read or write
 //----------------------------------------------------------------------
 
-OpenFile *
-FileSystem::Open(const char *name)
-{ 
+OpenFile *FileSystem::Open(const char *name, bool isForWrite)
+{
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector;
 
+    //+b FoxTox 24.01.16
     DEBUG('f', "Opening file %s\n", name);
     directory->FetchFrom(directoryFile);
-    sector = directory->Find(name); 
-    if (sector >= 0) 		
-	openFile = new OpenFile(sector);	// name was found in directory
-    else
-	DEBUG('f', "file %s not found\n", name);
+    sector = directory->Find(name);
+    OpenedFileEntry *entry = NULL;
+    if (!openedFileStructure->AddFile(sector, isForWrite, entry)) {
+    	return NULL;
+    }
+
+    if (sector >= 0) {
+    	openFile = new OpenFile(sector, entry, isForWrite);	// name was found in directory
+    }
+    else {
+    	DEBUG('f', "file %s not found\n", name);
+    }
+    //+e FoxTox 24.01.16
     delete directory;
     return openFile;				// return NULL if not found
 }
@@ -328,7 +353,7 @@ FileSystem::Remove(const char *name)
     Directory *directory;
     Directory *subDir;
     OpenFile *subDirFile;
-    BitMap *freeMap;
+    BitMap *freeMap = NULL;
     FileHeader *fileHdr;
     int sector;
     
@@ -339,29 +364,38 @@ FileSystem::Remove(const char *name)
        delete directory;
        return FALSE;			 // file not found 
     }//+b goubetc 21.01.16
-    if (directory->IsSubDir(name)){
-	subDirFile = new OpenFile(sector);
-	subDir = new Directory(MAX_ENTRIES);
-	subDir->FetchFrom(subDirFile);
-	if (subDir->IsEmptySubDirectory()){
-	    freeMap = new BitMap(NumSectors);
-	    freeMap->FetchFrom(freeMapFile);
-	}
-	else {
-	    delete directory;
-	    delete subDirFile;
-	    delete subDir;
-	    return FALSE;
-	}   
+    if (directory->IsSubDir(name)) {
+    	//+b FoxTox 23.01.16
+        OpenedFileEntry *entry = NULL;
+    	if (!openedFileStructure->AddFile(sector, true, entry)) {
+        	return NULL;
+    	}
+		subDirFile = new OpenFile(sector, entry, true);
+		//+e FoxTox 23.01.16
+		subDir = new Directory(MAX_ENTRIES);
+		subDir->FetchFrom(subDirFile);
+		if (subDir->IsEmptySubDirectory()){
+			freeMap = new BitMap(NumSectors);
+			freeMap->FetchFrom(freeMapFile);
+		}
+		else {
+			//+b FoxTox 24.01.16
+			delete directory;
+			delete subDirFile;
+			delete subDir;
+		    delete freeMap;
+			return FALSE;
+			//+e FoxTox 24.01.16
+		}
     }
     else {
-	fileHdr = new FileHeader;
-	fileHdr->FetchFrom(sector);
+		fileHdr = new FileHeader();
+		fileHdr->FetchFrom(sector);
 
-	freeMap = new BitMap(NumSectors);
-	freeMap->FetchFrom(freeMapFile);
+		freeMap = new BitMap(NumSectors);
+		freeMap->FetchFrom(freeMapFile);
 
-	fileHdr->Deallocate(freeMap);  		// remove data blocks
+		fileHdr->Deallocate(freeMap);  		// remove data blocks
     }
     //+e goubetc 21.01.16
     freeMap->Clear(sector);			// remove header block
@@ -369,10 +403,13 @@ FileSystem::Remove(const char *name)
     
     freeMap->WriteBack(freeMapFile);		// flush to disk
     directory->WriteBack(directoryFile);        // flush to disk
+    //+b FoxTox 24.01.16
     delete fileHdr;
-    
+    delete subDirFile;
+    delete subDir;
     delete directory;
     delete freeMap;
+    //+e FoxTox 24.01.16
     return TRUE;
 } 
 
@@ -390,6 +427,7 @@ FileSystem::List()
     directory->List();
     delete directory;
 }
+
 //+b goubetc 21.01.16
 void
 FileSystem::List_dir(const char *name)
@@ -401,7 +439,14 @@ FileSystem::List_dir(const char *name)
     if (sector != -1){
 	delete directory;
 	Directory *directoryTmp = new Directory(NumDirEntries);
-	OpenFile *dirFile = new OpenFile(sector);
+	//+b FoxTox 24.01.16
+	OpenedFileEntry *entry = NULL;
+	if (!openedFileStructure->AddFile(CurrentDirSector, false, entry)) {
+		return;
+	}
+
+	OpenFile *dirFile = new OpenFile(sector, entry, false);
+	//+e FoxTox 24.01.16
 	DEBUG('z', "sector : %d\n", sector);
 	directoryTmp->FetchFrom(dirFile);
 	directoryTmp->List();

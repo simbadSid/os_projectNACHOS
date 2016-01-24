@@ -106,7 +106,7 @@ static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, i
 AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 {
 	NoffHeader noffH;
-	unsigned int i, size;
+	unsigned int size;
 
 	executable->ReadAt ((char *) &noffH, sizeof (noffH), 0);								// Reads the header of the executable file
 	if ((noffH.noffMagic != NOFFMAGIC) && (WordToHost (noffH.noffMagic) == NOFFMAGIC))		// Convert the header to the host endian
@@ -127,7 +127,7 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 	DEBUG ('a', "Initializing address space, num pages %d, size %d\n", numPages, size);
 																							// first, set up the translation
 	pageTable = new TranslationEntry[numPages];												// Initialize the page table of the addrSpace
-	for (i = 0; i < numPages; i++)
+	for (unsigned int i = 0; i < numPages; ++i)
 	{
 		pageTable[i].virtualPage	= i;													//		TODO for now, virtual page # = phys page #
 		pageTable[i].physicalPage	= frameProvider->GetEmptyFrame();
@@ -140,41 +140,13 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 				pageTable[i].virtualPage, pageTable[i].physicalPage);
 	}
 	this->threadStackList = new KeyList();
-																							// Copy code and segments of the executable into addrSpace
-																							//		Writes the file code section in memory
-	ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr, pageTable, numPages);
-	this->codeFirstPage	= noffH.code.virtualAddr/ PageSize;
-	this->codeNbrPage	= noffH.code.size		/ PageSize;
-	DEBUG ('a', "Initializing code segment: size %d (bytes)\n", noffH.code.size);
-	DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.code.virtualAddr);
-	DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->codeFirstPage);
-	DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->codeNbrPage);
-	for (i=codeFirstPage; i<codeFirstPage+codeNbrPage; i++)
-	{
-		this->pageBitmap->Mark(i);															//		Notify the code pages as used
-		pageTable[i].readOnly	= true;														//		Ensure that the code will not be corrupted
-	}
-																							// Copy data segments of the executable into addrSpace
-																							//		Writes the file data section in memory
-	ReadAtVirtual(executable, noffH.initData.virtualAddr, noffH.initData.size, noffH.initData.inFileAddr, pageTable, numPages);
-	this->initDataFirstPage		= noffH.initData.virtualAddr	/ PageSize;
-	this->uninitDataFirstPage	= noffH.uninitData.virtualAddr	/ PageSize;
-	this->initDataNbrPage		= noffH.initData.size			/ PageSize;
-	this->uninitDataNbrPage		= noffH.uninitData.size			/ PageSize;
-	DEBUG ('a', "Initializing data segment: size %d (bytes)\n", noffH.initData.size);
-	DEBUG ('a', "\t-> Virtual  address:\t0x%x\n",	noffH.initData.virtualAddr);
-	DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->initDataFirstPage);
-	DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->initDataNbrPage);
-	DEBUG ('a', "\t-> First page:\t\t%d\n", 		this->initDataFirstPage);
-	DEBUG ('a', "\t-> Number of page:\t%d\n", 		this->initDataNbrPage);
-	for (i=initDataFirstPage; i<initDataFirstPage+initDataNbrPage; i++)
-	{
-		this->pageBitmap->Mark(i);														//		Notify the data pages as used
-	}
-	for (i=uninitDataFirstPage; i<uninitDataFirstPage+uninitDataNbrPage; i++)
-	{
-		this->pageBitmap->Mark(i);														//		Notify the data pages as used
-	}
+
+	ReadRegion(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr,
+			&this->codeFirstPage, &this->codeNbrPage, true);
+	ReadRegion(executable, noffH.initData.virtualAddr, noffH.initData.size, noffH.initData.inFileAddr,
+			&this->initDataFirstPage, &this->initDataNbrPage, false);
+	ReadRegion(executable, noffH.uninitData.virtualAddr, noffH.uninitData.size, noffH.uninitData.inFileAddr,
+				&this->uninitDataFirstPage, &this->uninitDataNbrPage, false);
 
 /*
 	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
@@ -187,6 +159,25 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 */
 }
 // +e simbadSid 15.01.2015
+
+// +b FoxTox 22.01.2015
+void AddrSpace::ReadRegion(OpenFile *executable, int virtualaddr, int numBytes, int position,
+						   unsigned int *firstPage, unsigned int *nbrPage, bool readOnly) {
+	// Writes the file code section in memory
+	ReadAtVirtual(executable, virtualaddr, numBytes, position, pageTable, numPages);
+	// Copy code and segments of the executable into addrSpace
+	*firstPage	= virtualaddr / PageSize;
+	*nbrPage	= numBytes / PageSize;
+	for (unsigned int i = *firstPage; i<*firstPage + *nbrPage; ++i)
+	{
+		//		Notify the code pages as used
+		this->pageBitmap->Mark(i);
+		//		Ensure that the code will not be corrupted
+		pageTable[i].readOnly	= readOnly;
+	}
+}
+// +e FoxTox 22.01.2015
+
 
 //----------------------------------------------------------------------
 // AddrSpace::~AddrSpace
@@ -352,7 +343,9 @@ int AddrSpace::GetThreadTopStackPointer(int tid)
 	if (!test) {
 		return -1;
 	}
-	else		return stackTopPageToStackTopVirtualAddress(stackTopPage);
+	else {
+		return stackTopPageToStackTopVirtualAddress(stackTopPage);
+	}
 }
 
 // --------------------------------------------------------------------
