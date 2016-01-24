@@ -13,11 +13,14 @@
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
+#include "utility.h"
+#include "filehdr.h"
+#include "openfile.h"
+#include "system.h"
 
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
-#include "openfile.h"
 //+ goubetc 19.01.16
 
 #define FileNameMaxLen 		9	// for simplicity, we assume 

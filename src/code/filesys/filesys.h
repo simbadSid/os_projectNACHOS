@@ -39,6 +39,9 @@
 #include "openfile.h"
 //+ goubetc 20.01.16
 
+#define READ false
+#define WRITE true
+
 #define MAX_ENTRIES 10 //+ goubetc 20.01.16
 
 
@@ -57,12 +60,12 @@ class FileSystem {
 	return TRUE; 
 	}
 
-    OpenFile* Open(char *name) {
+    OpenFile* Open(const char *name, bool isForWrite) {
 	  int fileDescriptor = OpenForReadWrite(name, FALSE);
 
 	  if (fileDescriptor == -1) return NULL;
 	  return new OpenFile(fileDescriptor);
-      }
+    }
 
     bool Remove(char *name) { return Unlink(name) == 0; }
 
@@ -83,7 +86,7 @@ class FileSystem {
 
     bool Create_sub_dir(const char *name); //+goubetc 21.01.06
     
-    OpenFile* Open(const char *name); 	// Open a file (UNIX open)
+    OpenFile* Open(const char *name, bool isForWrite); 	// Open a file (UNIX open)
 
     bool Remove(const char *name); 	// Delete a file (UNIX unlink)
 
@@ -97,6 +100,8 @@ class FileSystem {
 	return rootDirectorySector;
     }
     void ChangeCurrentDir(const char* name);
+
+    OpenedFileStructure* openedFileStructure;
 
     
   private:

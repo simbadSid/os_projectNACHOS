@@ -20,9 +20,6 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
-#include "copyright.h"
-#include "utility.h"
-#include "filehdr.h"
 #include "directory.h"
 
 //+ goubetc 19.01.16
@@ -41,6 +38,7 @@ Directory::Directory(int size,  int current, int father)
 {
     table = new DirectoryEntry[size];
     tableSize = size;
+    
     for (int i = 0; i < tableSize; i++)
 	table[i].inUse = FALSE;
     this->Add(".", current, true);
@@ -191,24 +189,34 @@ Directory::Add(const char *name, int newSector, bool directory)
 
 bool
 Directory::Remove(const char *name)
-{ 
+{
+	//+b FoxTox 24.01.16
     int i = FindIndex(name);
 
     if (i == -1)
-	return FALSE; 		// name not in directory
+    	return FALSE; 		// name not in directory
     //+b goubetc 20.01.16
     else if (table[i].isSubDir){
-	OpenFile *directoryTmpFile;
-	Directory *directory = new Directory(10, 1, 1);
-	directoryTmpFile = new OpenFile(table[i].sector);
-	directory->FetchFrom(directoryTmpFile);
-	if (!directory->IsEmptySubDirectory()){
-	    delete directory;
-	    return false;
-	}
+
+	    Directory *directory = new Directory(10, 1, 1);
+		OpenedFileEntry *entry = NULL;
+		if (!fileSystem->openedFileStructure->AddFile(table[i].sector, true, entry)) {
+		    return NULL;
+		}
+
+		OpenFile *directoryTmpFile = new OpenFile(table[i].sector, entry, true);
+		directory->FetchFrom(directoryTmpFile);
+		delete directoryTmpFile;
+		if (!directory->IsEmptySubDirectory()){
+			delete directory;
+			return false;
+		}
+
     }
     //+e goubetc 20.01.16
+
     table[i].inUse = FALSE;
+    //+e FoxTox 24.01.16
     return TRUE;	
 }
 
