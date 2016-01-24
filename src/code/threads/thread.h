@@ -98,6 +98,9 @@ class Thread
     const char *getName (){return (name);}
     int getTID (){return (tid);}
     void Print (){printf ("%s, ", name);}
+    #ifdef FILESYS
+    int CurrentDirectorySector;
+    #endif
 
   private:
     // some of the private data for this class is listed above

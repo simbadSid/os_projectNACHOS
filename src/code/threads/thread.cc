@@ -43,6 +43,10 @@ Thread::Thread (const char *threadName, int threadID)
 	status		= JUST_CREATED;
 	sprintf(name, "%s", threadName);
 
+#ifdef FILESYS    
+	CurrentDirectorySector = -1;
+#endif
+
 #ifdef USER_PROGRAM
 	this->space = NULL;
 	// FBT: Need to initialize special registers of simulator to 0
