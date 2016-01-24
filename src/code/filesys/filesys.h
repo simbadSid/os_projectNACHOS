@@ -57,12 +57,12 @@ class FileSystem {
 	return TRUE; 
 	}
 
-    OpenFile* Open(char *name) {
+    OpenFile* Open(const char *name, bool isForWrite) {
 	  int fileDescriptor = OpenForReadWrite(name, FALSE);
 
 	  if (fileDescriptor == -1) return NULL;
 	  return new OpenFile(fileDescriptor);
-      }
+    }
 
     bool Remove(char *name) { return Unlink(name) == 0; }
 
@@ -83,7 +83,7 @@ class FileSystem {
 
     bool Create_sub_dir(const char *name); //+goubetc 21.01.06
     
-    OpenFile* Open(const char *name); 	// Open a file (UNIX open)
+    OpenFile* Open(const char *name, bool isForWrite); 	// Open a file (UNIX open)
 
     bool Remove(const char *name); 	// Delete a file (UNIX unlink)
 
@@ -93,14 +93,13 @@ class FileSystem {
     
     void Print();			// List all the files and their contents
 
+    OpenedFileStructure* openedFileStructure;
     
   private:
    OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file
    OpenFile* directoryFile;		// "Root" directory -- list of 
 					// file names, represented as a file
-
-   OpenedFileStructure* openedFileStructure;
 
    int CurrentDirSector;  //+ goubetc 20.01.16
    // pointer to the sector index of the currently opened directory enrty specification

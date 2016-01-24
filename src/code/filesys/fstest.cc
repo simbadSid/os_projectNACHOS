@@ -55,7 +55,7 @@ Copy(const char *from, const char *to)
 	return;
     }
     
-    openFile = fileSystem->Open(to);
+    openFile = fileSystem->Open(to, true);
     ASSERT(openFile != NULL);
     
 // Copy the data in TransferSize chunks
@@ -81,7 +81,7 @@ Print(char *name)
     int i, amountRead;
     char *buffer;
 
-    if ((openFile = fileSystem->Open(name)) == NULL) {
+    if ((openFile = fileSystem->Open(name, false)) == NULL) {
 	printf("Print: unable to open file %s\n", name);
 	return;
     }
@@ -125,7 +125,7 @@ FileWrite()
       printf("Perf test: can't create %s\n", FileName);
       return;
     }
-    openFile = fileSystem->Open(FileName);
+    openFile = fileSystem->Open(FileName, true);
     if (openFile == NULL) {
 	printf("Perf test: unable to open %s\n", FileName);
 	return;
@@ -151,7 +151,7 @@ FileRead()
     printf("Sequential read of %d byte file, in %zd byte chunks\n", 
 	FileSize, ContentSize);
 
-    if ((openFile = fileSystem->Open(FileName)) == NULL) {
+    if ((openFile = fileSystem->Open(FileName, false)) == NULL) {
 	printf("Perf test: unable to open file %s\n", FileName);
 	delete [] buffer;
 	return;

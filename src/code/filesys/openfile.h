@@ -69,7 +69,8 @@ class FileHeader;
 
 class OpenFile {
   public:
-    OpenFile(int sector);		// Open a file whose header is located
+	// entry param used to connect file with it's entry in OpenedFileStructure.
+	OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWrite);		// Open a file whose header is located
 					// at "sector" on the disk
     ~OpenFile();			// Close the file
 
@@ -92,25 +93,21 @@ class OpenFile {
 					// than the UNIX idiom -- lseek to 
 					// end of file, tell, lseek back 
 
-    // Used to connect file with it's entry in OpenedFileStructure.
-    void SetOpenedFileEntry(OpenedFileEntry *entry);
-
   private:
     FileHeader *hdr;			// Header for this file 
     int seekPosition;			// Current position within the file
     OpenedFileEntry *openedFileEntry;
+    bool isForWrite;
 };
 
+//+b FoxTox 23.01.2015
 
 // One entry of opened files.
 class OpenedFileEntry{
 	public:
 		OpenedFileEntry();
 		~OpenedFileEntry();
-		// The name field be path from root directrory.
-		char *name;
-		OpenFile *file;
-		int tid;
+		int sector;
 		bool isForWrite;
 		// We never delete from our array entry. What we do is just set is as not free.
 		bool isFreeSlot;
@@ -122,13 +119,13 @@ class OpenedFileStructure{
 	public:
 		OpenedFileStructure();
 		~OpenedFileStructure();
-		bool CanOpen(int tid, char *name, OpenFile *result);
-		OpenedFileEntry * AddFile(OpenFile *file, char *name, int tid, bool isForWrite);
+		bool AddFile(int sector, bool isForWrite, OpenedFileEntry* result);
 	private:
+		bool CanOpen(int sector, bool isForWrite);
 		OpenedFileEntry *entries;
-		int lastErased;
 };
 
+//+e FoxTox 23.01.2015
 #endif // FILESYS
 
 #endif // OPENFILE_H

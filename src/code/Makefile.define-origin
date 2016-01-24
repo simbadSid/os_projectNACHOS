@@ -39,7 +39,6 @@ ORIG_USERPROGS=multithreadingTest matmult shell sort
 ORIG_USERPROGS=multithreadingLongTest matmult shell sort
 ORIG_USERPROGS=putcharint matmult shell sort
 ORIG_USERPROGS=userpages0 matmult shell sort
-ORIG_USERPROGS=openedFileStructure matmult shell sort
 
 ###########################################################################
 # Group of files used to defined initial flavors
