@@ -42,8 +42,11 @@ Thread::Thread (const char *threadName, int threadID)
     stack		= NULL;
     status		= JUST_CREATED;
     sprintf(name, "%s", threadName);
-#ifdef FILESYS    
+#ifdef FILESYS
     CurrentDirectorySector = -1;
+    openedFiles = new OpenFile*[MAX_OPEN_FILE_NUM];
+    for (int i = 0; i < MAX_OPEN_FILE_NUM; ++i)
+    	openedFiles[i] = NULL;
 #endif
 #ifdef USER_PROGRAM
     this->space = NULL;
@@ -73,6 +76,9 @@ Thread::~Thread ()
 
     //    ASSERT (this != currentThread);
     if (stack != NULL)	DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+#ifdef FILESYS
+    delete [] openedFiles;
+#endif
 #ifdef USER_PROGRAM
     if ((this->space != NULL) && (this->space->GetNbrThreadStack() == 0))				// Case the current Thread is the last thread in the process
 	{
@@ -262,6 +268,36 @@ Thread::Sleep ()
     scheduler->Run (nextThread);	// returns when we've been signalled
 }
 
+#ifdef FILESYS
+OpenFile *Thread::getFile(int id) {
+	if (id >= MAX_OPEN_FILE_NUM or id < 0 or openedFiles[id] == NULL) {
+		DEBUG('f', "Not correct file ID %d \n", id);
+		return NULL;
+	}
+	return openedFiles[id];
+}
+
+int Thread::addFile(OpenFile *file) {
+	for (int i = 0; i < MAX_OPEN_FILE_NUM; ++i) {
+		if (openedFiles[i] == NULL) {
+			openedFiles[i] = file;
+			return i;
+		}
+	}
+	DEBUG('f', "Not possible to add new file -- thread file system is full.\n");
+	return -1;
+}
+
+void Thread::CloseFile(int id) {
+	if (id >= MAX_OPEN_FILE_NUM or id < 0) {
+		DEBUG('f', "Not correct file ID %d \n", id);
+		return;
+	}
+	openedFiles[id]->Close();
+	openedFiles[id] = NULL;
+}
+#endif
+
 //----------------------------------------------------------------------
 // ThreadFinish, InterruptEnable, ThreadPrint
 //      Dummy functions because C++ does not allow a pointer to a member
@@ -275,6 +311,7 @@ ThreadFinish ()
 {
     currentThread->Finish ();
 }
+
 static void
 InterruptEnable ()
 {

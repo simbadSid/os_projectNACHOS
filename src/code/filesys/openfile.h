@@ -69,6 +69,9 @@ class FileHeader;
 
 class OpenFile {
   public:
+	//+b FoxTox 24.01.16
+	OpenFile();
+	//+e FoxTox 24.01.16
 	// entry param used to connect file with it's entry in OpenedFileStructure.
 	OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWrite);		// Open a file whose header is located
 					// at "sector" on the disk
@@ -91,13 +94,18 @@ class OpenFile {
     int Length(); 			// Return the number of bytes in the
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
-					// end of file, tell, lseek back 
+					// end of file, tell, lseek back
+
+    void Close();
 
   private:
     FileHeader *hdr;			// Header for this file 
     int seekPosition;			// Current position within the file
+    //+b FoxTox 24.01.16
     OpenedFileEntry *openedFileEntry;
     bool isForWrite;
+    bool isClosed;
+    //+e FoxTox 24.01.16
 };
 
 //+b FoxTox 23.01.2015
