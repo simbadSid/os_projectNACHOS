@@ -182,6 +182,7 @@ main (int argc, char **argv)
 			MailTest (atoi (*(argv + 1)));
 			argCount = 2;
 	    }
+//+b simbadSid 25.01.2016
 		if (!strcmp (*argv, "-nrt"))
 	    {
 			ASSERT (argc > 1);
@@ -191,6 +192,7 @@ main (int argc, char **argv)
 			RingTopologyNode(atoi (*(argv + 1)));
 			argCount = 2;
 	    }
+//+b simbadSid 25.01.2016
 #endif // NETWORK
       }
 

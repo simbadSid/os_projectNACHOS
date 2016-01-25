@@ -64,6 +64,7 @@ Interrupt::Interrupt()
     inHandler = FALSE;
     yieldOnReturn = FALSE;
     status = SystemMode;
+    printHalt = true;
 }
 
 //----------------------------------------------------------------------
@@ -243,8 +244,13 @@ Interrupt::Idle()
 void
 Interrupt::Halt()
 {
-    printf("Machine halting!\n\n");
-    stats->Print();
+// +b simbadSid 25.01.2016
+    if(printHalt)
+    {
+        printf("Machine halting!\n\n");
+        stats->Print();
+    }
+// +b simbadSid 25.01.2016
     Cleanup();     // Never returns.
 }
 
