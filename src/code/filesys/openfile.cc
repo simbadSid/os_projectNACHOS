@@ -17,6 +17,11 @@
 #include "system.h"
 
 
+OpenFile::OpenFile()
+{
+    isClosed = true;
+}
+
 //----------------------------------------------------------------------
 // OpenFile::OpenFile
 // 	Open a Nachos file for reading and writing.  Bring the file header
@@ -27,12 +32,13 @@
 
 OpenFile::OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWrite)
 {
-	isForWrite = _isForWrite;
+	hdr = new FileHeader;
+	hdr->FetchFrom(sector);
+	seekPosition = 0;
 	openedFileEntry = _openedFileEntry;
-    hdr = new FileHeader;
-    hdr->FetchFrom(sector);
-    seekPosition = 0;
+	isForWrite = _isForWrite;
     openedFileEntry = NULL;
+    isClosed = false;
 }
 
 //----------------------------------------------------------------------
@@ -42,10 +48,13 @@ OpenFile::OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWri
 
 OpenFile::~OpenFile()
 {
-    delete hdr;
-    if (openedFileEntry != NULL) {
-    	openedFileEntry->isFreeSlot = true;
-    }
+	if (!isClosed) {
+		delete hdr;
+		if (openedFileEntry != NULL) {
+			openedFileEntry->isFreeSlot = true;
+		}
+		isClosed = true;
+	}
 }
 
 //----------------------------------------------------------------------
@@ -206,6 +215,22 @@ DEBUG('f', "here %d\n", numSectors * SectorSize);
 int OpenFile::Length()
 { 
     return hdr->FileLength(); 
+}
+
+//----------------------------------------------------------------------
+// OpenFile::Close
+// 	Close a Nachos file, de-allocating any in-memory data structures.
+//----------------------------------------------------------------------
+
+void OpenFile::Close()
+{
+	if (!isClosed) {
+		delete hdr;
+		if (openedFileEntry != NULL) {
+			openedFileEntry->isFreeSlot = true;
+		}
+		isClosed = true;
+	}
 }
 
 // One entry of opened files.

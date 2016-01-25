@@ -42,16 +42,20 @@ Thread::Thread (const char *threadName, int threadID)
     stack		= NULL;
     status		= JUST_CREATED;
     sprintf(name, "%s", threadName);
-#ifdef FILESYS    
+#ifdef FILESYS
     CurrentDirectorySector = -1;
+    openedFiles = new OpenFile*[MAX_OPEN_FILE_NUM];
+    for (int i = 0; i < MAX_OPEN_FILE_NUM; ++i)
+    	openedFiles[i] = NULL;
 #endif
+
 #ifdef USER_PROGRAM
-    this->space = NULL;
-    // FBT: Need to initialize special registers of simulator to 0
-    // in particular LoadReg or it could crash when switching
-    // user threads.
-    for (int r=NumGPRegs; r<NumTotalRegs; r++)
-	userRegisters[r] = 0;
+	this->space = NULL;
+	// FBT: Need to initialize special registers of simulator to 0
+	// in particular LoadReg or it could crash when switching
+	// user threads.
+	for (int r=NumGPRegs; r<NumTotalRegs; r++)
+		userRegisters[r] = 0;
 #endif
 }
 
@@ -69,15 +73,18 @@ Thread::Thread (const char *threadName, int threadID)
 
 Thread::~Thread ()
 {
-    DEBUG ('t', "Deleting thread \"%s\"\n", name);
+	DEBUG ('t', "Deleting thread \"%s\"\n", name);
 
-    //    ASSERT (this != currentThread);
+//    ASSERT (this != currentThread);
     if (stack != NULL)	DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+#ifdef FILESYS
+    delete [] openedFiles;
+#endif
 #ifdef USER_PROGRAM
-    if ((this->space != NULL) && (this->space->GetNbrThreadStack() == 0))				// Case the current Thread is the last thread in the process
+	if ((this->space != NULL) && (this->space->GetNbrThreadStack() == 0))				// Case the current Thread is the last thread in the process
 	{
-	    delete this->space;
-	    DEBUG ('t', "\t->Removing address space: Thread %d\n", this->getTID());
+		delete this->space;
+		DEBUG ('t', "\t->Removing address space: Thread %d\n", this->getTID());
 	}
 
 #endif
@@ -106,23 +113,23 @@ Thread::~Thread ()
 void
 Thread::Fork (VoidFunctionPtr func, int arg)
 {
-    DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n", name, (int) func, arg);
-    StackAllocate (func, arg);
+	DEBUG ('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n", name, (int) func, arg);
+	StackAllocate (func, arg);
 
 #ifdef USER_PROGRAM
-    // LB: The addrspace should be tramsitted here, instead of later in
-    // StartProcess, so that the pageTable can be restored at
-    // launching time. This is crucial if the thread is launched with
-    // an already running program, as in the "fork" Unix system call.
+	// LB: The addrspace should be tramsitted here, instead of later in
+	// StartProcess, so that the pageTable can be restored at
+	// launching time. This is crucial if the thread is launched with
+	// an already running program, as in the "fork" Unix system call.
 
-    // LB: Observe that currentThread->space may be NULL at that time.
-    // +b simbadSid 20.01.2016
-    //    this->space = currentThread->space;
+	// LB: Observe that currentThread->space may be NULL at that time.
+// +b simbadSid 20.01.2016
+//    this->space = currentThread->space;
 
-    // From now one, as we manage several different address spaces, we need to
-    // initialize them using not only the currentThread->space
+// From now one, as we manage several different address spaces, we need to
+// initialize them using not only the currentThread->space
 
-    // +b simbadSid 20.01.2016
+// +b simbadSid 20.01.2016
 #endif // USER_PROGRAM
 
     IntStatus oldLevel = interrupt->SetLevel (IntOff);
@@ -152,7 +159,7 @@ Thread::CheckOverflow ()
 #ifdef HOST_SNAKE		// Stacks grow upward on the Snakes
 	ASSERT (stack[StackSize - 1] == STACK_FENCEPOST);
 #else
-    ASSERT (*stack == (int) STACK_FENCEPOST);
+	ASSERT (*stack == (int) STACK_FENCEPOST);
 #endif
 }
 
@@ -218,10 +225,10 @@ Thread::Yield ()
     DEBUG ('t', "Yielding thread \"%s\"\n", getName ());
     nextThread = scheduler->FindNextToRun ();
     if (nextThread != NULL)
-	{
-	    scheduler->ReadyToRun (this);
-	    scheduler->Run (nextThread);
-	}
+      {
+	  scheduler->ReadyToRun (this);
+	  scheduler->Run (nextThread);
+      }
 
     (void) interrupt->SetLevel (oldLevel);
 }
@@ -262,6 +269,36 @@ Thread::Sleep ()
     scheduler->Run (nextThread);	// returns when we've been signalled
 }
 
+#ifdef FILESYS
+OpenFile *Thread::getFile(int id) {
+	if (id >= MAX_OPEN_FILE_NUM or id < 0 or openedFiles[id] == NULL) {
+		DEBUG('f', "Not correct file ID %d \n", id);
+		return NULL;
+	}
+	return openedFiles[id];
+}
+
+int Thread::addFile(OpenFile *file) {
+	for (int i = 0; i < MAX_OPEN_FILE_NUM; ++i) {
+		if (openedFiles[i] == NULL) {
+			openedFiles[i] = file;
+			return i;
+		}
+	}
+	DEBUG('f', "Not possible to add new file -- thread file system is full.\n");
+	return -1;
+}
+
+void Thread::CloseFile(int id) {
+	if (id >= MAX_OPEN_FILE_NUM or id < 0) {
+		DEBUG('f', "Not correct file ID %d \n", id);
+		return;
+	}
+	openedFiles[id]->Close();
+	openedFiles[id] = NULL;
+}
+#endif
+
 //----------------------------------------------------------------------
 // ThreadFinish, InterruptEnable, ThreadPrint
 //      Dummy functions because C++ does not allow a pointer to a member
@@ -275,6 +312,7 @@ ThreadFinish ()
 {
     currentThread->Finish ();
 }
+
 static void
 InterruptEnable ()
 {
@@ -289,41 +327,41 @@ void
 SetupThreadState ()
 {
 
-    // LB: Similar to the second part of Scheduler::Run. This has to be
-    // done each time a thread is scheduled, either by SWITCH, or by
-    // getting created.
+  // LB: Similar to the second part of Scheduler::Run. This has to be
+  // done each time a thread is scheduled, either by SWITCH, or by
+  // getting created.
   
-    if (threadToBeDestroyed != NULL)
-	{
-	    delete threadToBeDestroyed;
-	    threadToBeDestroyed = NULL;
-	}
+  if (threadToBeDestroyed != NULL)
+    {
+      delete threadToBeDestroyed;
+      threadToBeDestroyed = NULL;
+    }
   
 #ifdef USER_PROGRAM
 
-    // LB: Now, we have to simulate the RestoreUserState/RestoreState
-    // part of Scheduler::Run
+  // LB: Now, we have to simulate the RestoreUserState/RestoreState
+  // part of Scheduler::Run
 
-    // Be very careful! We have no information about the thread which is
-    // currently running at the time this function is called. Actually,
-    // there is no reason why the running thread should have the same
-    // pageTable as the thread just being created.
+  // Be very careful! We have no information about the thread which is
+  // currently running at the time this function is called. Actually,
+  // there is no reason why the running thread should have the same
+  // pageTable as the thread just being created.
 
-    // This is definitely the case as soon as several *processes* are
-    // running together.
+  // This is definitely the case as soon as several *processes* are
+  // running together.
 
-    if (currentThread->space != NULL)
-	{				// if there is an address space
-	    // LB: Actually, the user state is void at that time. Keep this
-	    // action for consistency with the Scheduler::Run function
-	    currentThread->RestoreUserState ();	// to restore, do it.
-	    currentThread->space->RestoreState ();
-	}
+  if (currentThread->space != NULL)
+    {				// if there is an address space
+      // LB: Actually, the user state is void at that time. Keep this
+      // action for consistency with the Scheduler::Run function
+      currentThread->RestoreUserState ();	// to restore, do it.
+      currentThread->space->RestoreState ();
+    }
 
 #endif // USER_PROGRAM
 
-    // LB: The default level for interrupts is IntOn.
-    InterruptEnable (); 
+  // LB: The default level for interrupts is IntOn.
+  InterruptEnable (); 
 
 }
 
@@ -436,21 +474,21 @@ Thread::RestoreUserState ()
 //----------------------------------------------------------------------
 int Thread::UserThreadCreate(Thread *existingThread, int *createdThreadStack)
 {
-    DEBUG ('t', "\t->UserThreadCreate TID %d new TID %d \n", existingThread->tid, this->tid);
-    this->space		= (AddrSpace*)existingThread->space;
-    int test		= space->AllocateThreadStack(tid, createdThreadStack);	// Distinguish the new thread stack from the current thread stack
-    if (test == -1)															// Case: no memory left for the stack
+	DEBUG ('t', "\t->UserThreadCreate TID %d new TID %d \n", existingThread->tid, this->tid);
+	this->space		= (AddrSpace*)existingThread->space;
+	int test		= space->AllocateThreadStack(tid, createdThreadStack);	// Distinguish the new thread stack from the current thread stack
+	if (test == -1)															// Case: no memory left for the stack
 	{
-	    return -1;
+		return -1;
 	}
-    existingThread->space->SaveState();
+	existingThread->space->SaveState();
 
-    int existingThreadStack = existingThread->space->GetThreadTopStackPointer(
-									      existingThread->getTID()
-									      );
-    DEBUG ('t', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",
-	   existingThreadStack, *createdThreadStack, this->space->GetSize());
-    return 0;
+	int existingThreadStack = existingThread->space->GetThreadTopStackPointer(
+			existingThread->getTID()
+		);
+	DEBUG ('t', "\t->Thread stack creation: currentStack: %d, newStack: %d, addrSpaceSize: %d \n",
+	existingThreadStack, *createdThreadStack, this->space->GetSize());
+	return 0;
 }
 
 // +e FoxTox 10.01.2015
@@ -464,8 +502,8 @@ int Thread::UserThreadCreate(Thread *existingThread, int *createdThreadStack)
 //----------------------------------------------------------------------
 void Thread::UserThreadExit()
 {
-    bool test;
-    int stackPointer;
+	bool test;
+	int stackPointer;
 
 	if (this->space == NULL) return;
 	test = this->space->FreeThreadStack(this->getTID(), &stackPointer);

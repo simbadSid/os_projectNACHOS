@@ -21,6 +21,7 @@
 // of liability and disclaimer of warranty provisions.
 
 #include "directory.h"
+#include "openfile.h"
 
 //+ goubetc 19.01.16
 

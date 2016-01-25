@@ -40,6 +40,7 @@
 #include "copyright.h"
 #include "utility.h"
 
+
 // simbadSid 10.01.2015
 
 #ifdef USER_PROGRAM
@@ -55,6 +56,11 @@
 														// For simplicity, this is just the max over all architectures.
 #define StackSize	(4 * 1024)							// Size of the thread's private execution stack.
 														// WATCH OUT IF THIS ISN'T BIG ENOUGH!!!!! in words
+
+// +b FoxTox 24.01.2015
+#define MAX_OPEN_FILE_NUM	10
+// +e FoxTox 24.01.2015
+
 enum ThreadStatus										// Thread state
 {
 	JUST_CREATED,
@@ -82,6 +88,7 @@ class Thread
     // THEY MUST be in this position for SWITCH to work.
     int *stackTop;										// the current stack pointer
     int machineState[MachineStateSize];					// all registers except for stackTop
+
   public:
       Thread (const char *debugName, int tid);			// initialize a Thread
      ~Thread ();										// deallocate a Thread NOTE -- thread being deleted must not be running when delete is called
@@ -96,9 +103,12 @@ class Thread
     const char *getName (){return (name);}
     int getTID (){return (tid);}
     void Print (){printf ("%s, ", name);}
-    #ifdef FILESYS
+#ifdef FILESYS
     int CurrentDirectorySector;
-    #endif
+    OpenFile *getFile(int id);
+    int addFile(OpenFile *file);
+    void CloseFile(int id);
+#endif
  private:
     // some of the private data for this class is listed above
     int *stack;											// Bottom of the stack NULL if this is the main thread (If NULL, don't deallocate stack)
@@ -106,6 +116,9 @@ class Thread
     char name[THREAD_NAME_MAX_SIZE];
     int tid;
     void StackAllocate (VoidFunctionPtr func, int arg);	// Allocate a stack for thread. Used internally by Fork()
+#ifdef FILESYS
+	OpenFile **openedFiles;
+#endif
 
 #ifdef USER_PROGRAM
 // A thread running a user program actually has *two* sets of CPU registers -- 

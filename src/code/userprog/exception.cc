@@ -28,11 +28,7 @@
 //#include "machine.h"
 #include "userthread.h"
 
-
-
-
-
-
+#define NAME_SIZE 100
 
 // FoxTox 08.01.2016
 // FoxTox 09.01.2016
@@ -261,9 +257,9 @@ ExceptionHandler (ExceptionType which)
 		{
 		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
 		    		currentThread->getTID(), currentThread->getName());
-//TODO check
 		    UpdatePC();																	// Done because the next function never returns
 			do_UserThreadExit();														// Does not returns
+			ASSERT(false);
 			break;
 		}
 		case SC_UserThreadJoin:
@@ -299,8 +295,8 @@ ExceptionHandler (ExceptionType which)
 	    {
 			int fileNameUserPtr = machine->ReadRegister(4);
 			DEBUG('e', "Exception: user thread ForkExec.\n");
-			char kernelFileName[100];
-			copyStringFromMachine(fileNameUserPtr, (char*)kernelFileName, 100);
+			char kernelFileName[NAME_SIZE];
+			copyStringFromMachine(fileNameUserPtr, (char*)kernelFileName, NAME_SIZE);
 			DEBUG('e', "\t-> Program file name: %s.\n", kernelFileName);
 			int res = do_ForkExec(kernelFileName);
 			DEBUG('e', "\t->user thread ForkExec res = %d.\n", res);
@@ -308,6 +304,47 @@ ExceptionHandler (ExceptionType which)
 	    	break;
 	    }
 		//+e FoxTox 19.01.16
+		//+b FoxTox 24.01.16
+	#ifdef FILESYS
+		case SC_Open:
+	    {
+	    	char name[NAME_SIZE];
+			copyStringFromMachine(machine->ReadRegister(4), name, NAME_SIZE);
+			bool isForWrite = (bool) machine->ReadRegister(5);
+			DEBUG('e', "Open file: %s.\n", name);
+			machine->WriteRegister(2, currentThread->addFile(fileSystem->Open(name, isForWrite)));
+	    	break;
+	    }
+		case SC_Close:
+	    {
+	    	int fileID = machine->ReadRegister(4);
+			currentThread->CloseFile(fileID);
+			DEBUG('e', "Close file by id: %d. \n", fileID);
+	    	break;
+	    }
+		case SC_Read:
+		{
+			break;
+		}
+		case SC_Write:
+		{
+			char writeBuff[NAME_SIZE];
+			copyStringFromMachine(machine->ReadRegister(4), writeBuff, NAME_SIZE);
+			int size = machine->ReadRegister(5);
+			int id = machine->ReadRegister(6);
+			currentThread->getFile(id)->Write(writeBuff, size);
+			break;
+		}
+		case SC_Create:
+		{
+			char name[NAME_SIZE];
+			copyStringFromMachine(machine->ReadRegister(4), name, NAME_SIZE);
+			fileSystem->Create(name, 0);
+			DEBUG('e', "Create file: %s. \n", name);
+			break;
+		}
+		//+e FoxTox 24.01.16
+	#endif
 		default:
 		{
 			printf("***Unexpected user mode exception %d %d***\n", which, type);

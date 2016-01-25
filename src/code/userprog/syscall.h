@@ -115,10 +115,10 @@ typedef int OpenFileId;
 /* Create a Nachos file, with "name" */
 void Create (char *name);
 
-/* Open the Nachos file "name", and return an "OpenFileId" that can 
- * be used to read and write to the file.
+/* Open the Nachos file "name" in writing and reading or reading mode (1 or 0),
+ * and return an "OpenFileId" that can be used to read and write to the file.
  */
-OpenFileId Open (char *name);
+OpenFileId Open (char *name, int isForWrite);
 
 /* Write "size" bytes from "buffer" to the open file. */
 void Write (char *buffer, int size, OpenFileId id);
@@ -225,6 +225,15 @@ int ForkExec(char *fileName);
  */
 void UserThreadExit();
 //+ e goubetc 10.01.16
+
+//+b FoxTox 19.01.16
+/* Called in system call handler SC_ForkExec.  The system call creates a process totally independant from the caller
+ * process and executes the given program in the given program.
+ * Return the thread ID if the new thread if the call success.
+ * Return -1 if the given executable file does not exist. (only handled error).
+ */
+int ForkExec(char *fileName);
+//+e FoxTox 19.01.16
 #endif // IN_USER_MODE
 
 #endif /* SYSCALL_H */

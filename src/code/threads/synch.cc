@@ -210,6 +210,28 @@ Lock::Release ()
     busy = false;
     (void) interrupt->SetLevel (oldLevel);
 }
+ 
+// Lock::Lock (const char *debugName)
+// {
+//     name = debugName;
+//     sem = new Semaphore(debugName,1);
+// }
+
+// Lock::~Lock ()
+// {
+//     //delete queue;
+// }
+// void
+// Lock::Acquire ()
+// {
+//     sem->P();
+// }
+// void
+// Lock::Release ()
+// {
+//     sem->V();
+// }
+
 
 //+b goubetc 18.01.16
 Condition::Condition (const char *debugName)
