@@ -87,7 +87,9 @@ FileSystem::FileSystem(bool format)
     DEBUG('f', "Initializing the file system.\n");
     if (format) {
         BitMap *freeMap = new BitMap(NumSectors);
-	Directory *rootDirectory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+	Directory *rootDirectory = new Directory(NumDirEntries,
+						 currentThread->CurrentDirectorySector,
+						 currentThread->CurrentDirectorySector);
 	FileHeader *mapHdr = new FileHeader;
 	FileHeader *dirHdr = new FileHeader;
 
@@ -110,7 +112,7 @@ FileSystem::FileSystem(bool format)
     // on it!).
 
         DEBUG('f', "Writing headers back to disk.\n");
-	mapHdr->WriteBack(FreeMapSector);    
+	mapHdr->WriteBack(FreeMapSector);
 	dirHdr->WriteBack(DirectorySector);
 
     // OK to open the bitmap and directory files now
@@ -129,8 +131,9 @@ FileSystem::FileSystem(bool format)
     // to hold the file data for the directory and bitmap.
 
         DEBUG('f', "Writing bitmap and directory back to disk.\n");
+	freeMap->Print();
 	freeMap->WriteBack(freeMapFile);	 // flush changes to disk
-
+	// doesn't reach here
 	OpenedFileEntry *entry_1 = NULL;
 	if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry_1)) {
 	    return;
@@ -202,7 +205,7 @@ FileSystem::Create(const char *name, int initialSize)
     if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry)) {
     	return NULL;
     }
-
+    
     OpenFile *directoryTmpFile = new OpenFile(currentThread->CurrentDirectorySector, entry, WRITE);
 
     directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector); //+ goubetc 23.01.16
@@ -237,7 +240,6 @@ FileSystem::Create(const char *name, int initialSize)
     }
     delete directoryTmpFile;
     delete directory;
-    delete directoryTmpFile;
     return success;
     //+e FoxTox 24.01.16
 }
@@ -548,6 +550,7 @@ FileSystem::ChangeCurrentDir(const char* name)
     directory->FetchFrom(directoryFile);
     int idx = directory->Find(name);
     if(idx != -1){
+	
 	currentThread->CurrentDirectorySector = idx;
     }
 }

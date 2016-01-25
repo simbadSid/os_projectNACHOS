@@ -55,15 +55,18 @@ Copy(const char *from, const char *to)
 	return;
     }
     
+        DEBUG('f', "heeeeeeeeeee.\n");
     openFile = fileSystem->Open(to, true);
     ASSERT(openFile != NULL);
     
 // Copy the data in TransferSize chunks
     buffer = new char[TransferSize];
-    while ((amountRead = fread(buffer, sizeof(char), TransferSize, fp)) > 0)
-	openFile->Write(buffer, amountRead);	
-    delete [] buffer;
-
+    while ((amountRead = fread(buffer, sizeof(char), TransferSize, fp)) > 0){
+	openFile->Write(buffer, amountRead);
+    
+        DEBUG('f', "loop.\n");
+}
+	delete [] buffer;
 // Close the UNIX and the Nachos files
     delete openFile;
     fclose(fp);

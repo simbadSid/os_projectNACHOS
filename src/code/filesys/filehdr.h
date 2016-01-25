@@ -17,7 +17,7 @@
 #include "disk.h"
 #include "bitmap.h"
 
-#define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
+#define NumDirect 	((SectorSize - 3 * sizeof(int)) / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
 #define MaxFileNumb     10 //+ goubetc 20.01.16
 
@@ -64,8 +64,33 @@ class FileHeader {
   private:
     int numBytes;			// Number of bytes in the file
     int numSectors;			// Number of data sectors in the file
+    int indirectLink;
     int dataSectors[NumDirect];		// Disk sector numbers for each data 
 					// block in the file
+
+    //int doubleIndirect;
+};
+
+
+class IndirectLink {
+ public:
+    bool Allocate(BitMap *freeMap, int fileSize);
+
+    void Deallocate(BitMap *freeMap);
+
+    void FetchFrom(int sector);
+
+    void WriteBack(int sector);
+
+    int ByteToSector(int offset);
+
+    void Print();
+    
+    int GetFromIdx (int i) {
+	return table[i];
+    }
+ private:
+    int table[SectorSize / sizeof(int)];
 };
 
 #endif // FILEHDR_H
