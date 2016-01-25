@@ -150,7 +150,9 @@ Initialize (int argc, char **argv)
 	      format = TRUE;
 #endif
 #ifdef NETWORK
-	  if (!strcmp (*argv, "-l"))
+//+b simbadSid 25.01.2016
+	  if (!strcmp (*argv, "-reliability"))
+//+b simbadSid 25.01.2016
 	    {
 		ASSERT (argc > 1);
 		rely = atof (*(argv + 1));
@@ -205,6 +207,8 @@ Initialize (int argc, char **argv)
 #endif
 
 #ifdef NETWORK
+	ASSERT(rely <= 1);
+	ASSERT(rely >= 0);
     postOffice = new PostOffice (netname, rely, 10);
 #endif
 }

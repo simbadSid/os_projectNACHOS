@@ -27,6 +27,7 @@ void sendMsg(int destinationMachineId, const char *msg, int srcMailBox, int dstM
 	outMailHdr.from		= srcMailBox;
 	outMailHdr.length	= strlen(msg) + 1;
 	postOffice->Send(outPktHdr, outMailHdr, msg);				// Send the first message
+	fflush(stdout);
 }
 
 void receiveMsg(int receiverMachineId, char *msg, int mailBox)
@@ -51,6 +52,7 @@ void RingTopologyNode(unsigned int nbrRingNode)
 
 	if (currentMachineAddress == 0)
 	{
+		DEBUG('n', "Machine %d send to machine %d\n", currentMachineAddress, forwardMachineAddress);
 		sendMsg(forwardMachineAddress, DATA, 0, 1);
 		receiveMsg(currentMachineAddress, buffer, 1);
 	}
