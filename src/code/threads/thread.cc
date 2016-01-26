@@ -43,7 +43,8 @@ Thread::Thread (const char *threadName, int threadID)
     status		= JUST_CREATED;
     sprintf(name, "%s", threadName);
 #ifdef FILESYS
-    CurrentDirectorySector = -1;
+    CurrentDirectorySector = 1;
+
     openedFiles = new OpenFile*[MAX_OPEN_FILE_NUM];
     for (int i = 0; i < MAX_OPEN_FILE_NUM; ++i)
     	openedFiles[i] = NULL;

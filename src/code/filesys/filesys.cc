@@ -83,7 +83,6 @@
 
 FileSystem::FileSystem(bool format)
 {
-    currentThread->CurrentDirectorySector = DirectorySector;
     openedFileStructure = new OpenedFileStructure();
     DEBUG('f', "Initializing the file system.\n");
     if (format) {
@@ -284,7 +283,7 @@ FileSystem::Create_sub_dir(const char *name)
 	    success = TRUE;
 	    ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
 	    dirHdr->WriteBack(sector);
-
+	    
 	    if (!openedFileStructure->AddFile(sector, WRITE, entry)) {
 		return NULL;
 	    }
@@ -412,13 +411,15 @@ FileSystem::Remove(const char *name)
 	}   
     }
     else {
-		fileHdr = new FileHeader();
-		fileHdr->FetchFrom(sector);
+	DEBUG('f', "Remove File %s.\n", name);
+	fileHdr = new FileHeader();
+	fileHdr->FetchFrom(sector);
+	DEBUG('f', "Fetch worked\n");
+	freeMap = new BitMap(NumSectors);
+	freeMap->FetchFrom(freeMapFile);
+	//	fileHdr->Deallocate(freeMap);  		// remove data blocks
+	DEBUG('f', "Deallocate worked\n");
 
-		freeMap = new BitMap(NumSectors);
-		freeMap->FetchFrom(freeMapFile);
-
-		fileHdr->Deallocate(freeMap);  		// remove data blocks
     }
     //+e goubetc 21.01.16
     freeMap->Clear(sector);			// remove header block
@@ -430,12 +431,13 @@ FileSystem::Remove(const char *name)
     //+b FoxTox 24.01.16
     delete fileHdr;
     delete subDirFile;
-    delete subDir;
     delete directory;
     delete freeMap;
     //+e FoxTox 24.01.16
     return TRUE;
 } 
+
+
 
 //----------------------------------------------------------------------
 // FileSystem::List

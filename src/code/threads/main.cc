@@ -178,6 +178,12 @@ main (int argc, char **argv)
 			fileSystem->ChangeCurrentDir (*(argv + 1));
 			argCount = 2;
 	    }
+		else if (!strcmp (*argv, "-rm"))					// remove Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->Remove (*(argv + 1));
+			argCount = 2;
+	    }
 		
 #endif // FILESYS
 #ifdef NETWORK

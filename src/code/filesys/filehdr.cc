@@ -107,9 +107,29 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 void 
 FileHeader::Deallocate(BitMap *freeMap)
 {
-    for (int i = 0; i < numSectors; i++) {
-	ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
-	freeMap->Clear((int) dataSectors[i]);
+    // int numRegSectors = SectorSize / sizeof(int);
+    if ((int) NumDirect < numSectors){
+		DEBUG('f', "indirect allocationbla\n");
+	IndirectLink *idl = new IndirectLink;
+	idl->FetchFrom(indirectLink);
+	int leftToDeallocate = numSectors - NumDirect;
+	int toDeallocate = ((int) NumDirect < leftToDeallocate)? (int)NumDirect:leftToDeallocate;
+	leftToDeallocate -= toDeallocate; 
+	idl->Deallocate(freeMap, toDeallocate);
+	
+	for (int i = 0; i < (int) NumDirect; i++) {
+	    ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
+	    freeMap->Clear((int) dataSectors[i]);
+	    DEBUG('f', "loop %d\n", i);
+	}
+	delete idl;
+    } else {
+	DEBUG('f', "Regular\n");
+	for (int i = 0; i < numSectors; i++) {
+	    ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
+	    freeMap->Clear((int) dataSectors[i]);
+	    DEBUG('f', "loop %d\n", i);
+	}
     }
 }
 
@@ -253,10 +273,9 @@ IndirectLink::Allocate(BitMap *freeMap, int fileSize)
 }
 
 void 
-IndirectLink::Deallocate(BitMap *freeMap)
+IndirectLink::Deallocate(BitMap *freeMap, int nbSectors)
 {
-    int numSectors = SectorSize / sizeof(int);
-    for (int i = 0; i < numSectors; i++) {
+    for (int i = 0; i < nbSectors; i++) {
 	ASSERT(freeMap->Test((int) table[i]));  // ought to be marked!
 	freeMap->Clear((int) table[i]);
     }
