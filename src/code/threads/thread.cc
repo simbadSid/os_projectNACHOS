@@ -272,7 +272,6 @@ Thread::Sleep ()
 #ifdef FILESYS
 OpenFile *Thread::getFile(int id) {
 	if (id >= MAX_OPEN_FILE_NUM or id < 0 or openedFiles[id] == NULL) {
-		DEBUG('f', "Not correct file ID %d \n", id);
 		return NULL;
 	}
 	return openedFiles[id];
@@ -291,7 +290,6 @@ int Thread::addFile(OpenFile *file) {
 
 void Thread::CloseFile(int id) {
 	if (id >= MAX_OPEN_FILE_NUM or id < 0) {
-		DEBUG('f', "Not correct file ID %d \n", id);
 		return;
 	}
 	openedFiles[id]->Close();

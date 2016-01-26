@@ -200,9 +200,9 @@ Directory::Remove(const char *name)
     else if (table[i].isSubDir){
 
 	    Directory *directory = new Directory(10, 1, 1);
-		OpenedFileEntry *entry = NULL;
-		if (!fileSystem->openedFileStructure->AddFile(table[i].sector, true, entry)) {
-		    return NULL;
+		int entry = fileSystem->openedFileStructure->AddFile(table[i].sector, true);
+		if (entry == -1) {
+		    return false;
 		}
 
 		OpenFile *directoryTmpFile = new OpenFile(table[i].sector, entry, true);

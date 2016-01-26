@@ -84,7 +84,6 @@ main (int argc, char **argv)
     int argCount;											// the number of arguments
     														// for a particular command
     DEBUG ('t', "Entering main");
-
     (void) Initialize (argc, argv);
 
 #ifdef THREADS
@@ -172,13 +171,6 @@ main (int argc, char **argv)
 			fileSystem->List_dir (*(argv + 1));
 			argCount = 2;
 	    }
-		else if (!strcmp (*argv, "-cd"))					// remove Nachos file
-	    {
-			ASSERT (argc > 1);
-			fileSystem->ChangeCurrentDir (*(argv + 1));
-			argCount = 2;
-	    }
-		
 #endif // FILESYS
 #ifdef NETWORK
 		if (!strcmp (*argv, "-o"))
@@ -190,7 +182,6 @@ main (int argc, char **argv)
 			MailTest (atoi (*(argv + 1)));
 			argCount = 2;
 	    }
-//+b simbadSid 25.01.2016
 		if (!strcmp (*argv, "-nrt"))
 	    {
 			ASSERT (argc > 1);
@@ -200,7 +191,6 @@ main (int argc, char **argv)
 			RingTopologyNode(atoi (*(argv + 1)));
 			argCount = 2;
 	    }
-//+b simbadSid 25.01.2016
 #endif // NETWORK
       }
 
