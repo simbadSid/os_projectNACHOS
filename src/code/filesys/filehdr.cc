@@ -74,7 +74,6 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 	    idLink->WriteBack(indirectLink);
 	    if (remaining <= 0){
 		doubleIndirect = -1;
-		idLink->WriteBack(indirectLink);
 		DEBUG('f', "indirect allocation done\n");
 		delete idLink;
 		return TRUE;
@@ -88,6 +87,7 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 		DoubleIndirectLink *dbl = new DoubleIndirectLink;
 		dbl->Allocate(freeMap, remaining);
 		dbl->WriteBack(doubleIndirect);
+		delete idLink;
 		delete dbl;
 		return TRUE;
 		//		idLink = new IndirectLink;
@@ -156,23 +156,25 @@ FileHeader::ByteToSector(int offset)
     if (idx < (int) NumDirect){ //+ goubetc 25.01.16
 	return(dataSectors[idx]);
     } else {
-	// // int sectidxmax = SectorSize / sizeof(int);
-	// if ( idx < sectidxmax) {
+	 int sectidxmax = SectorSize / sizeof(int);
+	 if ((int)(idx - NumDirect) < sectidxmax) {
+	DEBUG('f', "Here %d\n", idx);
 	    IndirectLink *idl = new IndirectLink;
 	    idl->FetchFrom(indirectLink);	
 	    int sector = idl->GetFromIdx(idx - NumDirect);
 	    delete idl;
 	    return sector;
-	// } else {
-	//     DoubleIndirectLink *didl = new DoubleIndirectLink;
-	//     didl->FetchFrom(doubleIndirect);
-	//     int idx2 =  idx - sectidxmax;
-	//     DEBUG('f', "call to didl->GetFromIdx %d  %u  %u\n",idx2, idx, sectidxmax);
-	//     int sector = didl->GetFromIdx(idx2);
-	//     DEBUG('f', "out, sector: %d\n", sector);
-	//     delete didl;
-	//     return sector;
-	// }
+	} else {
+	    DEBUG('f', "here2 %d\n", idx);
+	    DoubleIndirectLink *didl = new DoubleIndirectLink;
+	    didl->FetchFrom(doubleIndirect);
+	    int idx2 =  idx - sectidxmax;
+	    DEBUG('f', "call to didl->GetFromIdx %d  %u  %u\n",idx2, idx, sectidxmax);
+	    int sector = didl->GetFromIdx(idx2);
+	    DEBUG('f', "out, sector: %d\n", sector);
+	    delete didl;
+	    return sector;
+	}
     }
 }
 
@@ -238,17 +240,16 @@ FileHeader::Print()
 int
 IndirectLink::Allocate(BitMap *freeMap, int fileSize)
 {
-    int a = divRoundUp(SectorSize, sizeof(int));
+    int a = SectorSize / sizeof(int);
     int b = divRoundUp(fileSize, SectorSize);
     int numSectors  = (a<b)?a:b;
-    DEBUG('f', "allocating %d sectors\n", numSectors);
+    DEBUG('f', "allocating %dsectors for size %d\n", numSectors, fileSize);
     if (freeMap->NumClear() < numSectors)
 	return -1;		// not enough space
 
     for (int i = 0; i < numSectors; i++)
 	table[i] = freeMap->FindAndMark();
-    return fileSize - SectorSize * numSectors;
-    
+    return fileSize - (SectorSize * numSectors);
 }
 
 void 
@@ -353,6 +354,7 @@ DoubleIndirectLink::Allocate(BitMap *freeMap, int fileSize)
 	    return FALSE;
 	}
 	table[i] = freeMap->FindAndMark();
+	DEBUG('f', "sector: %d \n", table[i]);
 	idLink->WriteBack(table[i]);
     }
     return TRUE;    
@@ -444,9 +446,11 @@ DoubleIndirectLink::Print()
 
 int
 DoubleIndirectLink::GetFromIdx(int i){
-
+    DEBUG('f', "in index: %d\n", i);
     int idx = i / (SectorSize/ sizeof(int));
     int idx2 = i - idx;
+    DEBUG('f', "inderect index: %d sector: %d\n", idx, table[idx]);
+    DEBUG('f', "double indirect index: %d\n", idx2);
     IndirectLink *idl = new IndirectLink;
     idl->FetchFrom(table[idx]);
     idx = idl->GetFromIdx(idx2);
