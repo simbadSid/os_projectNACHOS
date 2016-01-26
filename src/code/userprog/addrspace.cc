@@ -175,7 +175,10 @@ AddrSpace::AddrSpace (OpenFile * executable, int maxNbrThread)
 	{
 		this->pageBitmap->Mark(i);														//		Notify the data pages as used
 	}
-
+	if (noffH.uninitData.size % PageSize) {
+		this->pageBitmap->Mark(i++);
+	}
+	this->pageBitmap->Mark(i++);
 /*
 	unsigned int nbrCodePages = divRoundUp (noffH.code.size, PageSize);
 	unsigned int nbrDataPages = divRoundUp (noffH.initData.size, PageSize);

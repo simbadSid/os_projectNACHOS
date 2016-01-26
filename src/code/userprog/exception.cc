@@ -313,15 +313,21 @@ ExceptionHandler (ExceptionType which)
 	    	char name[NAME_SIZE];
 			copyStringFromMachine(machine->ReadRegister(4), name, NAME_SIZE);
 			bool isForWrite = (bool) machine->ReadRegister(5);
-			DEBUG('e', "Open file: %s.\n", name);
-			machine->WriteRegister(2, currentThread->addFile(fileSystem->Open(name, isForWrite)));
+			DEBUG('f', "Open file: %s, for write %d.\n", name, (int)isForWrite);
+			OpenFile * file = fileSystem->Open(name, isForWrite);
+			if (file != NULL) {
+				machine->WriteRegister(2, currentThread->addFile(file));
+			}
+			else {
+				machine->WriteRegister(2, -1);
+			}
 	    	break;
 	    }
 		case SC_Close:
 	    {
 	    	int fileID = machine->ReadRegister(4);
 			currentThread->CloseFile(fileID);
-			DEBUG('e', "Close file by id: %d. \n", fileID);
+			DEBUG('f', "Close file by id: %d. \n", fileID);
 	    	break;
 	    }
 		case SC_Read:
@@ -342,7 +348,7 @@ ExceptionHandler (ExceptionType which)
 			char name[NAME_SIZE];
 			copyStringFromMachine(machine->ReadRegister(4), name, NAME_SIZE);
 			fileSystem->Create(name, 0);
-			DEBUG('e', "Create file: %s. \n", name);
+			DEBUG('f', "Create file: %s, mode: %d. \n", name);
 			break;
 		}
 		//+e FoxTox 24.01.16

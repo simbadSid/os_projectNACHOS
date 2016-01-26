@@ -3,17 +3,15 @@
 // FoxTox 24.01.2015
 
 
-// Stress test
+// Stress test - should not work, it is normal.
 int main() {
-	int ids;
+	int id0, id1;
 	char name []= "FileAlisa";
 	Create(name);
-	ids = Open(name, 1);
-	ids = Open(name, 0);
-	Close(ids);
-	/*
-	for (i = 0; i < 10; ++i) {
-	}*/
+	id1 = Open(name, 1);
+	id0 = Open(name, 0);
+	Close(id1);
+	//Close(id0);
 	return 0;
 }
 

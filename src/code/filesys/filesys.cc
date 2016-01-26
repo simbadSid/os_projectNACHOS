@@ -201,7 +201,7 @@ FileSystem::Create(const char *name, int initialSize)
     //+b FoxTox 24.01.16
     OpenedFileEntry *entry = NULL;
     if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry)) {
-    	return NULL;
+    	return false;
     }
 
     OpenFile *directoryTmpFile = new OpenFile(currentThread->CurrentDirectorySector, entry, WRITE);
@@ -259,7 +259,7 @@ FileSystem::Create_sub_dir(const char *name)
     //+e goubetc 23.01.16
     OpenedFileEntry *entry = NULL;
     if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry)) {
-	return NULL;
+    	return false;
     }
     OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector, entry, WRITE);
     directory->FetchFrom(directoryFile);
@@ -283,7 +283,7 @@ FileSystem::Create_sub_dir(const char *name)
 	    dirHdr->WriteBack(sector);
 
 	    if (!openedFileStructure->AddFile(sector, WRITE, entry)) {
-		return NULL;
+	    	return false;
 	    }
 
 	    OpenFile *openDir = new OpenFile(sector, entry, WRITE);
@@ -379,7 +379,7 @@ FileSystem::Remove(const char *name)
 
     OpenedFileEntry *entry = NULL;
     if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry)) {
-	return NULL;
+    	return false;
     }
     CurrentDirFile = new OpenFile(currentThread->CurrentDirectorySector, entry, WRITE); //+ goubetc 23.01.16
     directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
@@ -391,7 +391,7 @@ FileSystem::Remove(const char *name)
     }//+b goubetc 21.01.16
     if (directory->IsSubDir(name)){
     	if (!openedFileStructure->AddFile(sector, WRITE, entry)) {
-        	return NULL;
+        	return false;
     	}
 	subDirFile = new OpenFile(sector, entry, WRITE);
 	subDir = new Directory(MAX_ENTRIES, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
@@ -445,7 +445,7 @@ FileSystem::List()
     Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
     OpenedFileEntry *entry = NULL;
     if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry)) {
-	return;
+    	return;
     }
 
     OpenFile *currentDirFile = new OpenFile(currentThread->CurrentDirectorySector, entry, READ); //+ goubetc 23.01.16
@@ -510,7 +510,7 @@ FileSystem::Print()
     Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
     OpenedFileEntry *entry = NULL;
     if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry)) {
-	return;
+    	return;
     }
 
     OpenFile *currentDirFile = new OpenFile(currentThread->CurrentDirectorySector, entry, READ); //+ goubetc 23.01.16
@@ -540,7 +540,7 @@ FileSystem::ChangeCurrentDir(const char* name)
 {
     OpenedFileEntry *entry = NULL;
     if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry)) {
-	return;
+    	return;
     }
 
     OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector, entry, READ);

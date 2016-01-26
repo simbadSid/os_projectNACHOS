@@ -249,7 +249,7 @@ OpenedFileStructure::~OpenedFileStructure() {
 
 bool OpenedFileStructure::CanOpen(int sector, bool isForWrite) {
 	for (int i = 0; i < OPEN_FILES_NUMB; ++i) {
-		if (!entries[i].isFreeSlot and entries[i].sector == sector) {
+		if ((!entries[i].isFreeSlot) and (entries[i].sector == sector)) {
 			if (isForWrite or entries[i].isForWrite) {
 				return false;
 			}
@@ -276,6 +276,7 @@ bool OpenedFileStructure::AddFile(int sector, bool isForWrite, OpenedFileEntry* 
 	}
 	entries[freeEntryInd].sector = sector;
 	entries[freeEntryInd].isForWrite = isForWrite;
+	entries[freeEntryInd].isFreeSlot = false;
 	result = &entries[freeEntryInd];
     (void) interrupt->SetLevel (oldLevel);
     return true;
