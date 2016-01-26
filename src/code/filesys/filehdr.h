@@ -17,9 +17,10 @@
 #include "disk.h"
 #include "bitmap.h"
 
-#define NumDirect 	((SectorSize - 3 * sizeof(int)) / sizeof(int))
+#define NumDirect 	((SectorSize - 4 * sizeof(int)) / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
 #define MaxFileNumb     10 //+ goubetc 20.01.16
+
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
 // the "i-node"), describing where on disk to find all of the data in the file.
@@ -66,13 +67,33 @@ class FileHeader {
     int numSectors;			// Number of data sectors in the file
     int indirectLink;
     int dataSectors[NumDirect];		// Disk sector numbers for each data 
-					// block in the file
-
-    //int doubleIndirect;
+					// block in the FileLength
+    int doubleIndirect;
 };
 
 
 class IndirectLink {
+ public:
+    int Allocate(BitMap *freeMap, int fileSize);
+
+    void Deallocate(BitMap *freeMap);
+
+    void FetchFrom(int sector);
+
+    void WriteBack(int sector);
+
+    int ByteToSector(int offset);
+
+    void Print();
+    
+    int GetFromIdx (int i){
+    return table[i];
+}
+ private:
+    int table[SectorSize / sizeof(int)];
+};
+
+class DoubleIndirectLink {
  public:
     bool Allocate(BitMap *freeMap, int fileSize);
 
@@ -86,9 +107,7 @@ class IndirectLink {
 
     void Print();
     
-    int GetFromIdx (int i) {
-	return table[i];
-    }
+    int GetFromIdx (int i);
  private:
     int table[SectorSize / sizeof(int)];
 };
