@@ -16,16 +16,20 @@
 #define OPTION_RELIABILITY		"-reliability"
 #define OPTION_DEBUG			"-debug"
 #define OPTION_NACHOS_DEBUG		"-nachosDebug"
+#define OPTION_RANDOM_SEED		"-rs"
+
 #define DEFAULT_NBR_RING_NODE	3
 #define DEFAULT_RELIABILITY		1.0
 #define DEFAULT_DEBUG			false
 #define DEFAULT_NACHOS_DEBUG	false
+#define DEFAULT_RANDOM_SEED		3
 
 #define NODE_EXECUTABLE_FILE	"../src/code/build/nachos-network"
 #define ARGUMENT_NODE			"-m"
 #define ARGUMENT_TEST			"-nrt"
 #define ARGUMENT_RELIABILITY	"-reliability"
 #define ARGUMENT_PRINT_HALT		"-nph"
+#define ARGUMENT_RANDOM_SEED	"-rs"
 
 pid_t	*pid				= NULL;
 int		nbrCreatedProcess	= 0;
@@ -33,6 +37,7 @@ int		nbrRingNode			= 0;
 double	reliability			= 1;
 bool	debug;
 bool	nachosDebug;
+int		randomSeed;
 
 
 // --------------------------------------------
@@ -60,7 +65,7 @@ void cleanProcess(bool forceExitProcess, const char *fatalError)
 	{
 		if (forceExitProcess) kill((int)pid[i], SIGKILL);
 		waitpid((int)pid[i], &processReturnVal, 0);
-		printDebug("\t------ End of node  %d with return value %d\n", i, processReturnVal);
+		printDebug("\t-> End of node  %d with return value %d\n", i, processReturnVal);
 	}
 	delete [] pid;
 	if (fatalError != NULL)
@@ -85,22 +90,22 @@ void sigAlarmHandler(int sig)	{cleanProcess(true, "SIGALARM");}
 // --------------------------------------------
 void runRingTopologyProcess(int nodeId, int nbrRingNode)
 {
-	char argNodeId[100];
-	char argNbrNode[100];
-	char argReliability[100];
+	char argNodeId[100], argNbrNode[100], argRandomSeed[100], argReliability[100];
 	const char *argNachosDebugOption, *argNachosDebugVal;
 
 	sprintf(argNodeId,		"%d", nodeId);
 	sprintf(argNbrNode,		"%d", nbrRingNode);
 	sprintf(argReliability,	"%f", reliability);
+	sprintf(argRandomSeed,	"%d", randomSeed);
 	argNachosDebugOption	= (nachosDebug) ? "-d" : "";
 	argNachosDebugVal		= (nachosDebug) ? "-n" : "";
 
-	printDebug("\t------ Start node %d\n", nodeId);
+	printDebug("\t-> Start node %d\n", nodeId);
 
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);									// Init the synchronization system
 	execl(NODE_EXECUTABLE_FILE, NODE_EXECUTABLE_FILE,						// Run the node program
 			ARGUMENT_PRINT_HALT,
+			ARGUMENT_RANDOM_SEED,	argRandomSeed,
 			argNachosDebugOption,	argNachosDebugVal,
 			ARGUMENT_RELIABILITY,	argReliability,
 			ARGUMENT_NODE,			argNodeId,
@@ -116,18 +121,20 @@ void runRingTopologyProcess(int nodeId, int nbrRingNode)
 //----------------------------------------------------------------------
 // Initialize the parameters of the progrem.
 //----------------------------------------------------------------------
-void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability, bool *debug, bool *nachosDebug)
+void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability, bool *debug, bool *nachosDebug, int *randomSeed)
 {
 	*nbrRingNode	= DEFAULT_NBR_RING_NODE;
 	*reliability	= DEFAULT_RELIABILITY;
 	*debug			= DEFAULT_DEBUG;
 	*nachosDebug	= DEFAULT_NACHOS_DEBUG;
+	*randomSeed		= DEFAULT_RANDOM_SEED;
 
 	for (int i=1; i<argc; i++)
 	{
 		argv++;
 		if		(!strcmp(*argv, OPTION_NBR_RING_NODE))	{argv++; i++; sscanf(*argv, "%d",	nbrRingNode);}
 		else if	(!strcmp(*argv, OPTION_RELIABILITY))	{argv++; i++; sscanf(*argv, "%lf",	reliability);}
+		else if	(!strcmp(*argv, OPTION_RANDOM_SEED))	{argv++; i++; sscanf(*argv, "%d",	randomSeed);}
 		else if	(!strcmp(*argv, OPTION_DEBUG))			{*debug			= true;}
 		else if	(!strcmp(*argv, OPTION_NACHOS_DEBUG))	{*nachosDebug	= true;}
 		else	cleanProcess(true, "Wrong arguments");
@@ -140,6 +147,7 @@ void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability
 	printDebug("Start of the test:\n");
 	printDebug("\t- NbrRingNode         = %d:\n", *nbrRingNode);
 	printDebug("\t- Network reliability = %f:\n", *reliability);
+	printDebug("\t- Random seed         = %d:\n", *randomSeed);
 	printDebug("----------------------------------------------\n\n");
 }
 
@@ -148,7 +156,7 @@ void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability
 //----------------------------------------------------------------------
 int main (int argc, char **argv)
 {
-	initParameters(argc, argv, &nbrRingNode, &reliability, &debug, &nachosDebug);
+	initParameters(argc, argv, &nbrRingNode, &reliability, &debug, &nachosDebug, &randomSeed);
 
 	pid					= new pid_t(nbrRingNode);
 	nbrCreatedProcess	= 0;

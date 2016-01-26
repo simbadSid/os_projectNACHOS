@@ -30,11 +30,20 @@
 
 #include "network.h"
 #include "synchlist.h"
+#include "timer.h"
 
+
+
+#define MAX_NBR_MSG_SEND	20
 
 
 typedef int MailBoxAddress;												// Mailbox address -- uniquely identifies a mailbox on a given machine.
 																		// A mailbox is just a place for temporary storage for messages.
+// ---------------------------------------------
+// Type of an ack in a mail msg
+// ---------------------------------------------
+typedef unsigned int ack_t;
+
 
 // -----------------------------------------------------------
 // The following class defines part of the message header.  
@@ -46,6 +55,10 @@ class MailHeader
   public:
     MailBoxAddress	to;													// Destination mail box
     MailBoxAddress	from;												// Mail box to reply to
+    // +b simbadSid 25.01.2015
+    bool			isAck;
+    ack_t				ackId;												// Id of an acknowledgment (0 if it the mail is not an ack)
+    // +e simbadSid 25.01.2015
     unsigned		length;												// Bytes of message data (excluding the mail header)
 };
 
@@ -86,7 +99,7 @@ class MailBox
     void Get(PacketHeader *pktHdr, MailHeader *mailHdr, char *data);	// Atomically get a message out of the
     																	// mailbox (and wait if there is no message to get!)
   private:
-    SynchList *messages;												// A mailbox is just a list of arrived messages
+    SynchList	*messages;												// A mailbox is just a list of arrived messages
 };
 
 // -----------------------------------------------------------
@@ -101,29 +114,71 @@ class MailBox
 class PostOffice
 {
   public:
-    PostOffice(NetworkAddress addr, double reliability, int nBoxes);	// Allocate and initialize Post Office "reliability" is how many packets
+	PostOffice(NetworkAddress addr, double reliability, int nBoxes);	// Allocate and initialize Post Office "reliability" is how many packets
 																		//   get dropped by the underlying network
-    ~PostOffice();														// De-allocate Post Office data
-    
-    void Send(PacketHeader pktHdr,MailHeader mailHdr, const char *data);// Send a message to a mailbox on a remote  machine.
-    																	// 	The fromBox in the MailHeader is the return box for ack's.
-    void Receive(int box, PacketHeader *pktHdr, MailHeader *mailHdr,	// Retrieve a message from "box".  Wait if
-    		char *data);												//	there is no message in the box.
-    void PostalDelivery();												// Wait for incoming messages, and then put them in the correct mailbox
-    void PacketSent();													// Interrupt handler, called when outgoing packet has been put on network; next
-    																	//	packet can now be sent
-    void IncomingPacket();												// Interrupt handler, called when incoming packet has arrived and can be pulled
-    																	// off of network (i.e., time to call PostalDelivery)
-    NetworkAddress GetNeworkAdress(){return this->netAddr;}
+	~PostOffice();														// De-allocate Post Office data
+
+	bool Send(PacketHeader pktHdr,MailHeader mailHdr, const char *data);// Send a message to a mailbox on a remote  machine.
+																		// 	The fromBox in the MailHeader is the return box for ack's.
+	void Receive(int box, PacketHeader *pktHdr, MailHeader *mailHdr,	// Retrieve a message from "box".  Wait if
+			char *data);												//	there is no message in the box.
+	void PostalDelivery();												// Wait for incoming messages, and then put them in the correct mailbox
+	//+b simbadSid 25.01.2016
+	void SendTimerHandler();											// Handler to the timer: Wake up all the threads waiting for an acknowledgment
+	//+e simbadSid 25.01.2016
+	void PacketSent();													// Interrupt handler, called when outgoing packet has been put on network; next
+																		//	packet can now be sent
+	void IncomingPacket();												// Interrupt handler, called when incoming packet has arrived and can be pulled
+																		// off of network (i.e., time to call PostalDelivery)
+	NetworkAddress GetNeworkAdress(){return this->netAddr;}
 
   private:
-    Network			*network;											// Physical network connection
-    NetworkAddress	netAddr;											// Network address of this machine
-    MailBox			*boxes;												// Table of mail boxes to hold incoming mail
-    int				numBoxes;											// Number of mail boxes
-    Semaphore		*messageAvailable;									// V'ed when message has arrived from network
-    Semaphore		*messageSent;										// V'ed when next message can be sent to network
-    Lock			*sendLock;											// Only one outgoing message at a time
+	// Private mathodes
+//+b simbadSid 25.01.2016
+	bool Send(PacketHeader pktHdr,MailHeader mailHdr, const char *data, bool IS_ACK, ack_t ACK_ID);
+	void SendSimple(PacketHeader pktHdr, char *msg);					// Send a single msg and don't wait for ack
+	bool SendUntilACK(PacketHeader pktHdr, char *msg, ack_t ack);		// Send several msg and wait for 1 ack
+	int	GenerateACK();
+//+e simbadSid 25.01.2016
+
+	// Private attributes
+	Network			*network;											// Physical network connection
+	NetworkAddress	netAddr;											// Network address of this machine
+	MailBox			*boxes;												// Table of mail boxes to hold incoming mail
+	int				numBoxes;											// Number of mail boxes
+	Semaphore		*messageAvailable;									// V'ed when message has arrived from network
+	Semaphore		*messageSent;										// V'ed when next message can be sent to network
+	Lock			*sendLock;											// Only one outgoing message at a time
+//+b simbadSid 25.01.2016
+	Timer			*timer;												// Call the postOffice at fixed rate
+	KeyList			*pendingSentMsg;									// List of msg waiting for acknowledgment
+	Lock			*pendingSentLock;									// Lock to access the pendingSentMsg list
+//+e simbadSid 25.01.2016
 };
+
+
+class PendingSentMsg
+{
+	public:
+		// Attributes
+		int			nbrTry;
+		Condition	*cond;
+		Lock		*lock;
+		bool		delivered;
+
+		// Builder
+		PendingSentMsg(Lock *LOCK)
+		{
+			this->nbrTry	= 0;
+			this->cond		= new Condition("Condition var for pending msg");
+			this->lock		= LOCK;
+			this->delivered	= false;
+		}
+		~PendingSentMsg()
+		{
+			delete this->cond;
+		}
+};
+
 
 #endif

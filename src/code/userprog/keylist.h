@@ -18,6 +18,7 @@ class KeyList
 		int		GetNbrElement	();
 		void	PrintList		();
 		void	FreeAllList		();
+	    void	Mapcar 			(VoidFunctionPtr func);				// Apply the given function to all the elements of the list
 
 	private:
 		int		key;

@@ -112,7 +112,7 @@ Network::Send(PacketHeader hdr, char* data)
 
     interrupt->Schedule(NetworkSendDone, (int)this, NetworkTime, NetworkSendInt);
 
-    if (Random() % 100 >= chanceToWork * 100) { // emulate a lost packet
+    if ((Random() % 100) >= chanceToWork * 100) { // emulate a lost packet
 	DEBUG('n', "oops, lost it!\n");
 	return;
     }
