@@ -179,7 +179,7 @@ OpenFile::WriteAt(const char *from, int numBytes, int position)
     firstSector = divRoundDown(position, SectorSize);
     lastSector = divRoundDown(position + numBytes - 1, SectorSize);
     numSectors = 1 + lastSector - firstSector;
-DEBUG('f', "here %d\n", numSectors * SectorSize);
+
     buf = new char[numSectors * SectorSize];
 
     firstAligned = (position == (firstSector * SectorSize));
@@ -201,9 +201,9 @@ DEBUG('f', "here %d\n", numSectors * SectorSize);
         synchDisk->WriteSector(hdr->ByteToSector(i * SectorSize), 
 					&buf[(i - firstSector) * SectorSize]);
     // TODO take care here of IndirectLink
-    DEBUG('f', "here2\n");
+
     delete [] buf;
-    DEBUG('f', "here2\n");
+
     return numBytes;
 }
 

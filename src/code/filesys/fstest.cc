@@ -55,7 +55,6 @@ Copy(const char *from, const char *to)
 	return;
     }
     
-        DEBUG('f', "heeeeeeeeeee.\n");
     openFile = fileSystem->Open(to, true);
     ASSERT(openFile != NULL);
     
@@ -64,7 +63,6 @@ Copy(const char *from, const char *to)
     while ((amountRead = fread(buffer, sizeof(char), TransferSize, fp)) > 0){
 	openFile->Write(buffer, amountRead);
     
-        DEBUG('f', "loop.\n");
 }
 	delete [] buffer;
 // Close the UNIX and the Nachos files
