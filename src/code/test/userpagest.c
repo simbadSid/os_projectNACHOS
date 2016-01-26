@@ -3,9 +3,6 @@
 
 
 int main() {
-
-	PutString("Fuck you Riyane, alisa is the best, really, !\n\0", 200);
-
 	int tid0 = ForkExec("ioTest");
 	int tid1 = ForkExec("multithreadingTest");
 

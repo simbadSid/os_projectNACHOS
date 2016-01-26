@@ -237,7 +237,6 @@ FileSystem::Create(const char *name, int initialSize)
     }
     delete directoryTmpFile;
     delete directory;
-    delete directoryTmpFile;
     return success;
     //+e FoxTox 24.01.16
 }
@@ -318,7 +317,7 @@ FileSystem::Create_sub_dir(const char *name)
 
 OpenFile *
 FileSystem::Open(const char *name, bool isForWrite) //+ goubetc 23.01.16
-{ 
+{
     Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
     OpenFile *openFile = NULL;
     int sector;

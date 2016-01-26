@@ -137,7 +137,9 @@ ExceptionHandler (ExceptionType which)
 			      userThreadList->GetNbrElement());
 			//+b goubetc 18.01.16
 			haltCondition->Acquire();
-			while(!userThreadList->IsEmpty()) variableCondition->Wait(haltCondition);
+			while(!userThreadList->IsEmpty()) {
+				variableCondition->Wait(haltCondition);
+			}
 			haltCondition->Release();
 			//+e goubetc 18.01.16
 			DEBUG('e', "\t->End wating for the user threads.\n");
@@ -257,9 +259,9 @@ ExceptionHandler (ExceptionType which)
 		{
 		    DEBUG('e', "Exception: user thread exit initiated by user thread: tid = %d, name = \"%s\".\n",
 		    		currentThread->getTID(), currentThread->getName());
-//TODO check
 		    UpdatePC();																	// Done because the next function never returns
 			do_UserThreadExit();														// Does not returns
+			ASSERT(false);
 			break;
 		}
 		case SC_UserThreadJoin:
