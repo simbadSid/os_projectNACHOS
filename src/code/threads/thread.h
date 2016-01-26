@@ -40,6 +40,7 @@
 #include "copyright.h"
 #include "utility.h"
 
+
 // simbadSid 10.01.2015
 
 #ifdef USER_PROGRAM
@@ -87,6 +88,7 @@ class Thread
     // THEY MUST be in this position for SWITCH to work.
     int *stackTop;										// the current stack pointer
     int machineState[MachineStateSize];					// all registers except for stackTop
+
   public:
       Thread (const char *debugName, int tid);			// initialize a Thread
      ~Thread ();										// deallocate a Thread NOTE -- thread being deleted must not be running when delete is called

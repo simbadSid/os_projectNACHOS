@@ -114,3 +114,12 @@ void KeyList::FreeAllList()
 }
 
 // +e simbadSid 10.01.2016
+
+// +b simbadSid 25.01.2016
+void KeyList::Mapcar(VoidFunctionPtr func)
+{
+	if (this->elem == NULL)	return;
+	(*func) ((int) this->elem);
+	if (this->next != NULL) this->next->Mapcar(func);
+}
+// +b simbadSid 25.01.2016

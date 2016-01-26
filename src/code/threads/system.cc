@@ -100,6 +100,7 @@ Initialize (int argc, char **argv)
     int argCount;
     const char *debugArgs = "";
     bool randomYield = FALSE;
+    bool printHalt = true;
 
 #ifdef USER_PROGRAM
     bool debugUserProg = FALSE;	// single step user program
@@ -115,6 +116,13 @@ Initialize (int argc, char **argv)
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount)
       {
 	  argCount = 1;
+//+b simbadSid 25.01.2015
+	  if (!strcmp (*argv, "-nph"))
+	  {
+		  printHalt = false;
+	  }
+//+e simbadSid 25.01.2015
+
 	  if (!strcmp (*argv, "-d"))
 	    {
 		if (argc == 1)
@@ -142,7 +150,9 @@ Initialize (int argc, char **argv)
 	      format = TRUE;
 #endif
 #ifdef NETWORK
-	  if (!strcmp (*argv, "-l"))
+//+b simbadSid 25.01.2016
+	  if (!strcmp (*argv, "-reliability"))
+//+b simbadSid 25.01.2016
 	    {
 		ASSERT (argc > 1);
 		rely = atof (*(argv + 1));
@@ -173,6 +183,7 @@ Initialize (int argc, char **argv)
 
     interrupt->Enable ();
     CallOnUserAbort (Cleanup);									// if user hits ctl-C
+    interrupt->setPrintHalt(printHalt);
 
 #ifdef USER_PROGRAM
     machine				= new Machine (debugUserProg);			// this must come first
@@ -196,6 +207,8 @@ Initialize (int argc, char **argv)
 #endif
 
 #ifdef NETWORK
+	ASSERT(rely <= 1);
+	ASSERT(rely >= 0);
     postOffice = new PostOffice (netname, rely, 10);
 #endif
 }
@@ -207,7 +220,10 @@ Initialize (int argc, char **argv)
 void
 Cleanup ()
 {
-    printf ("\nCleaning up...\n");
+    if ((interrupt == NULL) || (interrupt->getPrintHalt()))
+    {
+    	printf ("\nCleaning up...\n");
+    }
 #ifdef NETWORK
     delete postOffice;
 #endif

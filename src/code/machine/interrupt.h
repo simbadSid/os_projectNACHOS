@@ -113,6 +113,10 @@ class Interrupt {
     
     void OneTick();       		// Advance simulated time
 
+    //+b simbadSid 25.01.2016
+    void setPrintHalt(bool print)	{this->printHalt = print;}	// Indicate whether to print the stat at halt call or not
+    bool getPrintHalt()				{return this->printHalt;}	// Indicate whether to print the stat at halt call or not
+    //+e simbadSid 25.01.2016
   private:
     IntStatus level;		// are interrupts enabled or disabled?
     List *pending;		// the list of interrupts scheduled
@@ -121,6 +125,9 @@ class Interrupt {
     bool yieldOnReturn; 	// TRUE if we are to context switch
 				// on return from the interrupt handler
     MachineStatus status;	// idle, kernel mode, user mode
+    //+b simbadSid 25.01.2016
+	bool printHalt;
+    //+e simbadSid 25.01.2016
 
     // these functions are internal to the interrupt simulation code
 

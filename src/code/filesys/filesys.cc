@@ -51,6 +51,7 @@
 #include "filehdr.h"
 #include "filesys.h"
 #include "system.h"
+#include "openfile.h"
 
 //+ goubetc 19.01.16 20.01.16 21.01.16
 

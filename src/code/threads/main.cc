@@ -62,7 +62,7 @@ extern void ThreadTest (void), Copy (const char *unixFile, const char *nachosFil
 extern void Print (char *file), PerformanceTest (void);
 extern void StartProcess (char *file), ConsoleTest (char *in, char *out);
 extern void MailTest (int networkID);
-extern void RingTopologyNode(unsigned int machineId, unsigned int nbrRingNode);
+extern void RingTopologyNode(unsigned int nbrRingNode);
 
 //----------------------------------------------------------------------
 // main
@@ -82,9 +82,9 @@ int
 main (int argc, char **argv)
 {
     int argCount;											// the number of arguments
-    // for a particular command
-
+    														// for a particular command
     DEBUG ('t', "Entering main");
+
     (void) Initialize (argc, argv);
 
 #ifdef THREADS
@@ -92,92 +92,93 @@ main (int argc, char **argv)
 #endif
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount)
 	{
-	    argCount = 1;
-	    if (!strcmp (*argv, "-z"))	printf ("%s", copyright);// print copyright
+		argCount = 1;
+		if (!strcmp (*argv, "-z"))	printf ("%s", copyright);// print copyright
 #ifdef USER_PROGRAM
-	    if (!strcmp (*argv, "-x"))							// run a user program
-		{
-		    ASSERT (argc > 1);
-		    StartProcess (*(argv + 1));
-		    argCount = 2;
-		}
-	    else if (!strcmp (*argv, "-c"))						// test the console
-		{
-		    if (argc == 1)	ConsoleTest (NULL, NULL);
-		    else
+		if (!strcmp (*argv, "-x"))							// run a user program
+	    {
+			ASSERT (argc > 1);
+			StartProcess (*(argv + 1));
+			argCount = 2;
+	    }
+		else if (!strcmp (*argv, "-c"))						// test the console
+	    {
+			if (argc == 1)	ConsoleTest (NULL, NULL);
+			else
 			{
-			    ASSERT (argc > 2);
-			    ConsoleTest (*(argv + 1), *(argv + 2));
-			    argCount = 3;
+				ASSERT (argc > 2);
+				ConsoleTest (*(argv + 1), *(argv + 2));
+				argCount = 3;
 			}
-		    interrupt->Halt ();							// once we start the console, then
-		    // Nachos will loop forever waiting
-		    // for console input
-		}
-	    else if (!strcmp (*argv, "-sc"))				// test the synchronized console
-		{
-		    if (argc == 1)	ConsoleTest (NULL, NULL);
-		    else
+			interrupt->Halt ();							// once we start the console, then
+														// Nachos will loop forever waiting
+														// for console input
+	    }
+		else if (!strcmp (*argv, "-sc"))				// test the synchronized console
+	    {
+			if (argc == 1)	ConsoleTest (NULL, NULL);
+			else
 			{
-			    ASSERT (argc > 2);
-			    ConsoleTest (*(argv + 1), *(argv + 2));
-			    argCount = 3;
+				ASSERT (argc > 2);
+				ConsoleTest (*(argv + 1), *(argv + 2));
+				argCount = 3;
 			}
-		    interrupt->Halt ();							// once we start the console, then
-		    // Nachos will loop forever waiting
-		    // for console input
-		}
+			interrupt->Halt ();							// once we start the console, then
+														// Nachos will loop forever waiting
+														// for console input
+	    }
 #endif													// USER_PROGRAM
 #ifdef FILESYS
-	    if (!strcmp (*argv, "-cp"))						// copy from UNIX to Nachos
+		if (!strcmp (*argv, "-cp"))						// copy from UNIX to Nachos
 		{
-		    ASSERT (argc > 2);
-		    Copy (*(argv + 1), *(argv + 2));
-		    argCount = 3;
+			ASSERT (argc > 2);
+			Copy (*(argv + 1), *(argv + 2));
+			argCount = 3;
 		}
-	    else if (!strcmp (*argv, "-p"))					// print a Nachos file
-		{
-		    ASSERT (argc > 1);
-		    Print (*(argv + 1));
-		    argCount = 2;
-		}
-	    else if (!strcmp (*argv, "-r"))					// remove Nachos file
-		{
-		    ASSERT (argc > 1);
-		    fileSystem->Remove (*(argv + 1));
-		    argCount = 2;
-		}
-	    else if (!strcmp (*argv, "-l"))					// list Nachos directory
-		{
-		    fileSystem->List ();
-		}
-	    else if (!strcmp (*argv, "-D"))					// print entire filesystem
-		{
-		    fileSystem->Print ();
-		}
-	    else if (!strcmp (*argv, "-t"))					// performance test
-		{
-		    PerformanceTest ();
-		}
-	    else if (!strcmp (*argv, "-mkdir"))					// create Nachos directory
-		{
-		    ASSERT (argc > 1);
-		    fileSystem->Create_sub_dir (*(argv + 1));
-		    argCount = 2;
-		}
+		else if (!strcmp (*argv, "-p"))					// print a Nachos file
+	    {
+			ASSERT (argc > 1);
+			Print (*(argv + 1));
+			argCount = 2;
+	    }
+		else if (!strcmp (*argv, "-r"))					// remove Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->Remove (*(argv + 1));
+			argCount = 2;
+	    }
+		else if (!strcmp (*argv, "-l"))					// list Nachos directory
+	    {
+			fileSystem->List ();
+	    }
+		else if (!strcmp (*argv, "-D"))					// print entire filesystem
+	    {
+			fileSystem->Print ();
+	    }
+		else if (!strcmp (*argv, "-t"))					// performance test
+	    {
+			PerformanceTest ();
+	    }
+		else if (!strcmp (*argv, "-mkdir"))					// create Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->Create_sub_dir (*(argv + 1));
+			argCount = 2;
+	    }
 		
-	    else if (!strcmp (*argv, "-ls"))					// remove Nachos file
-		{
-		    ASSERT (argc > 1);
-		    fileSystem->List_dir (*(argv + 1));
-		    argCount = 2;
-		}
-	    else if (!strcmp (*argv, "-cd"))					// remove Nachos file
-		{
-		    ASSERT (argc > 1);
-		    fileSystem->ChangeCurrentDir (*(argv + 1));
-		    argCount = 2;
-		}
+		else if (!strcmp (*argv, "-ls"))					// remove Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->List_dir (*(argv + 1));
+			argCount = 2;
+	    }
+		else if (!strcmp (*argv, "-cd"))					// remove Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->ChangeCurrentDir (*(argv + 1));
+			argCount = 2;
+	    }
+		
 #endif // FILESYS
 #ifdef NETWORK
 		if (!strcmp (*argv, "-o"))
@@ -189,19 +190,19 @@ main (int argc, char **argv)
 			MailTest (atoi (*(argv + 1)));
 			argCount = 2;
 	    }
+//+b simbadSid 25.01.2016
 		if (!strcmp (*argv, "-nrt"))
 	    {
 			ASSERT (argc > 1);
 //			Delay (2);									// delay for 2 seconds
 														// to give the user time to
 														// start up another nachos
-			RingTopologyNode(atoi (*(argv + 1)),
-							 atoi (*(argv + 2)));
+			RingTopologyNode(atoi (*(argv + 1)));
 			argCount = 2;
 	    }
-
+//+b simbadSid 25.01.2016
 #endif // NETWORK
-	}
+      }
 
     currentThread->Finish ();	// NOTE: if the procedure "main" 
     // returns, then the program "nachos"

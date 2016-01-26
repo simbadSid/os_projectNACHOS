@@ -15,7 +15,7 @@
 #include "bitmap.h"
 
 
-#define	DEFAULT_FRAME_ALLOCATION_POLICY	FirstFree
+#define	DEFAULT_FRAME_ALLOCATION_POLICY	RandomFree
 
 enum FrameAllocationPolicy
 {

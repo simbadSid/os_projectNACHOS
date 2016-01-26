@@ -48,8 +48,7 @@ Timer::Timer(VoidFunctionPtr timerHandler, int callArg, bool doRandom)
     arg = callArg; 
 
     // schedule the first interrupt from the timer device
-    interrupt->Schedule(TimerHandler, (int) this, TimeOfNextInterrupt(), 
-		TimerInt); 
+    interrupt->Schedule(TimerHandler, (int) this, TimeOfNextInterrupt(), TimerInt);
 }
 
 //----------------------------------------------------------------------
