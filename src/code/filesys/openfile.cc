@@ -30,14 +30,13 @@ OpenFile::OpenFile()
 //	"sector" -- the location on disk of the file header for this file
 //----------------------------------------------------------------------
 
-OpenFile::OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWrite)
+OpenFile::OpenFile(int sector, int _openedFileEntryID, bool _isForWrite)
 {
 	hdr = new FileHeader;
 	hdr->FetchFrom(sector);
 	seekPosition = 0;
-	openedFileEntry = _openedFileEntry;
+	openedFileEntryID = _openedFileEntryID;
 	isForWrite = _isForWrite;
-    openedFileEntry = NULL;
     isClosed = false;
 }
 
@@ -49,11 +48,10 @@ OpenFile::OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWri
 OpenFile::~OpenFile()
 {
 	if (!isClosed) {
+		fileSystem->openedFileStructure->RemoveFile(openedFileEntryID);
 		delete hdr;
-		if (openedFileEntry != NULL) {
-			openedFileEntry->isFreeSlot = true;
-		}
 		isClosed = true;
+
 	}
 }
 
@@ -175,7 +173,7 @@ OpenFile::WriteAt(const char *from, int numBytes, int position)
 	numBytes = fileLength - position;
     DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n", 	
 			numBytes, position, fileLength);
-
+    
     firstSector = divRoundDown(position, SectorSize);
     lastSector = divRoundDown(position + numBytes - 1, SectorSize);
     numSectors = 1 + lastSector - firstSector;
@@ -184,7 +182,7 @@ OpenFile::WriteAt(const char *from, int numBytes, int position)
 
     firstAligned = (position == (firstSector * SectorSize));
     lastAligned = ((position + numBytes) == ((lastSector + 1) * SectorSize));
-
+    
 // read in first and last sector, if they are to be partially modified
     if (!firstAligned)
         ReadAt(buf, SectorSize, firstSector * SectorSize);	
@@ -195,11 +193,15 @@ OpenFile::WriteAt(const char *from, int numBytes, int position)
 // copy in the bytes we want to change 
     bcopy(from, &buf[position - (firstSector * SectorSize)], numBytes);
 
+    
 // write modified sectors back
     for (i = firstSector; i <= lastSector; i++)	
         synchDisk->WriteSector(hdr->ByteToSector(i * SectorSize), 
 					&buf[(i - firstSector) * SectorSize]);
+    // TODO take care here of IndirectLink
+
     delete [] buf;
+
     return numBytes;
 }
 
@@ -222,9 +224,7 @@ void OpenFile::Close()
 {
 	if (!isClosed) {
 		delete hdr;
-		if (openedFileEntry != NULL) {
-			openedFileEntry->isFreeSlot = true;
-		}
+		fileSystem->openedFileStructure->RemoveFile(openedFileEntryID);
 		isClosed = true;
 	}
 }
@@ -249,7 +249,7 @@ OpenedFileStructure::~OpenedFileStructure() {
 
 bool OpenedFileStructure::CanOpen(int sector, bool isForWrite) {
 	for (int i = 0; i < OPEN_FILES_NUMB; ++i) {
-		if (!entries[i].isFreeSlot and entries[i].sector == sector) {
+		if ((!entries[i].isFreeSlot) and (entries[i].sector == sector)) {
 			if (isForWrite or entries[i].isForWrite) {
 				return false;
 			}
@@ -259,11 +259,11 @@ bool OpenedFileStructure::CanOpen(int sector, bool isForWrite) {
 }
 
 
-bool OpenedFileStructure::AddFile(int sector, bool isForWrite, OpenedFileEntry* result) {
+int OpenedFileStructure::AddFile(int sector, bool isForWrite) {
 	IntStatus oldLevel = interrupt->SetLevel (IntOff);
 	if (!CanOpen(sector, isForWrite)) {
 		DEBUG('f', "Not allowed to open file \n");
-		return false;
+		return -1;
 	}
 	int freeEntryInd;
 	for (freeEntryInd = 0; freeEntryInd < OPEN_FILES_NUMB; ++freeEntryInd) {
@@ -276,7 +276,14 @@ bool OpenedFileStructure::AddFile(int sector, bool isForWrite, OpenedFileEntry* 
 	}
 	entries[freeEntryInd].sector = sector;
 	entries[freeEntryInd].isForWrite = isForWrite;
-	result = &entries[freeEntryInd];
+	entries[freeEntryInd].isFreeSlot = false;
     (void) interrupt->SetLevel (oldLevel);
-    return true;
+    return freeEntryInd;
+}
+
+void OpenedFileStructure::RemoveFile(int id) {
+	if (id < 0 or id >= OPEN_FILES_NUMB) {
+		return;
+	}
+	entries[id].isFreeSlot = true;
 }
