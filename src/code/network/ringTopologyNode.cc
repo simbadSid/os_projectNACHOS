@@ -12,7 +12,7 @@
 #include "interrupt.h"
 
 
-#define		MAX_NBR_RING_NODE	20
+#define		MAX_NBR_RING_NODE	30
 #define		DATA				"Hello there!"
 #define		ACK					"Got it!"
 
@@ -53,12 +53,16 @@ void RingTopologyNode(unsigned int nbrRingNode)
 	if (currentMachineAddress == 0)
 	{
 		DEBUG('n', "Machine %d send to machine %d\n", currentMachineAddress, forwardMachineAddress);
+//printf("Start send\n");
 		sendMsg(forwardMachineAddress, DATA, 0, 1);
+//printf("End send\n");
 		receiveMsg(currentMachineAddress, buffer, 1);
 	}
 	else
 	{
+//printf("Start receive\n");
 		receiveMsg(currentMachineAddress, buffer, 1);
+//printf("End receive\n");
 		sendMsg(forwardMachineAddress, buffer, 0, 1);
 	}
 

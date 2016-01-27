@@ -12,17 +12,19 @@
 
 
 
-#define OPTION_NBR_RING_NODE	"-nbrMachine"
+#define OPTION_NBR_RING_NODE	"-nbrNode"
 #define OPTION_RELIABILITY		"-reliability"
 #define OPTION_DEBUG			"-debug"
 #define OPTION_NACHOS_DEBUG		"-nachosDebug"
 #define OPTION_RANDOM_SEED		"-rs"
+#define OPTION_PRINT_HAlT		"-ph"
 
 #define DEFAULT_NBR_RING_NODE	3
 #define DEFAULT_RELIABILITY		1.0
 #define DEFAULT_DEBUG			false
 #define DEFAULT_NACHOS_DEBUG	false
 #define DEFAULT_RANDOM_SEED		3
+#define DEFAULT_PRINT_HALT		false;
 
 #define NODE_EXECUTABLE_FILE	"../src/code/build/nachos-network"
 #define ARGUMENT_NODE			"-m"
@@ -38,6 +40,7 @@ double	reliability			= 1;
 bool	debug;
 bool	nachosDebug;
 int		randomSeed;
+bool	printHalt;
 
 
 // --------------------------------------------
@@ -91,7 +94,7 @@ void sigAlarmHandler(int sig)	{cleanProcess(true, "SIGALARM");}
 void runRingTopologyProcess(int nodeId, int nbrRingNode)
 {
 	char argNodeId[100], argNbrNode[100], argRandomSeed[100], argReliability[100];
-	const char *argNachosDebugOption, *argNachosDebugVal;
+	const char *argNachosDebugOption, *argNachosDebugVal, *argNachosPrintHalt;
 
 	sprintf(argNodeId,		"%d", nodeId);
 	sprintf(argNbrNode,		"%d", nbrRingNode);
@@ -99,12 +102,13 @@ void runRingTopologyProcess(int nodeId, int nbrRingNode)
 	sprintf(argRandomSeed,	"%d", randomSeed);
 	argNachosDebugOption	= (nachosDebug) ? "-d" : "";
 	argNachosDebugVal		= (nachosDebug) ? "-n" : "";
+	argNachosPrintHalt		= (printHalt)	? "" : ARGUMENT_PRINT_HALT;
 
 	printDebug("\t-> Start node %d\n", nodeId);
 
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);									// Init the synchronization system
 	execl(NODE_EXECUTABLE_FILE, NODE_EXECUTABLE_FILE,						// Run the node program
-			ARGUMENT_PRINT_HALT,
+			argNachosPrintHalt,
 			ARGUMENT_RANDOM_SEED,	argRandomSeed,
 			argNachosDebugOption,	argNachosDebugVal,
 			ARGUMENT_RELIABILITY,	argReliability,
@@ -121,13 +125,14 @@ void runRingTopologyProcess(int nodeId, int nbrRingNode)
 //----------------------------------------------------------------------
 // Initialize the parameters of the progrem.
 //----------------------------------------------------------------------
-void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability, bool *debug, bool *nachosDebug, int *randomSeed)
+void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability, bool *debug, bool *nachosDebug, int *randomSeed, bool *printHalt)
 {
 	*nbrRingNode	= DEFAULT_NBR_RING_NODE;
 	*reliability	= DEFAULT_RELIABILITY;
 	*debug			= DEFAULT_DEBUG;
 	*nachosDebug	= DEFAULT_NACHOS_DEBUG;
 	*randomSeed		= DEFAULT_RANDOM_SEED;
+	*printHalt		= DEFAULT_PRINT_HALT;
 
 	for (int i=1; i<argc; i++)
 	{
@@ -137,6 +142,7 @@ void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability
 		else if	(!strcmp(*argv, OPTION_RANDOM_SEED))	{argv++; i++; sscanf(*argv, "%d",	randomSeed);}
 		else if	(!strcmp(*argv, OPTION_DEBUG))			{*debug			= true;}
 		else if	(!strcmp(*argv, OPTION_NACHOS_DEBUG))	{*nachosDebug	= true;}
+		else if	(!strcmp(*argv, OPTION_PRINT_HAlT))		{*printHalt		= true;}
 		else	cleanProcess(true, "Wrong arguments");
 	}
 	if (*nbrRingNode	<= 1) cleanProcess(true, "Nbr machine <= 1");
@@ -156,7 +162,7 @@ void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability
 //----------------------------------------------------------------------
 int main (int argc, char **argv)
 {
-	initParameters(argc, argv, &nbrRingNode, &reliability, &debug, &nachosDebug, &randomSeed);
+	initParameters(argc, argv, &nbrRingNode, &reliability, &debug, &nachosDebug, &randomSeed, &printHalt);
 
 	pid					= new pid_t(nbrRingNode);
 	nbrCreatedProcess	= 0;
@@ -177,7 +183,7 @@ int main (int argc, char **argv)
 			ptrace(PTRACE_CONT, pid[i], NULL, NULL);
 		}
 	}
-	alarm(5);
+	alarm(8);
 	cleanProcess(false, NULL);
 }
 

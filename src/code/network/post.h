@@ -31,10 +31,14 @@
 #include "network.h"
 #include "synchlist.h"
 #include "timer.h"
+// +b simbadSid 26.01.2016
+//#include "system.h"
+// +e simbadSid 26.01.2016
 
 
 
-#define MAX_NBR_MSG_SEND	20
+#define MAX_NBR_MSG_SEND	20											// Number of tries to send a msg
+#define RESEND_WAITING_TIME	200											// Number of scheduler click before resent a msg waiting for ack
 
 
 typedef int MailBoxAddress;												// Mailbox address -- uniquely identifies a mailbox on a given machine.
@@ -124,7 +128,7 @@ class PostOffice
 			char *data);												//	there is no message in the box.
 	void PostalDelivery();												// Wait for incoming messages, and then put them in the correct mailbox
 	//+b simbadSid 25.01.2016
-	void SendTimerHandler();											// Handler to the timer: Wake up all the threads waiting for an acknowledgment
+	void CheckAck();													// Handler to the timer: Wake up all the threads waiting for an acknowledgment
 	//+e simbadSid 25.01.2016
 	void PacketSent();													// Interrupt handler, called when outgoing packet has been put on network; next
 																		//	packet can now be sent
@@ -150,7 +154,6 @@ class PostOffice
 	Semaphore		*messageSent;										// V'ed when next message can be sent to network
 	Lock			*sendLock;											// Only one outgoing message at a time
 //+b simbadSid 25.01.2016
-	Timer			*timer;												// Call the postOffice at fixed rate
 	KeyList			*pendingSentMsg;									// List of msg waiting for acknowledgment
 	Lock			*pendingSentLock;									// Lock to access the pendingSentMsg list
 //+e simbadSid 25.01.2016

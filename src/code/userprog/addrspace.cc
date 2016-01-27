@@ -349,7 +349,8 @@ int AddrSpace::GetThreadTopStackPointer(int tid)
 {
 	int stackTopPage = 0;
 	bool test = this->threadStackList->IsInList(tid, (void**)&stackTopPage);
-	if (!test) {
+	if (!test)
+	{
 		return -1;
 	}
 	else		return stackTopPageToStackTopVirtualAddress(stackTopPage);
