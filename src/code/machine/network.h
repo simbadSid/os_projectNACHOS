@@ -60,7 +60,7 @@ class Network
 {
   public:
     Network(NetworkAddress addr, double reliability,						// Allocate and initialize network driver
-  	  VoidFunctionPtr readAvail, VoidFunctionPtr writeDone, int callArg);
+  	    VoidFunctionPtr readAvail, VoidFunctionPtr writeDone, int callArg);
     ~Network();																// De-allocate the network driver data
     void Send(PacketHeader hdr, char* data);								// Send the packet data to a remote machine,
 																			// specified by "hdr".  Returns immediately.

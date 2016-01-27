@@ -23,7 +23,6 @@
 
 
 
-
 //----------------------------------------------------------------------
 // Mail::Mail
 //      Initialize a single mail message, by concatenating the headers to
@@ -146,15 +145,10 @@ MailBox::Get(PacketHeader *pktHdr, MailHeader *mailHdr, char *data)
 //
 //	"arg" -- pointer to the Post Office managing the Network
 //----------------------------------------------------------------------
-
-static void PostalHelper(int arg)
-{ PostOffice* po = (PostOffice *) arg; po->PostalDelivery(); }
-static void PostalTimer(int arg)
-{ PostOffice* po = (PostOffice *) arg; po->SendTimerHandler(); }
-static void ReadAvail(int arg)
-{ PostOffice* po = (PostOffice *) arg; po->IncomingPacket(); }
-static void WriteDone(int arg)
-{ PostOffice* po = (PostOffice *) arg; po->PacketSent(); }
+static void PostalHelper(int arg)	{ PostOffice* po = (PostOffice *) arg; po->PostalDelivery(); }
+//static void AckHelper(int arg)		{ PostOffice* po = (PostOffice *) arg; po->CheckAck(); }
+static void ReadAvail(int arg)		{ PostOffice* po = (PostOffice *) arg; po->IncomingPacket(); }
+static void WriteDone(int arg)		{ PostOffice* po = (PostOffice *) arg; po->PacketSent(); }
 
 //----------------------------------------------------------------------
 // PostOffice::PostOffice
@@ -186,18 +180,20 @@ PostOffice::PostOffice(NetworkAddress addr, double reliability, int nBoxes)
 
 	network				= new Network(addr, reliability, ReadAvail,		// Initialize the network; tell it which interrupt handlers to call
 							WriteDone, (int) this);
-
-	//+b simbadSid 15.01.2016
-	// TODO Change the second parameter: 144
-	Thread *t = new Thread("postal worker", 144);						// Create a thread whose sole job is to wait for incoming messages, and put them in the right mailbox.
-	t->Fork(PostalHelper, (int) this);
-	//+e simbadSid 15.01.2016
-
 	//+b simbadSid 25.01.2016
 	this->pendingSentMsg	= new KeyList();							// Initialize the list of sent msg waiting for ack + lock for accessing the list
 	this->pendingSentLock	= new Lock("Pending sent msg list lock");
 
-	this->timer = new Timer(PostalTimer, 0, false);						// Initialize the timer that will check the acknowledgment of sent msg
+
+	//+b simbadSid 15.01.2016
+	// TODO Change the second parameter: 144
+	Thread *t0 = new Thread("postal worker", 144);						// Create a thread whose sole job is to wait for incoming messages, and put them in the right mailbox.
+	t0->Fork(PostalHelper, (int) this);
+
+//	Thread *t1 = new Thread("postal worker", 145);						// Create a thread whose sole job is to wait for incoming messages, and put them in the right mailbox.
+//	t1->Fork(AckHelper, (int) this);
+	//+e simbadSid 15.01.2016
+
 	//+e simbadSid 25.01.2016
 }
 
@@ -217,7 +213,6 @@ PostOffice::~PostOffice()
     this->pendingSentMsg->FreeAllList();
     delete this->pendingSentMsg;
     delete this->pendingSentLock;
-    delete this->timer;
     // +e simbadSid 25.01.2016
 }
 
@@ -238,21 +233,22 @@ void PostOffice::PostalDelivery()
 
     for (;;)
     {
-        // first, wait for a message
-        messageAvailable->P();	
-        pktHdr = network->Receive(buffer);
+		// first, wait for a message
+		messageAvailable->P();
+		pktHdr = network->Receive(buffer);
 
-        mailHdr = *(MailHeader *)buffer;
+		mailHdr = *(MailHeader *)buffer;
 
-        if (DebugIsEnabled('n'))
-        {
-			printf("Putting mail into mailbox: ");
+		if (DebugIsEnabled('n'))
+		{
+			const char *mailType = ((mailHdr.isAck) ? "ACK" : "User mail");
+			printf("Putting mail into mailbox: (%s)", mailType);
 			PrintHeader(pktHdr, mailHdr);
-        }
+		}
 		// check that arriving message is legal!
 		ASSERT(0 <= mailHdr.to && mailHdr.to < numBoxes);
 		ASSERT(mailHdr.length <= MaxMailSize);
-
+//printf("Receive msg: (%s)\n", ((mailHdr.isAck)?"ACK":"User mail"));
         //+b simbadSid 25.01.2015
         if (!mailHdr.isAck)															// Case: mail is a msg
         {
@@ -270,14 +266,15 @@ void PostOffice::PostalDelivery()
         else																		// Case mail is an acknowledgment
         {
 //TODO
-        	this->pendingSentLock->Acquire();										//		Begin critical section
-        	PendingSentMsg *psm;
-        	bool test = this->pendingSentMsg->IsInList(mailHdr.ackId, (void**)&psm);//		Look for the sent msg waiting for the arrived ack
-        	ASSERT(test);
-        	psm->delivered = true;
-    		psm->cond->Signal(this->pendingSentLock);								//		Notify the waiting thread that the ack arrived
+//printf("ACK %d\n", mailHdr.ackId);
+			this->pendingSentLock->Acquire();										//		Begin critical section
+			PendingSentMsg *psm;
+			bool test = this->pendingSentMsg->IsInList(mailHdr.ackId, (void**)&psm);//		Look for the sent msg waiting for the arrived ack
+			ASSERT(test);
+			psm->delivered = true;
+			psm->cond->Signal(this->pendingSentLock);								//		Notify the waiting thread that the ack arrived
 
-        	this->pendingSentLock->Release();										//		End critical section
+			this->pendingSentLock->Release();										//		End critical section
         }
         //+e simbadSid 25.01.2015
     }
@@ -285,24 +282,29 @@ void PostOffice::PostalDelivery()
 
 //+b simbadSid 25.01.2016
 // TODO
-/*
+
+
 static void wakePendingMsg(PendingSentMsg *psm)
 {
 	psm->cond->Signal(psm->lock);
 }
-*/
+
 //----------------------------------------------------------------------
 // Handler to the timer: Wake up all the threads waiting for an acknowledgment
 //----------------------------------------------------------------------
-void PostOffice::SendTimerHandler()
+void PostOffice::CheckAck()
 {
 // TODO
-/*
-printf("Timer interrupt\n");
-	this->pendingSentLock->Acquire();								// Begin critical section
-	this->pendingSentMsg->Mapcar((VoidFunctionPtr)wakePendingMsg);	// Wake up all the threads waiting for an ack
-	this->pendingSentLock->Release();								// End critical section
-*/
+	for (;;)
+	{
+		this->pendingSentLock->Acquire();									// Begin critical section
+//printf("AAAAAAAAA\n");
+		if (!this->pendingSentMsg->IsEmpty())
+		{
+			this->pendingSentMsg->Mapcar((VoidFunctionPtr)wakePendingMsg);	// Wake up all the threads waiting for an ack
+		}
+		this->pendingSentLock->Release();									// End critical section
+	}
 }
 //+e simbadSid 25.01.2016
 
@@ -352,6 +354,10 @@ bool PostOffice::Send(PacketHeader pktHdr, MailHeader mailHdr, const char* data,
 	// +e simbadSid 25.01.2016
 
 	delete [] buffer;															// we've sent the message, so we can delete our buffer
+	if (!res)
+	{
+		DEBUG('n', "**** The destination has not returned any ACK: The msg may have been lost ****\n");
+	}
 	return res;
 }
 
@@ -434,17 +440,21 @@ void PostOffice::SendSimple(PacketHeader pktHdr, char *msg)
 bool PostOffice::SendUntilACK(PacketHeader pktHdr, char *msg, ack_t ack)
 {
 //TODO
-	bool res = false;
+	bool res = false, test;
 
 	this->pendingSentLock->Acquire();							// Begin critical section
 
 	PendingSentMsg *psm = new PendingSentMsg(this->pendingSentLock), *psm2 = NULL;
 	this->pendingSentMsg->Prepend(ack, (void*)psm);				// Put the pending mail in the list
-	while (psm->nbrTry < MAX_NBR_MSG_SEND)						// While the number of mail sent is < security
+//	while (psm->nbrTry < MAX_NBR_MSG_SEND)						// While the number of mail sent is < security
+while(true)
 	{
 		psm->nbrTry ++;
 		this->SendSimple(pktHdr, msg);							//		Send the mail
 		psm->cond->Wait(this->pendingSentLock);					//		Wait for the ack response or for the timer
+		test = this->pendingSentMsg->IsInList(ack, (void**)&psm2);
+		ASSERT(test);
+		ASSERT(psm == psm2);
 		if (!psm->delivered) continue;
 		res = true;
 		break;
