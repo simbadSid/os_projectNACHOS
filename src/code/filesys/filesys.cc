@@ -93,8 +93,7 @@ FileSystem::FileSystem(bool format)
 	FileHeader *mapHdr = new FileHeader;
 	FileHeader *dirHdr = new FileHeader;
 
-        DEBUG('f', "Formatting the file system.\n");
-
+    DEBUG('f', "Formatting the file system.\n");
     // First, allocate space for FileHeaders for the directory and bitmap
     // (make sure no one else grabs these!)
 	freeMap->Mark(FreeMapSector);	    
@@ -105,7 +104,6 @@ FileSystem::FileSystem(bool format)
 
 	ASSERT(mapHdr->Allocate(freeMap, FreeMapFileSize));
 	ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
-
     // Flush the bitmap and directory FileHeaders back to disk
     // We need to do this before we can "Open" the file, since open
     // reads the file header off of disk (and currently the disk has garbage
@@ -114,12 +112,11 @@ FileSystem::FileSystem(bool format)
         DEBUG('f', "Writing headers back to disk.\n");
 	mapHdr->WriteBack(FreeMapSector);
 	dirHdr->WriteBack(DirectorySector);
-
     // OK to open the bitmap and directory files now
     // The file system operations assume these two files are left open
     // while Nachos is running.
 
-	freeMapFile = new OpenFile(FreeMapSector, NULL, true);
+	freeMapFile = new OpenFile(FreeMapSector, -1, true);
     // OpenFile *directoryFile = new OpenFile(DirectorySector);
     // directoryFile = new OpenFile(DirectorySector, NULL, true);
 
@@ -133,11 +130,12 @@ FileSystem::FileSystem(bool format)
         DEBUG('f', "Writing bitmap and directory back to disk.\n");
 	freeMap->Print();
 	freeMap->WriteBack(freeMapFile);	 // flush changes to disk
-	// doesn't reach here
-	OpenedFileEntry *entry_1 = NULL;
-	if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry_1)) {
+
+	int entry_1 = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE);
+	if (entry_1 == -1) {
 	    return;
 	}
+
 	OpenFile *file = new OpenFile(currentThread->CurrentDirectorySector, entry_1, WRITE);
 	rootDirectory->WriteBack(file);
 	delete file;
@@ -146,7 +144,7 @@ FileSystem::FileSystem(bool format)
 	    freeMap->Print();
 	    rootDirectory->Print();
 
-        delete freeMap; 
+        delete freeMap;
         delete rootDirectory;
         delete mapHdr;
         delete dirHdr;
@@ -154,7 +152,7 @@ FileSystem::FileSystem(bool format)
     } else {
     	// if we are not formatting the disk, just open the files representing
     	// the bitmap and directory; these are left open while Nachos is running
-	freeMapFile = new OpenFile(FreeMapSector, NULL, WRITE);
+	freeMapFile = new OpenFile(FreeMapSector, -1, WRITE);
         //directoryFile = new OpenFile(DirectorySector, NULL, true);
         //CurrentDirSector = DirectorySector; //+ goubetc 20.01.16
     }
@@ -201,9 +199,9 @@ FileSystem::Create(const char *name, int initialSize)
     DEBUG('f', "Creating file %s, size %d\n", name, initialSize);
 
     //+b FoxTox 24.01.16
-    OpenedFileEntry *entry = NULL;
-    if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry)) {
-    	return NULL;
+    int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE);
+    if (entry == -1) {
+    	return false;
     }
     
     OpenFile *directoryTmpFile = new OpenFile(currentThread->CurrentDirectorySector, entry, WRITE);
@@ -225,18 +223,18 @@ FileSystem::Create(const char *name, int initialSize)
             success = FALSE;	// no space in directory
 	else {
     	    hdr = new FileHeader;
-	    if (!hdr->Allocate(freeMap, initialSize))
-            	success = FALSE;	// no space on disk for data
-	    else {	
-	    	success = TRUE;
-		// everthing worked, flush all changes back to disk
-    	    	hdr->WriteBack(sector); 		
-    	    	directory->WriteBack(directoryTmpFile);
-    	    	freeMap->WriteBack(freeMapFile);
-	    }
-            delete hdr;
-	}
-        delete freeMap;
+			if (!hdr->Allocate(freeMap, initialSize))
+					success = FALSE;	// no space on disk for data
+			else {
+				success = TRUE;
+			// everthing worked, flush all changes back to disk
+					hdr->WriteBack(sector);
+					directory->WriteBack(directoryTmpFile);
+					freeMap->WriteBack(freeMapFile);
+			}
+				delete hdr;
+		}
+		delete freeMap;
     }
     delete directoryTmpFile;
     delete directory;
@@ -259,9 +257,9 @@ FileSystem::Create_sub_dir(const char *name)
     //+b goubetc 23.01.16
     directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
     //+e goubetc 23.01.16
-    OpenedFileEntry *entry = NULL;
-    if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry)) {
-	return NULL;
+    int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE);
+    if (entry == -1) {
+    	return false;
     }
     OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector, entry, WRITE);
     directory->FetchFrom(directoryFile);
@@ -283,9 +281,10 @@ FileSystem::Create_sub_dir(const char *name)
 	    success = TRUE;
 	    ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
 	    dirHdr->WriteBack(sector);
-	    
-	    if (!openedFileStructure->AddFile(sector, WRITE, entry)) {
-		return NULL;
+
+	    entry = openedFileStructure->AddFile(sector, WRITE);
+	    if (entry == -1) {
+	    	return false;
 	    }
 
 	    OpenFile *openDir = new OpenFile(sector, entry, WRITE);
@@ -320,14 +319,14 @@ FileSystem::Create_sub_dir(const char *name)
 
 OpenFile *
 FileSystem::Open(const char *name, bool isForWrite) //+ goubetc 23.01.16
-{ 
+{
     Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
     OpenFile *openFile = NULL;
     int sector;
 
     //+b goubetc 24.01.16
-    OpenedFileEntry *entry = NULL;
-    if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry)) {
+    int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ);
+    if (entry == -1) {
     	return NULL;
     }
 
@@ -338,7 +337,8 @@ FileSystem::Open(const char *name, bool isForWrite) //+ goubetc 23.01.16
     DEBUG('f', "Opening file %s\n", name);
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name);
-    if (!openedFileStructure->AddFile(sector, isForWrite, entry)) {
+    entry = openedFileStructure->AddFile(sector, isForWrite);
+    if (entry == -1) {
     	return NULL;
     }
 
@@ -379,9 +379,9 @@ FileSystem::Remove(const char *name)
     FileHeader *fileHdr;
     int sector;
 
-    OpenedFileEntry *entry = NULL;
-    if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE, entry)) {
-	return NULL;
+    int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE);
+    if (entry == -1) {
+    	return false;
     }
     CurrentDirFile = new OpenFile(currentThread->CurrentDirectorySector, entry, WRITE); //+ goubetc 23.01.16
     directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
@@ -392,8 +392,9 @@ FileSystem::Remove(const char *name)
        return FALSE;			 // file not found 
     }//+b goubetc 21.01.16
     if (directory->IsSubDir(name)){
-    	if (!openedFileStructure->AddFile(sector, WRITE, entry)) {
-        	return NULL;
+    	entry = openedFileStructure->AddFile(sector, WRITE);
+    	if (entry == -1) {
+        	return false;
     	}
 	subDirFile = new OpenFile(sector, entry, WRITE);
 	subDir = new Directory(MAX_ENTRIES, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
@@ -445,9 +446,9 @@ void
 FileSystem::List()
 {
     Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
-    OpenedFileEntry *entry = NULL;
-    if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry)) {
-	return;
+    int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ);
+    if (entry == -1) {
+    	return;
     }
 
     OpenFile *currentDirFile = new OpenFile(currentThread->CurrentDirectorySector, entry, READ); //+ goubetc 23.01.16
@@ -463,8 +464,8 @@ FileSystem::List_dir(const char *name)
 {
     Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
 
-OpenedFileEntry *entry1 = NULL;
-	if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry1)) {
+    int entry1 = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ);
+	if (entry1 == -1) {
 		return;
 	}
 	OpenFile *currentDirFile = new OpenFile(currentThread->CurrentDirectorySector, entry1, READ); //+ goubetc 23.01.16
@@ -475,8 +476,8 @@ OpenedFileEntry *entry1 = NULL;
 
 	Directory *directoryTmp = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
 	//+b FoxTox 24.01.16
-	OpenedFileEntry *entry = NULL;
-	if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry)) {
+	int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ);
+	if (entry == -1) {
 		return;
 	}
 
@@ -510,9 +511,9 @@ FileSystem::Print()
     FileHeader *dirHdr = new FileHeader;
     BitMap *freeMap = new BitMap(NumSectors);
     Directory *directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
-    OpenedFileEntry *entry = NULL;
-    if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry)) {
-	return;
+    int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ);
+    if (entry == -1) {
+    	return;
     }
 
     OpenFile *currentDirFile = new OpenFile(currentThread->CurrentDirectorySector, entry, READ); //+ goubetc 23.01.16
@@ -540,9 +541,9 @@ FileSystem::Print()
 void
 FileSystem::ChangeCurrentDir(const char* name)
 {
-    OpenedFileEntry *entry = NULL;
-    if (!openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ, entry)) {
-	return;
+    int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ);
+    if (entry == -1) {
+    	return;
     }
 
     OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector, entry, READ);

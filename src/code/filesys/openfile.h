@@ -73,7 +73,7 @@ class OpenFile {
 	OpenFile();
 	//+e FoxTox 24.01.16
 	// entry param used to connect file with it's entry in OpenedFileStructure.
-	OpenFile(int sector, OpenedFileEntry *_openedFileEntry, bool _isForWrite);		// Open a file whose header is located
+	OpenFile(int sector, int _openedFileEntryID, bool _isForWrite);		// Open a file whose header is located
 					// at "sector" on the disk
     ~OpenFile();			// Close the file
 
@@ -102,7 +102,7 @@ class OpenFile {
     FileHeader *hdr;			// Header for this file 
     int seekPosition;			// Current position within the file
     //+b FoxTox 24.01.16
-    OpenedFileEntry *openedFileEntry;
+    int openedFileEntryID;
     bool isForWrite;
     bool isClosed;
     //+e FoxTox 24.01.16
@@ -127,7 +127,8 @@ class OpenedFileStructure{
 	public:
 		OpenedFileStructure();
 		~OpenedFileStructure();
-		bool AddFile(int sector, bool isForWrite, OpenedFileEntry* result);
+		int AddFile(int sector, bool isForWrite);
+		void RemoveFile(int id);
 	private:
 		bool CanOpen(int sector, bool isForWrite);
 		OpenedFileEntry *entries;

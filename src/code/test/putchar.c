@@ -8,17 +8,15 @@
 //+b FoxTox 08.01.2016
 void print(char c, int n)
 {	
-    /*
-    int i;
-    for (i = 0; i < 20; i++) {
-    	char temp = GetChar();
-     	PutChar(temp);
-    }
-    	char line[11];
-    	GetString(line, 11);
-    	PutString(line, 10);
+//    int i;
+//    for (i = 0; i < 20; i++) {
+//    	char temp = GetChar();
+//     	PutChar(temp);
+//    }
+	char line[11];
+	GetString(line, 11);
+	PutString(line, 10);
     PutChar('\n');
-    */   
     int numb;
     GetInt(&numb);
     PutInt(numb);
