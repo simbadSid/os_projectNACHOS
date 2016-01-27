@@ -171,19 +171,24 @@ main (int argc, char **argv)
 			fileSystem->List_dir (*(argv + 1));
 			argCount = 2;
 	    }
-
-		else if (!strcmp (*argv, "-rm"))					// remove Nachos file
-		{
-			ASSERT (argc > 1);
-			fileSystem->Remove (*(argv + 1));
-			argCount = 2;
-		}
 		else if (!strcmp (*argv, "-path"))					// remove Nachos file
 		{
 			ASSERT (argc > 1);
 			printf("PATH RESULT %d \n", fileSystem->findSectorByPath (*(argv + 1)));
 			argCount = 2;
 		}
+		else if (!strcmp (*argv, "-cd"))					// remove Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->ChangeCurrentDir (*(argv + 1));
+			argCount = 2;
+	    }
+		else if (!strcmp (*argv, "-rm"))					// remove Nachos file
+	    {
+			ASSERT (argc > 1);
+			fileSystem->Remove (*(argv + 1));
+			argCount = 2;
+	    }
 #endif // FILESYS
 #ifdef NETWORK
 		if (!strcmp (*argv, "-o"))

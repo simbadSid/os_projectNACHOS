@@ -83,12 +83,13 @@
 
 FileSystem::FileSystem(bool format)
 {
-    currentThread->CurrentDirectorySector = DirectorySector;
     openedFileStructure = new OpenedFileStructure();
     DEBUG('f', "Initializing the file system.\n");
     if (format) {
-    BitMap *freeMap = new BitMap(NumSectors);
-	Directory *rootDirectory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+        BitMap *freeMap = new BitMap(NumSectors);
+	Directory *rootDirectory = new Directory(NumDirEntries,
+						 currentThread->CurrentDirectorySector,
+						 currentThread->CurrentDirectorySector);
 	FileHeader *mapHdr = new FileHeader;
 	FileHeader *dirHdr = new FileHeader;
 
@@ -108,8 +109,8 @@ FileSystem::FileSystem(bool format)
     // reads the file header off of disk (and currently the disk has garbage
     // on it!).
 
-    DEBUG('f', "Writing headers back to disk.\n");
-	mapHdr->WriteBack(FreeMapSector);    
+        DEBUG('f', "Writing headers back to disk.\n");
+	mapHdr->WriteBack(FreeMapSector);
 	dirHdr->WriteBack(DirectorySector);
     // OK to open the bitmap and directory files now
     // The file system operations assume these two files are left open
@@ -127,6 +128,7 @@ FileSystem::FileSystem(bool format)
     // to hold the file data for the directory and bitmap.
 
         DEBUG('f', "Writing bitmap and directory back to disk.\n");
+	freeMap->Print();
 	freeMap->WriteBack(freeMapFile);	 // flush changes to disk
 
 	int entry_1 = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE);
@@ -201,7 +203,7 @@ FileSystem::Create(const char *name, int initialSize)
     if (entry == -1) {
     	return false;
     }
-
+    
     OpenFile *directoryTmpFile = new OpenFile(currentThread->CurrentDirectorySector, entry, WRITE);
 
     directory = new Directory(NumDirEntries, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector); //+ goubetc 23.01.16
@@ -410,15 +412,15 @@ FileSystem::Remove(const char *name)
 	}   
     }
     else {
-		fileHdr = new FileHeader();
-		fileHdr->FetchFrom(sector);
+	fileHdr = new FileHeader();
+	fileHdr->FetchFrom(sector);
+	freeMap = new BitMap(NumSectors);
+	freeMap->FetchFrom(freeMapFile);
+	fileHdr->Deallocate(freeMap);  		// remove data blocks
 
-		freeMap = new BitMap(NumSectors);
-		freeMap->FetchFrom(freeMapFile);
-
-		fileHdr->Deallocate(freeMap);  		// remove data blocks
     }
     //+e goubetc 21.01.16
+    DEBUG('f', "Deallocate worked\n");
     freeMap->Clear(sector);			// remove header block
     directory->Remove(name);
     
@@ -434,6 +436,8 @@ FileSystem::Remove(const char *name)
     //+e FoxTox 24.01.16
     return TRUE;
 } 
+
+
 
 //----------------------------------------------------------------------
 // FileSystem::List
@@ -549,6 +553,7 @@ FileSystem::ChangeCurrentDir(const char* name)
     directory->FetchFrom(directoryFile);
     int idx = directory->Find(name);
     if(idx != -1){
+	
 	currentThread->CurrentDirectorySector = idx;
     }
 }
