@@ -411,17 +411,15 @@ FileSystem::Remove(const char *name)
 	}   
     }
     else {
-	DEBUG('f', "Remove File %s.\n", name);
 	fileHdr = new FileHeader();
 	fileHdr->FetchFrom(sector);
-	DEBUG('f', "Fetch worked\n");
 	freeMap = new BitMap(NumSectors);
 	freeMap->FetchFrom(freeMapFile);
-	//	fileHdr->Deallocate(freeMap);  		// remove data blocks
-	DEBUG('f', "Deallocate worked\n");
+	fileHdr->Deallocate(freeMap);  		// remove data blocks
 
     }
     //+e goubetc 21.01.16
+    DEBUG('f', "Deallocate worked\n");
     freeMap->Clear(sector);			// remove header block
     directory->Remove(name);
     
@@ -430,7 +428,6 @@ FileSystem::Remove(const char *name)
     delete CurrentDirFile;
     //+b FoxTox 24.01.16
     delete fileHdr;
-    delete subDirFile;
     delete directory;
     delete freeMap;
     //+e FoxTox 24.01.16

@@ -120,7 +120,6 @@ FileHeader::Deallocate(BitMap *freeMap)
 	for (int i = 0; i < (int) NumDirect; i++) {
 	    ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
 	    freeMap->Clear((int) dataSectors[i]);
-	    DEBUG('f', "loop %d\n", i);
 	}
 	delete idl;
     } else {
@@ -128,7 +127,6 @@ FileHeader::Deallocate(BitMap *freeMap)
 	for (int i = 0; i < numSectors; i++) {
 	    ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
 	    freeMap->Clear((int) dataSectors[i]);
-	    DEBUG('f', "loop %d\n", i);
 	}
     }
 }
