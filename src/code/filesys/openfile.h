@@ -22,8 +22,8 @@
 
 #include "copyright.h"
 #include "utility.h"
-#include <stdio.h>
-#include <string.h>
+#include <cstring>
+#include <iostream>
 
 #define OPEN_FILES_NUMB 10
 

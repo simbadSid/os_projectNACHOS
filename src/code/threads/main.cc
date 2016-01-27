@@ -171,6 +171,19 @@ main (int argc, char **argv)
 			fileSystem->List_dir (*(argv + 1));
 			argCount = 2;
 	    }
+
+		else if (!strcmp (*argv, "-rm"))					// remove Nachos file
+		{
+			ASSERT (argc > 1);
+			fileSystem->Remove (*(argv + 1));
+			argCount = 2;
+		}
+		else if (!strcmp (*argv, "-path"))					// remove Nachos file
+		{
+			ASSERT (argc > 1);
+			printf("PATH RESULT %d \n", fileSystem->findSectorByPath (*(argv + 1)));
+			argCount = 2;
+		}
 #endif // FILESYS
 #ifdef NETWORK
 		if (!strcmp (*argv, "-o"))
@@ -193,8 +206,8 @@ main (int argc, char **argv)
 	    }
 #endif // NETWORK
       }
-
-    currentThread->Finish ();	// NOTE: if the procedure "main" 
+    interrupt->Halt();
+    //currentThread->Finish ();	// NOTE: if the procedure "main"
     // returns, then the program "nachos"
     // will exit (as any other normal program
     // would).  But there may be other

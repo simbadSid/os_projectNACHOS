@@ -48,7 +48,9 @@ OpenFile::OpenFile(int sector, int _openedFileEntryID, bool _isForWrite)
 OpenFile::~OpenFile()
 {
 	if (!isClosed) {
-		fileSystem->openedFileStructure->RemoveFile(openedFileEntryID);
+		if (fileSystem != NULL) {
+			fileSystem->openedFileStructure->RemoveFile(openedFileEntryID);
+		}
 		delete hdr;
 		isClosed = true;
 
@@ -219,9 +221,12 @@ int OpenFile::Length()
 void OpenFile::Close()
 {
 	if (!isClosed) {
+		if (fileSystem != NULL) {
+			fileSystem->openedFileStructure->RemoveFile(openedFileEntryID);
+		}
 		delete hdr;
-		fileSystem->openedFileStructure->RemoveFile(openedFileEntryID);
 		isClosed = true;
+
 	}
 }
 

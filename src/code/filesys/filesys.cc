@@ -427,7 +427,7 @@ FileSystem::Remove(const char *name)
     delete CurrentDirFile;
     //+b FoxTox 24.01.16
     delete fileHdr;
-    delete subDirFile;
+    //delete subDirFile;
     delete subDir;
     delete directory;
     delete freeMap;
@@ -551,4 +551,47 @@ FileSystem::ChangeCurrentDir(const char* name)
     if(idx != -1){
 	currentThread->CurrentDirectorySector = idx;
     }
+}
+
+int FileSystem::findSectorByPath(char* name) {
+	int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, WRITE);
+	if (entry == -1) {
+	    return false;
+	}
+	int sector, fatherSector;
+	sector = fatherSector = currentThread->CurrentDirectorySector;
+
+	OpenFile *directoryTmpFile = new OpenFile(sector, entry, WRITE);
+
+	Directory * directory = new Directory(NumDirEntries, sector, fatherSector);
+	directory->FetchFrom(directoryTmpFile);
+	directoryTmpFile->Close();
+
+	char* subName = strtok(name, "/");
+	while(subName)
+	{
+		sector = directory->Find(subName);
+		if (sector == -1) {
+			delete directoryTmpFile;
+			delete directory;
+			return -1;
+		}
+		entry = openedFileStructure->AddFile(sector, READ);
+		if (entry == -1) {
+			delete directoryTmpFile;
+			delete directory;
+		    return -1;
+		}
+
+		directoryTmpFile = new OpenFile(sector, entry, READ);
+		directory = new Directory(NumDirEntries, sector, fatherSector);
+		directory->FetchFrom(directoryTmpFile);
+		directoryTmpFile->Close();
+		fatherSector = sector;
+
+		subName = strtok(NULL, "/");
+	}
+	delete directoryTmpFile;
+	delete directory;
+	return sector;
 }

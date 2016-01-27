@@ -37,6 +37,8 @@
 
 #include "copyright.h"
 #include "openfile.h"
+#include <iostream>       // std::cout
+#include <string>
 //+ goubetc 20.01.16
 
 #define READ false
@@ -101,8 +103,9 @@ class FileSystem {
     }
     void ChangeCurrentDir(const char* name);
 
-    OpenedFileStructure* openedFileStructure;
+    int findSectorByPath(char* name);
 
+    OpenedFileStructure* openedFileStructure;
     
   private:
     int rootDirectorySector;  //+ goubetc 23.01.16

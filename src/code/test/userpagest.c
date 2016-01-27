@@ -3,7 +3,7 @@
 
 
 int main() {
-	int tid0 = ForkExec("ioTest");
+	int tid0 = ForkExec("fileTest");
 	int tid1 = ForkExec("multithreadingTest");
 
 // +b simbadSid x20.01.2016
