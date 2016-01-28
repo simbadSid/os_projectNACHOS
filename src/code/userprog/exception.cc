@@ -213,6 +213,11 @@ ExceptionHandler (ExceptionType which)
 		    synchconsole->SynchPutInt(i);
 		    break;
 		}
+		case SC_GetCharInt:
+		{
+			machine->WriteRegister(2, synchconsole->SynchGetCharInt());
+			break;
+		}
 		    //+b FoxTox 09.01.2016
 		    //+b simbadSid 10.01.16
 		case SC_UserThreadCreate:

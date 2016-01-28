@@ -149,35 +149,6 @@ Directory::Add(const char *name, int newSector, bool directory)
     return FALSE;	// no space.  Fix when we have extensible files.
 }
 
-//+b goubetc 19.01.16
-//----------------------------------------------------------------------
-// Directory::Add
-// 	Add a file into the directory.  Return TRUE if successful;
-//	return FALSE if the file name is already in the directory, or if
-//	the directory is completely full, and has no more space for
-//	additional file names.
-//
-//	"name" -- the name of the file being added
-//	"newSector" -- the disk sector containing the added file's header
-//----------------------------------------------------------------------
-
-// bool
-// Add_subDirectory(const char *name, int newSector){
-//     if (FindIndex(name) != -1)
-// 	return FALSE;
-
-//     for (int i = 0; i < tableSize; i++)
-//         if (!table[i].inUse) {
-//             table[i].inUse = TRUE;
-//             strncpy(table[i].name, name, FileNameMaxLen); 
-//             table[i].sector = newSector;
-// 	    table[i].isSubDirectory = true;
-// 	    return TRUE;
-// 	}
-//     return FALSE;	// no space.  Fix when we have extensible files.
-
-// }
-
 
 //+e goubetc 19.01.16
 //----------------------------------------------------------------------
