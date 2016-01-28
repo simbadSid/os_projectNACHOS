@@ -266,7 +266,6 @@ void PostOffice::PostalDelivery()
         else																		// Case mail is an acknowledgment
         {
 //TODO
-//printf("ACK %d\n", mailHdr.ackId);
 			this->pendingSentLock->Acquire();										//		Begin critical section
 			PendingSentMsg *psm;
 			bool test = this->pendingSentMsg->IsInList(mailHdr.ackId, (void**)&psm);//		Look for the sent msg waiting for the arrived ack
@@ -298,7 +297,6 @@ void PostOffice::CheckAck()
 	for (;;)
 	{
 		this->pendingSentLock->Acquire();									// Begin critical section
-//printf("AAAAAAAAA\n");
 		if (!this->pendingSentMsg->IsEmpty())
 		{
 			this->pendingSentMsg->Mapcar((VoidFunctionPtr)wakePendingMsg);	// Wake up all the threads waiting for an ack
@@ -446,8 +444,8 @@ bool PostOffice::SendUntilACK(PacketHeader pktHdr, char *msg, ack_t ack)
 
 	PendingSentMsg *psm = new PendingSentMsg(this->pendingSentLock), *psm2 = NULL;
 	this->pendingSentMsg->Prepend(ack, (void*)psm);				// Put the pending mail in the list
-//	while (psm->nbrTry < MAX_NBR_MSG_SEND)						// While the number of mail sent is < security
-while(true)
+	while (psm->nbrTry < MAX_NBR_MSG_SEND)						// While the number of mail sent is < security
+//while(true)
 	{
 		psm->nbrTry ++;
 		this->SendSimple(pktHdr, msg);							//		Send the mail

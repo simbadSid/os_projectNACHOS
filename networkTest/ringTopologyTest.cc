@@ -18,6 +18,7 @@
 #define OPTION_NACHOS_DEBUG		"-nachosDebug"
 #define OPTION_RANDOM_SEED		"-rs"
 #define OPTION_PRINT_HAlT		"-ph"
+#define OPTION_PRINT_OPTIONS	"-help"
 
 #define DEFAULT_NBR_RING_NODE	3
 #define DEFAULT_RELIABILITY		1.0
@@ -95,10 +96,11 @@ void runRingTopologyProcess(int nodeId, int nbrRingNode)
 {
 	char argNodeId[100], argNbrNode[100], argRandomSeed[100], argReliability[100];
 	const char *argNachosDebugOption, *argNachosDebugVal, *argNachosPrintHalt;
-
+	int res = reliability+1;
+printf("%d", res);
 	sprintf(argNodeId,		"%d", nodeId);
 	sprintf(argNbrNode,		"%d", nbrRingNode);
-	sprintf(argReliability,	"%f", reliability);
+	sprintf(argReliability,	"%d", res);
 	sprintf(argRandomSeed,	"%d", randomSeed);
 	argNachosDebugOption	= (nachosDebug) ? "-d" : "";
 	argNachosDebugVal		= (nachosDebug) ? "-n" : "";
@@ -122,6 +124,16 @@ void runRingTopologyProcess(int nodeId, int nbrRingNode)
 	exit(-1);
 }
 
+void printOptions()
+{
+	printf("\nringTopologyTest Usage:\n");
+	printf("\t%s:\t\t\t\t to print the steps of the current program\n", OPTION_DEBUG);
+	printf("\t%s:\t\t\t to print the debug value of the nachos corresponding to the network\n", OPTION_NACHOS_DEBUG);
+	printf("\t%s:\t\t\t\t to print the statistics of the nachos after it quits\n", OPTION_PRINT_HAlT);
+	printf("\t%s: <%s>\t to force the number of node in the topology\n", OPTION_NBR_RING_NODE, "number of nodes");
+	printf("\t%s: <%s>\t to force the probability of a message to be successfully sent\n", OPTION_RELIABILITY, "probability");
+	printf("\t%s: <%s>\t\t to force the value of the random seed\n", OPTION_RANDOM_SEED, "random seed");
+}
 //----------------------------------------------------------------------
 // Initialize the parameters of the progrem.
 //----------------------------------------------------------------------
@@ -143,6 +155,7 @@ void initParameters(int argc, char **argv, int *nbrRingNode, double *reliability
 		else if	(!strcmp(*argv, OPTION_DEBUG))			{*debug			= true;}
 		else if	(!strcmp(*argv, OPTION_NACHOS_DEBUG))	{*nachosDebug	= true;}
 		else if	(!strcmp(*argv, OPTION_PRINT_HAlT))		{*printHalt		= true;}
+		else if (!strcmp(*argv, OPTION_PRINT_OPTIONS))	printOptions();
 		else	cleanProcess(true, "Wrong arguments");
 	}
 	if (*nbrRingNode	<= 1) cleanProcess(true, "Nbr machine <= 1");
@@ -187,4 +200,3 @@ int main (int argc, char **argv)
 	cleanProcess(false, NULL);
 }
 
-Status

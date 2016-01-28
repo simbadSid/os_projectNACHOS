@@ -207,8 +207,9 @@ Initialize (int argc, char **argv)
 #endif
 
 #ifdef NETWORK
-	ASSERT(rely <= 1);
-	ASSERT(rely >= 0);
+//	ASSERT(rely <= 1);
+//	ASSERT(rely >= 0);
+    if ((rely < 0) || (rely > 1)) rely = 1;
     postOffice = new PostOffice (netname, rely, 10);
 #endif
 }

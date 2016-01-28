@@ -23,7 +23,7 @@
 #include "post.h"
 #include "interrupt.h"
 
-#define NBB_MSG	10
+#define NBB_MSG	1
 
 // Test out message delivery, by doing the following:
 //	1. send a message to the machine with ID "farAddr", at mail box #0
