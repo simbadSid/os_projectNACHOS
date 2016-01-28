@@ -47,7 +47,7 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 	return FALSE;		// not enough space
 
     if (numSectors <= (int) NumDirect){
-	DEBUG('f', "regular allocation size %d\n", fileSize);
+	//printf("regular allocation size %d\n", fileSize);
 	for (int i = 0; i < numSectors; i++)
 	    dataSectors[i] = freeMap->FindAndMark();
 	indirectLink = -1;
@@ -55,7 +55,7 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 	return TRUE;
     } else {
 	int idLinkSize = fileSize - NumDirect * SectorSize;; // fileSize - ((SectorSize - 4 * sizeof(int)));
-	DEBUG('f', "indirect allocation %d\n", idLinkSize);
+	////	printf("indirect allocation %d\n", idLinkSize);
 	for (int i = 0; i < (int) NumDirect; i++){
 	    dataSectors[i] = freeMap->FindAndMark();
 	}
@@ -78,7 +78,7 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 		delete idLink;
 		return TRUE;
 	    } else {
-		DEBUG('f', "double indirect allocation %d\n", remaining);
+		//	printf("double indirect allocation %d\n", remaining);
 		// double indirection
 		doubleIndirect = freeMap->FindAndMark();
 		if (doubleIndirect == -1){

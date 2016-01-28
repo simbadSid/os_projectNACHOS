@@ -277,7 +277,6 @@ FileSystem::Create_sub_dir(const char *name)
 	else {
     	    subDir = new Directory(10, sector, currentThread->CurrentDirectorySector);
 	    DEBUG('z', "sector : %d\n", sector);
-	    subDir->List(); // KILL-ME
 	    success = TRUE;
 	    ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
 	    dirHdr->WriteBack(sector);
@@ -543,18 +542,26 @@ FileSystem::Print()
 void
 FileSystem::ChangeCurrentDir(const char* name)
 {
-    int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ);
-    if (entry == -1) {
-    	return;
-    }
+    if (*name == '/'){
+	char newName[strlen(name)];
+	strcpy(newName, name);
+	int sector = findSectorByPath(newName + 1);
+	if (sector > 0)
+	    currentThread->CurrentDirectorySector = sector;
+    } else {
+	int entry = openedFileStructure->AddFile(currentThread->CurrentDirectorySector, READ);
+	if (entry == -1) {
+	    return;
+	}
 
-    OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector, entry, READ);
-    Directory *directory = new Directory(MAX_ENTRIES, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
-    directory->FetchFrom(directoryFile);
-    int idx = directory->Find(name);
-    if(idx != -1){
+	OpenFile *directoryFile = new OpenFile(currentThread->CurrentDirectorySector, entry, READ);
+	Directory *directory = new Directory(MAX_ENTRIES, currentThread->CurrentDirectorySector, currentThread->CurrentDirectorySector);
+	directory->FetchFrom(directoryFile);
+	int idx = directory->Find(name);
+	if(idx != -1){
 	
-	currentThread->CurrentDirectorySector = idx;
+	    currentThread->CurrentDirectorySector = idx;
+	}
     }
 }
 
