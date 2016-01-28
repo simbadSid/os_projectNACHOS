@@ -277,7 +277,6 @@ FileSystem::Create_sub_dir(const char *name)
 	else {
     	    subDir = new Directory(10, sector, currentThread->CurrentDirectorySector);
 	    DEBUG('z', "sector : %d\n", sector);
-	    subDir->List(); // KILL-ME
 	    success = TRUE;
 	    ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
 	    dirHdr->WriteBack(sector);

@@ -103,3 +103,15 @@ echo
 echo "we want to access /bli/ho"
 echo "command: -cd /bli/ho -l should display ho with one entry (hi)."
 ../build/nachos-filesys -cd /bli/ho -l
+echo
+echo
+read -p "Press enter to continue... " -n1 -s
+echo
+echo
+echo "************************************************"
+echo "Testing Big File allocation"
+echo "command: -cp ../Makefile.define-origin make"
+../build/nachos-filesys -f 
+../build/nachos-filesys -cp ../Makefile.define-origin make
+read -p "Press enter to continue... " -n1 -s
+../build/nachos-filesys -D
