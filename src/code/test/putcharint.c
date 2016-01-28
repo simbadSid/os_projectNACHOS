@@ -4,26 +4,17 @@
 //void print(char c, int n)
 void print_chars()
 {
-    //int i;
-    //char line[11];
-    //for (i = 0; i < 10; i++) {
-    //	char temp =(char) GetCharInt();
-    // 	line[i] = temp;
-    //}
-	int temp_i = GetCharInt();
-	//temp_i = 8888;
-	//char temp =(char) temp_i;
-    //PutChar(temp);
-    PutInt(temp_i);
-    PutChar('\n');
-    //Halt();
+	int temp_i;
+	temp_i = GetCharInt();
+	PutChar((char)temp_i);
+	PutChar('\n');
 }
 
 int
 main()
 {
     print_chars();
-    Halt();
+    return 0;
     // create system call for
 }
 //+e FoxTox 09.01.2016

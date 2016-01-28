@@ -2,14 +2,14 @@
 
 void threadFunction1() {
 	char name [] = "File0";
-	//Create(name);
+	Create(name);
 	int id = Open(name, 0);
 	Close(id);
 }
 
 void threadFunction2() {
 	char name [] = "File1";
-	//Create(name);
+	Create(name);
 	int id = Open(name, 0);
 	Close(id);
 }

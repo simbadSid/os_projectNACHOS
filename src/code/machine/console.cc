@@ -104,6 +104,7 @@ Console::CheckCharAvail()
     // otherwise, read character and tell user about it
     n = ReadPartial(readFileNo, &c, sizeof(char));
     incoming = (n == 1 ? c : EOF);
+    incomingInt = (n == 1 ? (int)c : intEOF);
     stats->numConsoleCharsRead++;
     (*readHandler)(handlerArg);	
 }
@@ -167,25 +168,4 @@ Console::GetCharInt()
 
    incomingInt = intEOF;
    return ch;
-}
-
-void
-Console::CheckCharIntAvail()
-{
-    char c;
-    int n;
-
-    // schedule the next time to poll for a packet
-    interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime,
-			ConsoleReadInt);
-//    PutChar((char)incomingInt);
-    // do nothing if character is already buffered, or none to be read
-    if (incomingInt != intEOF || !PollFile(readFileNo) )
-	return;
-
-    // otherwise, read character and tell user about it
-    n = ReadPartial(readFileNo, &c, sizeof(char));
-    incomingInt = (n == 1 ? (int)c : intEOF);
-    stats->numConsoleCharsRead++;
-    (*readHandler)(handlerArg);
 }

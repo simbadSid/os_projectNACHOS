@@ -3,22 +3,12 @@
 
 
 int main() {
-	int tid0 = ForkExec("fileTest");
-	int tid1 = ForkExec("multithreadingTest");
+	int tid0 = ForkExec("userpages1");
+	int tid1 = ForkExec("userpages0");
 
 // +b simbadSid x20.01.2016
-
-//	if (tid0 < 0)
-//	{
-tid0++;
-		PutString("******* Can't find the first executable file *******\n", 200);
-//	}
-//	if (tid1 < 0)
-//	{
-tid1++;
-		PutString("******* Can't find the second executable file *******\n", 200);
-//	}
-//	Halt();
+	tid0++;
+	tid1++;
 // +e simbadSid 20.01.2016
 	return 0;
 }

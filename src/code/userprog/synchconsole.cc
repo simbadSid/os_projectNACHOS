@@ -125,28 +125,13 @@ void SynchConsole::SynchPutInt(int n)
 // Gets Char and returns an integer value
 int SynchConsole::SynchGetCharInt()
 {
-    //reading->P ();   //+e goubetc 10.01.16
-    console->CheckCharIntAvail();
-    return (int)console->GetCharInt ();
-    //reading->V ();   //+ goubetc 10.01.16
+	reading->Acquire ();   //+ goubetc 12.01.16
+	readAvail->P ();
 
-    /*reading->P (); //+ goubetc 10.01.16
-    char c;
-    size_t i;
+	console->CheckCharAvail();
+    int c = (int)console->GetCharInt ();
 
-    for (i=0; i<(size_t)n; ++i)
-	{
-	    readAvail->P ();
-	    if ((c = console->GetChar()) == EOF)
-	    	break;
-	    *(s + i) = c;
-	    if (c == '\n')
-	    	break;
-	}
-    *(s + i + 1) = 0;
-    if (i == 0 || c == EOF)
-    	*s = EOF;
-    reading->V (); //+ goubetc 10.01.16
-    return (int)c; */
+    reading->Release ();   //+ goubetc 12.01.16
+    return c;
 }
 //+e TooFo 11012016
